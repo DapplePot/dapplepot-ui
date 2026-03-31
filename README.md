@@ -83,6 +83,7 @@ The `@dapplepot/types/*` alias resolves to `src/types/*` (configured in
 dapplepot_ui/
 ├── agent.md                            ← full IDE agent context
 ├── README.md                           ← this file
+├── DAPPLEPOT_MASTER_README.md          ← platform-wide alignment doc
 ├── package.json
 ├── pnpm-lock.yaml
 ├── tsconfig.json                       ← strict, @dapplepot/types alias → src/types/
@@ -93,7 +94,7 @@ dapplepot_ui/
 │
 └── src/
     ├── main.tsx                        ← React root, QueryClient, RouterProvider
-    ├── router.tsx                      ← TanStack Router route tree
+    ├── router.tsx                      ← TanStack Router route tree (incl. /login)
     ├── index.css                       ← imports tailwind.css
     ├── vite-env.d.ts                   ← Vite env type declarations
     │
@@ -107,7 +108,8 @@ dapplepot_ui/
     │   └── security.ts                 ← Zone 6: RiskBand, SessionRiskScore, SecurityFinding, SecurityOverview, RemediationCard
     │
     ├── api/                            ← typed HTTP functions (ky)
-    │   ├── client.ts                   ← ky instance, JWT interceptor, 401 redirect
+    │   ├── client.ts                   ← ky instance, JWT interceptor, 401 → /login redirect
+    │   ├── auth.ts                     ← login(): POST /v1/auth/login → { token, expiresAt }
     │   ├── sessions.ts
     │   ├── analytics.ts
     │   ├── alerts.ts
@@ -127,13 +129,14 @@ dapplepot_ui/
     │   └── useSecurity.ts
     │
     ├── stores/                         ← Zustand (UI state only, not server state)
-    │   ├── auth.ts                     ← JWT token (localStorage)
+    │   ├── auth.ts                     ← JWT token (localStorage key: dp_token)
     │   ├── sessionFilters.ts           ← status, agentId, environment, dateRange, q
     │   ├── alertFilters.ts             ← severity, status, ruleId
     │   ├── traceFilters.ts             ← active category on event timeline
     │   └── ui.ts                       ← sidebar, activeTab, selectedSessionId
     │
     ├── pages/                          ← one file per route
+    │   ├── Login.tsx                   ← /login — full-screen, no AppShell chrome
     │   ├── Overview.tsx
     │   ├── Sessions.tsx
     │   ├── SessionDetail.tsx
@@ -142,7 +145,7 @@ dapplepot_ui/
     │   └── Security.tsx
     │
     ├── layout/
-    │   ├── AppShell.tsx
+    │   ├── AppShell.tsx                ← bypasses sidebar/topbar when pathname === '/login'
     │   ├── Sidebar.tsx
     │   └── Topbar.tsx
     │
@@ -194,12 +197,31 @@ cp .env.example .env
 ### 3. Start
 
 ```bash
-# Make sure dapplepot_api is running first
+# Make sure dapplepot_api is running first (see platform startup sequence in DAPPLEPOT_MASTER_README.md)
 pnpm dev     # Vite dev server on http://localhost:5173
 ```
 
-Vite proxies all `/v1/` requests to `dapplepot_api` so there are no CORS
-issues in development.
+Vite proxies all `/v1/` requests to `dapplepot_api` so there are no CORS issues in development.
+
+**Full platform startup order (this repo is Step 7):**
+Infrastructure → Pipeline setup → Security migrations → Pipeline consumers → Security consumer → API → **UI** → smoke test.
+See `DAPPLEPOT_MASTER_README.md` § 5 for the complete sequence.
+
+---
+
+## Auth flow
+
+The UI uses JWT tokens stored in `localStorage` via the `useAuthStore` Zustand store (`src/stores/auth.ts`).
+
+| Step | Behaviour |
+|------|-----------|
+| Login | `POST /v1/auth/login` with `{ email, password }` → receives `{ token, expiresAt }` |
+| Token storage | Stored in `localStorage` under `dp_token`, loaded into Zustand on init |
+| Request auth | Every `ky` request adds `Authorization: Bearer <token>` via the `beforeRequest` hook |
+| 401 handling | `client.ts` clears the token and hard-navigates to `/login` |
+| Login route | `/login` renders `src/pages/Login.tsx` — bypasses `AppShell` (no sidebar/topbar) |
+
+**Note:** JWT issuer, expiry, and refresh strategy must be confirmed once `dapplepot_api` README is available. Token refresh is not yet implemented — expiry currently requires the user to log in again.
 
 ---
 
@@ -212,6 +234,7 @@ pnpm preview        # Preview the production build locally
 pnpm typecheck      # tsc --noEmit
 pnpm lint           # eslint src/
 pnpm lint:fix       # eslint --fix src/
+pnpm sync-types     # Copy updated types from ../dapplepot-api/src/types/ → src/types/
 ```
 
 ---
@@ -235,13 +258,14 @@ Types live in `src/types/security.ts`. Stale times are intentionally matched to 
 
 ## Updating shared types
 
-When `dapplepot_api` updates its types, copy the changed files:
+When `dapplepot_api` updates its types, run:
 
 ```bash
-cp ../dapplepot-api/src/types/*.ts src/types/
+pnpm sync-types
+# equivalent to: cp ../dapplepot-api/src/types/*.ts src/types/
 ```
 
-TypeScript will immediately flag any UI component that needs updating.
+TypeScript will immediately flag any UI component that needs updating. Add this step to CI after the API build to catch contract drift automatically.
 
 ---
 

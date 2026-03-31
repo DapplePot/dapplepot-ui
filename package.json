@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "lint:fix": "eslint --fix src/"
+    "lint:fix": "eslint --fix src/",
+    "sync-types": "cp ../dapplepot-api/src/types/*.ts src/types/"
   },
   "dependencies": {
     "@microsoft/fetch-event-source": "^2.0.1",

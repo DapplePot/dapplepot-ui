@@ -89,9 +89,10 @@ dapplepot_ui/
 │   # Project root
 ├── agent.md                                ← this file
 ├── README.md                               ← human setup guide
+├── DAPPLEPOT_MASTER_README.md              ← platform-wide alignment + cross-repo dependency map
 ├── package.json
 ├── pnpm-lock.yaml
-├── tsconfig.json                           ← strict, paths alias for @dapplepot/types
+├── tsconfig.json                           ← strict, paths alias for @dapplepot/types → src/types/
 ├── vite.config.ts                          ← path aliases, proxy to dapplepot_api in dev
 ├── tailwind.css                            ← @import "tailwindcss" — v4 style
 ├── .env.example
@@ -101,11 +102,12 @@ dapplepot_ui/
 │
 └── src/
     ├── main.tsx                            ← React root, QueryClient setup, RouterProvider
-    ├── router.tsx                          ← TanStack Router route tree
+    ├── router.tsx                          ← TanStack Router route tree (incl. /login)
     │
     │   # API client — single source of truth for all HTTP calls
     ├── api/
-    │   ├── client.ts                       ← ky instance with JWT interceptor + base URL
+    │   ├── client.ts                       ← ky instance with JWT interceptor + base URL; 401 → /login
+    │   ├── auth.ts                         ← login(): POST /v1/auth/login → { token, expiresAt }
     │   ├── sessions.ts                     ← getSessionList, getSessionDetail, getTrace, getStateHistory
     │   ├── analytics.ts                    ← getOverview, getLlmUsage, getErrorRates, getLatency, getCost
     │   ├── alerts.ts                       ← getAlerts, getAlertDetail, updateAlertStatus, getAlertStats
@@ -125,6 +127,7 @@ dapplepot_ui/
     │
     │   # Zustand stores — UI state only (not server state)
     ├── stores/
+    │   ├── auth.ts                         ← JWT token (localStorage key: dp_token)
     │   ├── sessionFilters.ts               ← status, agentId, environment, dateRange, searchQuery
     │   ├── alertFilters.ts                 ← severity, status, ruleId filters
     │   ├── traceFilters.ts                 ← active category filter on event timeline
@@ -132,6 +135,7 @@ dapplepot_ui/
     │
     │   # Pages — one file per route
     ├── pages/
+    │   ├── Login.tsx                       ← /login — email+password form, no AppShell chrome
     │   ├── Overview.tsx                    ← Surface 1: live overview home screen
     │   ├── Sessions.tsx                    ← Surface 2: session list with filters
     │   ├── SessionDetail.tsx               ← Surface 3: trace view for one session
@@ -141,7 +145,7 @@ dapplepot_ui/
     │
     │   # Layout
     ├── layout/
-    │   ├── AppShell.tsx                    ← sidebar + topbar wrapper, route outlet
+    │   ├── AppShell.tsx                    ← sidebar + topbar wrapper; bypasses chrome on /login
     │   ├── Sidebar.tsx                     ← nav items, agent selector, collapse toggle
     │   └── Topbar.tsx                      ← breadcrumb, env selector, user menu
     │
@@ -575,34 +579,39 @@ export async function getTrace(
 
 ## 5. SSE hooks
 
+Native `EventSource` does not support custom headers, so all SSE connections
+use `@microsoft/fetch-event-source` which accepts an `Authorization` header.
+
 ### useLiveSessions — live session feed
 
 ```typescript
-// src/hooks/useControl.ts
+// src/api/sse.ts
 export function useLiveSessions() {
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    const token = useAuthStore.getState().token
-    // Native EventSource does not support custom headers.
-    // Use a fetch-based SSE polyfill (e.g. `eventsource` npm package or
-    // a custom fetchEventSource wrapper) that supports Authorization headers.
-    const es = new EventSource(
-      `${API_BASE}/v1/sessions/live`,
-      // Pass Authorization: Bearer <jwt> via polyfill, not as a query param
-    )
+    const controller = new AbortController()
 
-    es.addEventListener('sessions', (e) => {
-      const sessions = JSON.parse(e.data) as SessionSummary[]
-      // Update the React Query cache directly — no re-fetch needed
-      queryClient.setQueryData(['sessions', 'live'], sessions)
-    })
-
-    es.onerror = () => {
-      // EventSource auto-reconnects — no manual retry needed
+    const connect = async () => {
+      const token = useAuthStore.getState().token
+      await fetchEventSource(`${API_BASE}/v1/sessions/live`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        signal: controller.signal,
+        onmessage(event) {
+          if (event.event === 'sessions') {
+            const sessions = JSON.parse(event.data) as SessionSummary[]
+            // Update the React Query cache directly — no re-fetch needed
+            queryClient.setQueryData(['sessions', 'live'], sessions)
+          }
+        },
+        onerror() {
+          // fetchEventSource retries automatically on error
+        },
+      })
     }
 
-    return () => es.close()
+    void connect()
+    return () => controller.abort()
   }, [queryClient])
 
   return useQuery({
@@ -618,10 +627,25 @@ export function useLiveSessions() {
 ```typescript
 // src/api/sse.ts
 export function useControlChannel(sessionId: string) {
-  // Only used by operators monitoring a specific live session
-  // Opens SSE to GET /v1/control/channel?session_id=...
-  // Receives { type: 'kill_switch' | 'interrupt', ... } command events
-  // Updates a local Zustand store with the latest command received
+  useEffect(() => {
+    const controller = new AbortController()
+
+    const connect = async () => {
+      const token = useAuthStore.getState().token
+      await fetchEventSource(
+        `${API_BASE}/v1/control/channel?session_id=${encodeURIComponent(sessionId)}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          signal: controller.signal,
+          onmessage() { /* command events handled by caller */ },
+          onerror() { /* auto-retry */ },
+        }
+      )
+    }
+
+    void connect()
+    return () => controller.abort()
+  }, [sessionId])
 }
 ```
 
@@ -688,8 +712,11 @@ Skeleton components live alongside their data components:
 
 ```typescript
 // src/router.tsx
+// rootRoute uses AppShell as its component.
+// AppShell checks the current pathname and bypasses sidebar/topbar on /login.
 const rootRoute = createRootRoute({ component: AppShell })
 
+const loginRoute       = createRoute({ path: '/login',          component: Login })
 const overviewRoute    = createRoute({ path: '/',               component: Overview })
 const sessionsRoute    = createRoute({ path: '/sessions',       component: Sessions,
                                        validateSearch: sessionListSearchSchema })
@@ -700,10 +727,31 @@ const securityRoute    = createRoute({ path: '/security',       component: Secur
 
 // Session list search params are fully typed:
 const sessionListSearchSchema = z.object({
-  page:        z.number().default(1),
+  page: z.number().default(1),
   // Filters are in Zustand, not URL — only page lives in URL
 })
 ```
+
+### AppShell login bypass
+
+```typescript
+// src/layout/AppShell.tsx
+export function AppShell() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  if (pathname === '/login') return <Outlet />   // no sidebar or topbar
+  return (
+    <div className="flex h-screen overflow-hidden bg-slate-50">
+      <Sidebar />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Topbar />
+        <main className="flex-1 overflow-y-auto p-6"><Outlet /></main>
+      </div>
+    </div>
+  )
+}
+```
+
+This keeps the route tree flat (all routes are children of `rootRoute`) so path types remain simple — `/sessions/$id` not `/_app/sessions/$id`.
 
 ---
 
@@ -719,10 +767,33 @@ VITE_APP_ENV=development                   # 'development' | 'staging' | 'produc
 
 ---
 
-## 10. Local dev setup
+## 10. Auth flow
+
+```typescript
+// Token lifecycle
+// 1. User submits /login form → src/api/auth.ts login() → POST /v1/auth/login
+// 2. { token, expiresAt } stored in localStorage (key: dp_token) via useAuthStore
+// 3. Every ky request: beforeRequest hook reads token → Authorization: Bearer <token>
+// 4. On 401: afterResponse hook clears token + window.location.href = '/login'
+
+// src/api/auth.ts
+export interface LoginRequest  { email: string; password: string }
+export interface LoginResponse { token: string; expiresAt: string }
+export async function login(body: LoginRequest): Promise<LoginResponse> {
+  return ky.post(`${API_BASE}/v1/auth/login`, { json: body }).json()
+}
+```
+
+**Open:** JWT issuer, expiry duration, and refresh strategy are pending `dapplepot_api` README.
+Token refresh is not yet implemented — an expired token triggers a /login redirect.
+
+---
+
+## 11. Local dev setup (this repo is Step 7)
 
 ```bash
-# dapplepot_api must be running first:
+# dapplepot_api must be running first (this repo is Step 7 in the platform startup sequence)
+# See DAPPLEPOT_MASTER_README.md § 5 for the full sequence.
 # cd ../dapplepot_api && pnpm dev
 
 git clone https://github.com/dapplepot/dapplepot_ui
@@ -744,7 +815,7 @@ server: {
 
 ---
 
-## 11. Build order
+## 12. Build order
 
 Build in this exact sequence. Each phase is independently testable.
 
@@ -753,12 +824,14 @@ Build in this exact sequence. Each phase is independently testable.
 src/utils/cn.ts                    clsx + tailwind-merge helper
 src/utils/format.ts                formatTokens, formatDuration, formatAgo, formatBytes
 src/utils/eventColors.ts           category → hex color map
-src/api/client.ts                  ky instance with JWT interceptor
+src/stores/auth.ts                 JWT token store (localStorage key: dp_token) — must exist before client.ts
+src/api/client.ts                  ky instance with JWT interceptor + 401 → /login redirect
 src/stores/ui.ts                   sidebarCollapsed, activeTab, selectedSessionId
 ```
 
 ### Phase 2 — API client functions (no UI yet)
 ```
+src/api/auth.ts          login(): POST /v1/auth/login → { token, expiresAt }
 src/api/sessions.ts
 src/api/analytics.ts
 src/api/alerts.ts
@@ -797,12 +870,13 @@ src/components/ui/toggle.tsx
 src/components/ui/skeleton.tsx
 ```
 
-### Phase 6 — Layout
+### Phase 6 — Layout + Auth
 ```
 src/layout/Sidebar.tsx
 src/layout/Topbar.tsx
-src/layout/AppShell.tsx
-src/router.tsx
+src/layout/AppShell.tsx   (bypasses chrome when pathname === '/login')
+src/pages/Login.tsx       (email+password form → calls auth.ts login() → stores token → navigates to /)
+src/router.tsx            (add loginRoute; all routes are direct children of rootRoute)
 src/main.tsx
 ```
 
@@ -875,7 +949,7 @@ src/pages/Security.tsx
 
 ---
 
-## 12. Locked design decisions — do not change
+## 13. Locked design decisions — do not change
 
 | # | Decision | Reason |
 |---|----------|--------|
@@ -884,15 +958,15 @@ src/pages/Security.tsx
 | 3 | Cursor pagination on trace, never OFFSET | Matches the API — `sequence_index > $cursor` is O(1); OFFSET is O(N) |
 | 4 | Filter state in Zustand, pagination in URL | Filters persist on back-navigation; page resets on filter change |
 | 5 | Virtualise the event timeline with `@tanstack/react-virtual` | Sessions can have 500+ events; rendering all at once causes jank |
-| 6 | Shared types imported from `dapplepot_api` via path alias | Single source of truth — API and UI types can never drift |
+| 6 | Types **copied** into `src/types/`, not imported from `dapplepot_api` via path alias | Repos deploy separately — a path alias to `../dapplepot-api` does not work in CI. Run `pnpm sync-types` after API changes; TypeScript immediately surfaces mismatches. |
 | 7 | Non-linear scale on error rate bars (100% at 15%) | A 10% error rate should look alarming, not negligible |
 | 8 | SSE updates React Query cache directly via `setQueryData` | Avoids a redundant HTTP re-fetch when SSE delivers fresh data |
-| 9 | Use a fetch-based SSE polyfill (e.g. `eventsource`) for SSE endpoints | Native `EventSource` API does not support custom headers; polyfill allows `Authorization: Bearer <jwt>` |
+| 9 | Use `@microsoft/fetch-event-source` for all SSE connections | Native `EventSource` API does not support custom headers; this polyfill allows `Authorization: Bearer <jwt>` on every SSE request |
 | 10 | shadcn/ui primitives copied in, not installed as package | Allows full customisation of each primitive without dependency on shadcn releases |
 
 ---
 
-## 13. What done looks like
+## 14. What done looks like
 
 **Phase 7 done:** Overview page loads, metric cards show real numbers,
 session feed updates live via SSE, alert dots appear with correct severity
@@ -907,9 +981,19 @@ opens the inline drawer with all fields, "Acknowledge" button updates status
 immediately (optimistic update), rule toggle correctly invalidates rule cache
 on both API and pipeline, dry-run preview updates as threshold slider moves.
 
-**Full build done:** All six pages navigate correctly, no TypeScript errors,
-no console errors, all loading states show skeletons (not blanks), all error
-states show error cards (not crashes).
+**Phase 12 done:** `/security` page loads, overview metrics show real numbers,
+risk distribution bars render for all 5 bands, OWASP frequency chart shows
+signal IDs, highest-risk table links to session detail, remediation tab ranks
+cards by frequency.
+
+**Auth done:** `/login` renders full-screen without sidebar or topbar. Submitting
+valid credentials stores the JWT in localStorage and navigates to `/`. An
+expired or invalid token triggers a 401, clears the token, and redirects back
+to `/login`.
+
+**Full build done:** All six pages + login navigate correctly, no TypeScript
+errors, no console errors, all loading states show skeletons (not blanks), all
+error states show error cards (not crashes).
 
 ---
 

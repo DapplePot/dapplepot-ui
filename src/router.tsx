@@ -7,9 +7,16 @@ import { SessionDetail } from './pages/SessionDetail'
 import { Analytics } from './pages/Analytics'
 import { Detection } from './pages/Detection'
 import { Security } from './pages/Security'
+import { Login } from './pages/Login'
 
 const rootRoute = createRootRoute({
   component: AppShell,
+})
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: Login,
 })
 
 const overviewRoute = createRoute({
@@ -54,6 +61,7 @@ const securityRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
+  loginRoute,
   overviewRoute,
   sessionsRoute,
   sessionRoute,

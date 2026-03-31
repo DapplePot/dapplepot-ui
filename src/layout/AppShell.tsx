@@ -1,8 +1,13 @@
-import { Outlet } from '@tanstack/react-router'
+import { Outlet, useRouterState } from '@tanstack/react-router'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 
 export function AppShell() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+
+  // Login page renders full-screen without chrome
+  if (pathname === '/login') return <Outlet />
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar />
