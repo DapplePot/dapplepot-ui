@@ -103,7 +103,8 @@ dapplepot_ui/
     │   ├── alert.ts
     │   ├── rule.ts
     │   ├── channel.ts
-    │   └── common.ts
+    │   ├── common.ts
+    │   └── security.ts                 ← Zone 6: RiskBand, SessionRiskScore, SecurityFinding, SecurityOverview, RemediationCard
     │
     ├── api/                            ← typed HTTP functions (ky)
     │   ├── client.ts                   ← ky instance, JWT interceptor, 401 redirect
@@ -212,6 +213,23 @@ pnpm typecheck      # tsc --noEmit
 pnpm lint           # eslint src/
 pnpm lint:fix       # eslint --fix src/
 ```
+
+---
+
+## Security module (Zone 6)
+
+The `/security` page connects to `dapplepot_security` via the `dapplepot_api` proxy. All security
+endpoints live under `/v1/security/`.
+
+| Endpoint | Hook | Stale time | Description |
+|---|---|---|---|
+| `GET /v1/security/overview?windowHours=168` | `useSecurityOverview(windowHours?)` | 2 min | Tenant risk summary — band distribution, OWASP frequency, top sessions |
+| `GET /v1/security/sessions/:id/score` | `useSessionSecurity(id).score` | 5 min | Per-session `SessionRiskScore` (stable once written by scorer) |
+| `GET /v1/security/sessions/:id/findings` | `useSessionSecurity(id).findings` | 5 min | `SecurityFinding[]` for the session |
+| `GET /v1/security/remediation?windowHours=168` | `useRemediation(windowHours?)` | 5 min | Top signals with fix steps and optional SDK snippet |
+
+Types live in `src/types/security.ts`. Stale times are intentionally matched to the API cache TTLs
+(`CACHE_TTL_SECURITY_OVERVIEW = 120`, `CACHE_TTL_SESSION_SCORE = 300`).
 
 ---
 

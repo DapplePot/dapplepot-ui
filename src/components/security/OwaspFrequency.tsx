@@ -1,5 +1,5 @@
 interface OwaspEntry {
-  category: string
+  owaspId: string
   count: number
 }
 
@@ -12,10 +12,10 @@ export function OwaspFrequency({ entries }: OwaspFrequencyProps) {
 
   return (
     <div className="space-y-2">
-      {entries.map(({ category, count }) => (
-        <div key={category}>
+      {entries.map(({ owaspId, count }) => (
+        <div key={owaspId}>
           <div className="mb-1 flex justify-between text-xs">
-            <span className="text-slate-600 font-mono">{category}</span>
+            <span className="text-slate-600 font-mono">{owaspId}</span>
             <span className="font-medium text-slate-800">{count}</span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">

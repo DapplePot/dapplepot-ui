@@ -1,27 +1,38 @@
 import { useQuery } from '@tanstack/react-query'
 import * as securityApi from '../api/security'
 
-export function useSecurityOverview(window: string) {
+// Tenant-level security overview — refreshes every 2 minutes
+export function useSecurityOverview(windowHours = 168) {
   return useQuery({
-    queryKey: ['security', 'overview', window],
-    queryFn: () => securityApi.getSecurityOverview(window),
-    staleTime: 60_000,
+    queryKey: ['security', 'overview', windowHours],
+    queryFn:  () => securityApi.getSecurityOverview({ windowHours }),
+    staleTime: 120_000,
+    refetchInterval: 120_000,
   })
 }
 
-export function useSessionScore(sessionId: string) {
-  return useQuery({
-    queryKey: ['security', 'session', sessionId],
-    queryFn: () => securityApi.getSessionScore(sessionId),
-    staleTime: Infinity,
-    enabled: !!sessionId,
+// Per-session risk score + findings — stable once written
+export function useSessionSecurity(sessionId: string) {
+  const score = useQuery({
+    queryKey: ['security', 'session', sessionId, 'score'],
+    queryFn:  () => securityApi.getSessionScore(sessionId),
+    staleTime: 300_000,
+    enabled:  !!sessionId,
   })
+  const findings = useQuery({
+    queryKey: ['security', 'session', sessionId, 'findings'],
+    queryFn:  () => securityApi.getSessionFindings(sessionId),
+    staleTime: 300_000,
+    enabled:  !!sessionId,
+  })
+  return { score, findings }
 }
 
-export function useRemediation() {
+// Remediation guidance — changes only when new findings accumulate
+export function useRemediation(windowHours = 168) {
   return useQuery({
-    queryKey: ['security', 'remediation'],
-    queryFn: () => securityApi.getRemediation(),
+    queryKey: ['security', 'remediation', windowHours],
+    queryFn:  () => securityApi.getRemediation({ windowHours }),
     staleTime: 300_000,
   })
 }

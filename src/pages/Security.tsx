@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSecurityOverview, useSessionScore, useRemediation } from '../hooks/useSecurity'
+import { useSecurityOverview, useSessionSecurity, useRemediation } from '../hooks/useSecurity'
 import { RiskDistribution } from '../components/security/RiskDistribution'
 import { OwaspFrequency } from '../components/security/OwaspFrequency'
 import { HighRiskTable } from '../components/security/HighRiskTable'
@@ -23,8 +23,8 @@ export function Security() {
   const [tab, setTab] = useState<Tab>('overview')
   const [selectedSessionId, setSelectedSessionId] = useState('')
 
-  const overview = useSecurityOverview('7d')
-  const sessionScore = useSessionScore(selectedSessionId)
+  const overview   = useSecurityOverview()
+  const { score, findings } = useSessionSecurity(selectedSessionId)
   const remediation = useRemediation()
 
   const handleSelectSession = (id: string) => {
@@ -32,7 +32,7 @@ export function Security() {
     setTab('session')
   }
 
-  const dist = overview.data?.riskDistribution
+  const dist = overview.data?.bandDistribution
   const bands = dist
     ? Object.entries(dist).map(([key, count]) => ({
         label: key.charAt(0).toUpperCase() + key.slice(1),
@@ -40,7 +40,7 @@ export function Security() {
         color: RISK_COLORS[key] ?? '#94a3b8',
       }))
     : []
-  const totalScored = overview.data?.totalScored ?? 0
+  const totalScored = overview.data?.sessionsScored ?? 0
 
   return (
     <div className="space-y-4">
@@ -71,10 +71,10 @@ export function Security() {
               {/* Metric cards */}
               <div className="grid grid-cols-4 gap-4">
                 {[
-                  { label: 'Sessions scored',    value: overview.data.totalScored },
-                  { label: 'High / critical',     value: overview.data.highCriticalCount },
-                  { label: 'Avg risk score',      value: overview.data.avgScore.toFixed(1) },
-                  { label: 'Top signal',          value: overview.data.topSignal || '—' },
+                  { label: 'Sessions scored',  value: overview.data.sessionsScored },
+                  { label: 'High / critical',   value: overview.data.highCriticalCount },
+                  { label: 'Avg risk score',    value: overview.data.avgRiskScore },
+                  { label: 'Top signal',        value: overview.data.topSignalId ?? '—' },
                 ].map((m) => (
                   <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4">
                     <p className="text-xs text-slate-500">{m.label}</p>
@@ -113,27 +113,27 @@ export function Security() {
             <p className="py-12 text-center text-sm text-slate-400">
               Select a session from the Overview tab to view its risk detail
             </p>
-          ) : sessionScore.isLoading ? (
+          ) : score.isLoading ? (
             <Skeleton className="h-48 w-full rounded-lg" />
-          ) : sessionScore.isError ? (
-            <p className="text-sm text-red-500">{sessionScore.error.message}</p>
-          ) : sessionScore.data ? (
+          ) : score.isError ? (
+            <p className="text-sm text-red-500">{score.error.message}</p>
+          ) : score.data ? (
             <div className="space-y-4">
               <p className="font-mono text-sm text-slate-500">{selectedSessionId}</p>
               <SessionRiskPanel
-                sessionId={sessionScore.data.sessionId}
-                agentId={sessionScore.data.agentId}
-                riskScore={sessionScore.data.riskScore}
-                riskBand={sessionScore.data.riskBand}
-                signalCount={sessionScore.data.signalCount}
-                scoredAfterMs={sessionScore.data.scoredAfterMs}
-                breakdown={sessionScore.data.breakdown}
-                owaspCategories={sessionScore.data.owaspCategories}
+                riskScore={score.data.riskScore}
+                riskBand={score.data.riskBand}
+                signalCount={score.data.signalCount}
+                signalIds={score.data.signalIds}
+                scoredAt={score.data.scoredAt}
+                scorerVersion={score.data.scorerVersion}
               />
               <h2 className="text-sm font-medium text-slate-700">Findings</h2>
-              <FindingsList findings={sessionScore.data.findings} />
+              <FindingsList findings={findings.data ?? []} />
             </div>
-          ) : null}
+          ) : (
+            <p className="py-12 text-center text-sm text-slate-400">No score available for this session</p>
+          )}
         </TabsContent>
 
         {/* Remediation tab */}

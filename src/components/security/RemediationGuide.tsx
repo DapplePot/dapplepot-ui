@@ -1,12 +1,4 @@
-interface RemediationCard {
-  signalId: string
-  owaspId: string
-  title: string
-  description: string
-  fix: string
-  sdkSnippet?: string
-  frequency: number
-}
+import type { RemediationCard } from '../../types/security'
 
 interface RemediationGuideProps {
   cards: RemediationCard[]
@@ -45,8 +37,12 @@ export function RemediationGuide({ cards }: RemediationGuideProps) {
           <p className="mt-3 text-sm text-slate-600">{card.description}</p>
 
           <div className="mt-3 rounded-md bg-emerald-50 border border-emerald-100 p-3">
-            <p className="text-xs font-medium text-emerald-700 mb-1">Fix</p>
-            <p className="text-xs text-emerald-800">{card.fix}</p>
+            <p className="text-xs font-medium text-emerald-700 mb-2">Fix steps</p>
+            <ol className="list-decimal list-inside space-y-1">
+              {card.fixSteps.map((step, idx) => (
+                <li key={idx} className="text-xs text-emerald-800">{step}</li>
+              ))}
+            </ol>
           </div>
 
           {card.sdkSnippet && (

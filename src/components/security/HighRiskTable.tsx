@@ -5,7 +5,7 @@ interface HighRiskSession {
   agentId: string
   riskScore: number
   riskBand: string
-  signals: string[]
+  signalIds: string[]
 }
 
 interface HighRiskTableProps {
@@ -58,8 +58,8 @@ export function HighRiskTable({ sessions, onSelect }: HighRiskTableProps) {
                 </Badge>
               </td>
               <td className="px-4 py-3 text-xs text-slate-500">
-                {s.signals.slice(0, 3).join(', ')}
-                {s.signals.length > 3 && ` +${s.signals.length - 3}`}
+                {s.signalIds.slice(0, 3).join(', ')}
+                {s.signalIds.length > 3 && ` +${s.signalIds.length - 3}`}
               </td>
             </tr>
           ))}

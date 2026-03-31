@@ -2,28 +2,15 @@ import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Button } from '../ui/button'
-
-interface Finding {
-  findingId: string
-  title: string
-  signalId: string
-  owaspCategory: string
-  severity: 'info' | 'warning' | 'medium' | 'critical'
-  points: number
-  timestamp: string
-  matchedText: string
-  sessionId: string
-  sequenceIndex: number
-}
+import type { SecurityFinding } from '../../types/security'
 
 interface FindingsListProps {
-  findings: Finding[]
+  findings: SecurityFinding[]
 }
 
 const SEVERITY_ICON: Record<string, string> = {
   critical: '🔴',
   warning:  '🟡',
-  medium:   '🟠',
   info:     '🔵',
 }
 
@@ -44,12 +31,12 @@ export function FindingsList({ findings }: FindingsListProps) {
           >
             <span>{SEVERITY_ICON[f.severity] ?? '⚪'}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800">{f.title}</p>
+              <p className="text-sm font-medium text-slate-800">{f.signalId}</p>
               <p className="text-xs text-slate-400">
-                {f.signalId} · {f.owaspCategory}
+                {f.sigType} · {f.owaspId}
               </p>
             </div>
-            <span className="text-xs font-semibold text-slate-700">+{f.points}pts</span>
+            <span className="text-xs font-semibold text-slate-700">+{f.scoreContrib}pts</span>
             {expandedId === f.findingId ? (
               <ChevronDown className="h-4 w-4 text-slate-400" />
             ) : (
@@ -58,12 +45,22 @@ export function FindingsList({ findings }: FindingsListProps) {
           </div>
 
           {expandedId === f.findingId && (
-            <div className="border-t border-slate-50 px-4 py-3 bg-slate-50">
-              <p className="mb-2 text-xs font-medium text-slate-500">Matched text</p>
-              <pre className="rounded bg-slate-900 p-3 font-mono text-xs text-slate-100 whitespace-pre-wrap break-all">
-                {f.matchedText}
-              </pre>
-              <div className="mt-3">
+            <div className="border-t border-slate-50 px-4 py-3 bg-slate-50 space-y-3">
+              {f.detail && (
+                <p className="text-xs text-slate-600">{f.detail}</p>
+              )}
+              {f.matchedText && (
+                <>
+                  <p className="text-xs font-medium text-slate-500">Matched text</p>
+                  <pre className="rounded bg-slate-900 p-3 font-mono text-xs text-slate-100 whitespace-pre-wrap break-all">
+                    {f.matchedText}
+                  </pre>
+                </>
+              )}
+              <p className="text-xs text-slate-400">
+                {f.detectionPhase} · {f.eventType} · {new Date(f.createdAt).toLocaleString()}
+              </p>
+              <div>
                 <Link to="/sessions/$id" params={{ id: f.sessionId }}>
                   <Button size="sm" variant="outline">
                     View in trace ↗

@@ -1,68 +1,36 @@
 import { apiClient } from './client'
+import type {
+  SecurityOverview, SessionRiskScore,
+  SecurityFinding, RemediationCard
+} from '../types/security'
 
-export interface SecurityOverview {
-  totalScored: number
-  highCriticalCount: number
-  avgScore: number
-  topSignal: string
-  riskDistribution: {
-    clean: number
-    low: number
-    medium: number
-    high: number
-    critical: number
+export async function getSecurityOverview(
+  params: { windowHours?: number }
+): Promise<SecurityOverview> {
+  return apiClient.get('v1/security/overview', { searchParams: params }).json()
+}
+
+export async function getSessionScore(sessionId: string): Promise<SessionRiskScore | null> {
+  try {
+    return await apiClient.get(`v1/security/sessions/${sessionId}/score`).json()
+  } catch (e: any) {
+    if (e.response?.status === 404) return null
+    throw e
   }
-  owaspFrequency: Array<{ category: string; count: number }>
-  highRiskSessions: Array<{
-    sessionId: string
-    agentId: string
-    riskScore: number
-    riskBand: string
-    signals: string[]
-  }>
 }
 
-export interface SessionScore {
-  sessionId: string
-  agentId: string
-  riskScore: number
-  riskBand: string
-  signalCount: number
-  scoredAfterMs: number
-  breakdown: Array<{ signal: string; points: number }>
-  owaspCategories: string[]
-  findings: Array<{
-    findingId: string
-    title: string
-    signalId: string
-    owaspCategory: string
-    severity: 'info' | 'warning' | 'medium' | 'critical'
-    points: number
-    timestamp: string
-    matchedText: string
-    sessionId: string
-    sequenceIndex: number
-  }>
+export async function getSessionFindings(sessionId: string): Promise<SecurityFinding[]> {
+  const data = await apiClient
+    .get(`v1/security/sessions/${sessionId}/findings`)
+    .json<{ findings: SecurityFinding[] }>()
+  return data.findings
 }
 
-export interface RemediationItem {
-  signalId: string
-  owaspId: string
-  title: string
-  description: string
-  fix: string
-  sdkSnippet?: string
-  frequency: number
-}
-
-export async function getSecurityOverview(window: string): Promise<SecurityOverview> {
-  return apiClient.get('v1/security/overview', { searchParams: { window } }).json()
-}
-
-export async function getSessionScore(sessionId: string): Promise<SessionScore> {
-  return apiClient.get(`v1/security/sessions/${sessionId}/score`).json()
-}
-
-export async function getRemediation(): Promise<RemediationItem[]> {
-  return apiClient.get('v1/security/remediation').json()
+export async function getRemediation(
+  params: { windowHours?: number }
+): Promise<RemediationCard[]> {
+  const data = await apiClient
+    .get('v1/security/remediation', { searchParams: params })
+    .json<{ remediation: RemediationCard[] }>()
+  return data.remediation
 }

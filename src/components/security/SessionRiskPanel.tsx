@@ -1,19 +1,12 @@
 import { Badge } from '../ui/badge'
 
-interface ScoreBreakdown {
-  signal: string
-  points: number
-}
-
 interface SessionRiskPanelProps {
-  sessionId: string
-  agentId: string
-  riskScore: number
-  riskBand: string
-  signalCount: number
-  scoredAfterMs: number
-  breakdown: ScoreBreakdown[]
-  owaspCategories: string[]
+  riskScore:    number
+  riskBand:     string
+  signalCount:  number
+  signalIds:    string[]
+  scoredAt:     string
+  scorerVersion: string
 }
 
 const BAND_VARIANT: Record<string, 'destructive' | 'warning' | 'info' | 'secondary'> = {
@@ -28,9 +21,9 @@ export function SessionRiskPanel({
   riskScore,
   riskBand,
   signalCount,
-  scoredAfterMs,
-  breakdown,
-  owaspCategories,
+  signalIds,
+  scoredAt,
+  scorerVersion,
 }: SessionRiskPanelProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -38,35 +31,27 @@ export function SessionRiskPanel({
       <div className="rounded-lg border border-slate-200 bg-white p-4">
         <p className="text-xs font-medium text-slate-500">Risk score</p>
         <div className="mt-2 flex items-end gap-3">
-          <span className="text-5xl font-bold text-slate-900">{riskScore.toFixed(1)}</span>
+          <span className="text-5xl font-bold text-slate-900">{riskScore}</span>
           <Badge variant={BAND_VARIANT[riskBand] ?? 'secondary'} className="mb-1">
             {riskBand}
           </Badge>
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          {signalCount} signal{signalCount !== 1 ? 's' : ''} · scored {(scoredAfterMs / 1000).toFixed(1)}s after session_end
+          {signalCount} signal{signalCount !== 1 ? 's' : ''} · scored {new Date(scoredAt).toLocaleString()}
         </p>
-
-        <div className="mt-4 divide-y divide-slate-50">
-          {breakdown.map(({ signal, points }) => (
-            <div key={signal} className="flex justify-between py-1.5 text-xs">
-              <span className="text-slate-600">{signal}</span>
-              <span className="font-medium text-slate-800">+{points}</span>
-            </div>
-          ))}
-        </div>
+        <p className="mt-1 text-xs text-slate-400 font-mono">{scorerVersion}</p>
       </div>
 
-      {/* OWASP exposure card */}
+      {/* Signal IDs card */}
       <div className="rounded-lg border border-slate-200 bg-white p-4">
-        <p className="text-xs font-medium text-slate-500 mb-3">OWASP exposure</p>
-        {owaspCategories.length === 0 ? (
-          <p className="text-sm text-slate-400">No OWASP categories triggered</p>
+        <p className="text-xs font-medium text-slate-500 mb-3">Signals triggered</p>
+        {signalIds.length === 0 ? (
+          <p className="text-sm text-slate-400">No signals</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {owaspCategories.map((cat) => (
-              <Badge key={cat} variant="destructive" className="font-mono text-xs">
-                {cat}
+            {signalIds.map((id) => (
+              <Badge key={id} variant="secondary" className="font-mono text-xs">
+                {id}
               </Badge>
             ))}
           </div>
