@@ -1,0 +1,67 @@
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer,
+} from 'recharts'
+import type { ErrorRatePoint } from '@dapplepot/types/analytics'
+import { Skeleton } from '../ui/skeleton'
+
+function barColor(rate: number): string {
+  if (rate > 0.08) return '#ef4444'
+  if (rate > 0.04) return '#f59e0b'
+  return '#10b981'
+}
+
+interface ErrorRateChartProps {
+  data: ErrorRatePoint[]
+}
+
+export function ErrorRateChart({ data }: ErrorRateChartProps) {
+  // Aggregate to latest rate per agent
+  const byAgent = data.reduce<Record<string, { errors: number; total: number }>>((acc, pt) => {
+    if (!acc[pt.agentId]) acc[pt.agentId] = { errors: 0, total: 0 }
+    acc[pt.agentId].errors += pt.errorCount
+    acc[pt.agentId].total += pt.totalCount
+    return acc
+  }, {})
+
+  const chartData = Object.entries(byAgent).map(([agentId, { errors, total }]) => ({
+    agentId,
+    rate: total > 0 ? errors / total : 0,
+  }))
+
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart
+        data={chartData}
+        layout="vertical"
+        margin={{ top: 4, right: 16, left: 8, bottom: 0 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+        <XAxis
+          type="number"
+          domain={[0, 0.14]}
+          tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
+          tick={{ fontSize: 11, fill: '#94a3b8' }}
+        />
+        <YAxis
+          type="category"
+          dataKey="agentId"
+          tick={{ fontSize: 11, fill: '#64748b' }}
+          width={120}
+        />
+        <Tooltip
+          formatter={(value: number) => [`${(value * 100).toFixed(1)}%`, 'Error rate']}
+          contentStyle={{ fontSize: 12 }}
+        />
+        <Bar dataKey="rate" radius={[0, 3, 3, 0]}>
+          {chartData.map((entry) => (
+            <Cell key={entry.agentId} fill={barColor(entry.rate)} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
+export function ErrorRateChartSkeleton() {
+  return <Skeleton className="h-[220px] w-full" />
+}
