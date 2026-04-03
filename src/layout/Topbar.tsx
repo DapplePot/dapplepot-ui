@@ -7,6 +7,7 @@ const ROUTE_LABELS: Record<string, string> = {
   '/analytics':  'Analytics',
   '/detection':  'Detection',
   '/security':   'Security',
+  '/settings':   'Settings',
 }
 
 function getBreadcrumbs(pathname: string): string[] {

@@ -13,7 +13,7 @@ export function useLiveSessions() {
     const controller = new AbortController()
 
     const connect = async () => {
-      const token = useAuthStore.getState().token
+      const token = useAuthStore.getState().accessToken
       await fetchEventSource(`${API_BASE}/v1/sessions/live`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         signal: controller.signal,
@@ -46,7 +46,7 @@ export function useControlChannel(sessionId: string) {
     const controller = new AbortController()
 
     const connect = async () => {
-      const token = useAuthStore.getState().token
+      const token = useAuthStore.getState().accessToken
       await fetchEventSource(
         `${API_BASE}/v1/control/channel?session_id=${encodeURIComponent(sessionId)}`,
         {

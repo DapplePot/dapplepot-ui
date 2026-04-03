@@ -12,7 +12,7 @@ and security posture.
 
 ## What this is
 
-The frontend that makes the platform usable. Six surfaces built on top of
+The frontend that makes the platform usable. Seven surfaces built on top of
 `dapplepot_api`:
 
 | Surface | Route | What it shows |
@@ -23,6 +23,7 @@ The frontend that makes the platform usable. Six surfaces built on top of
 | 4 | `/analytics` | Token usage, error rates, latency charts, cost attribution |
 | 5 | `/detection` | Alert inbox, rule builder with dry-run, channel config |
 | 6 | `/security` | Security posture, risk scores, OWASP findings, remediation |
+| 7 | `/settings` | User profile, user management (admin), invite users |
 
 ---
 
@@ -70,6 +71,7 @@ import type { SessionDetail, TracePage } from '@dapplepot/types/session'
 import type { OverviewMetrics }          from '@dapplepot/types/analytics'
 import type { AlertSummary }             from '@dapplepot/types/alert'
 import type { Paginated }                from '@dapplepot/types/common'
+import type { UserSummary, LoginResponse } from '@dapplepot/types/auth'
 ```
 
 The `@dapplepot/types/*` alias resolves to `src/types/*` (configured in
@@ -83,7 +85,6 @@ The `@dapplepot/types/*` alias resolves to `src/types/*` (configured in
 dapplepot_ui/
 ├── agent.md                            ← full IDE agent context
 ├── README.md                           ← this file
-├── DAPPLEPOT_MASTER_README.md          ← platform-wide alignment doc
 ├── package.json
 ├── pnpm-lock.yaml
 ├── tsconfig.json                       ← strict, @dapplepot/types alias → src/types/
@@ -94,7 +95,9 @@ dapplepot_ui/
 │
 └── src/
     ├── main.tsx                        ← React root, QueryClient, RouterProvider
-    ├── router.tsx                      ← TanStack Router route tree (incl. /login)
+    ├── router.tsx                      ← TanStack Router route tree (incl. /login, /accept-invite,
+    │                                      /forgot-password, /reset-password, /settings)
+    │                                      requireAuth guard on all protected routes
     ├── index.css                       ← imports tailwind.css
     ├── vite-env.d.ts                   ← Vite env type declarations
     │
@@ -102,14 +105,22 @@ dapplepot_ui/
     │   ├── session.ts
     │   ├── analytics.ts
     │   ├── alert.ts
+    │   ├── auth.ts                     ← UserSummary, UserRole, UserStatus, LoginRequest/Response,
+    │   │                                  RefreshRequest/Response, LogoutRequest, ForgotPasswordRequest,
+    │   │                                  ResetPasswordRequest, AcceptInviteRequest, InviteSummary,
+    │   │                                  InviteUserRequest, UpdateMeRequest, ChangeRoleRequest,
+    │   │                                  ChangeStatusRequest
     │   ├── rule.ts
     │   ├── channel.ts
     │   ├── common.ts
     │   └── security.ts                 ← Zone 6: RiskBand, SessionRiskScore, SecurityFinding, SecurityOverview, RemediationCard
     │
     ├── api/                            ← typed HTTP functions (ky)
-    │   ├── client.ts                   ← ky instance, JWT interceptor, 401 → /login redirect
-    │   ├── auth.ts                     ← login(): POST /v1/auth/login → { token, expiresAt }
+    │   ├── client.ts                   ← ky instance, JWT interceptor, 401 → auto-refresh → retry;
+    │   │                                  on refresh failure: clearAuth + redirect /login
+    │   │                                  Only GET/HEAD requests are retried (POST body can't be replayed)
+    │   ├── auth.ts                     ← bare ky (no auth header): login, refresh, logout,
+    │   │                                  forgotPassword, resetPassword, acceptInvite
     │   ├── sessions.ts
     │   ├── analytics.ts
     │   ├── alerts.ts
@@ -120,6 +131,10 @@ dapplepot_ui/
     │   └── sse.ts                      ← useLiveSessions, useControlChannel
     │
     ├── hooks/                          ← TanStack Query hooks
+    │   ├── useAuth.ts                  ← useLogin, useLogout, useForgotPassword,
+    │   │                                  useResetPassword, useAcceptInvite
+    │   ├── useUsers.ts                 ← useMe, useUpdateMe, useUsers, useInviteUser,
+    │   │                                  useInvites, useChangeRole, useChangeStatus
     │   ├── useSessions.ts
     │   ├── useAnalytics.ts
     │   ├── useAlerts.ts
@@ -129,7 +144,10 @@ dapplepot_ui/
     │   └── useSecurity.ts
     │
     ├── stores/                         ← Zustand (UI state only, not server state)
-    │   ├── auth.ts                     ← JWT token (localStorage key: dp_token)
+    │   ├── auth.ts                     ← accessToken + refreshToken (localStorage: dp_access_token,
+    │   │                                  dp_refresh_token) + user profile (dp_user)
+    │   │                                  setTokens (login/accept-invite), setAccessToken (refresh),
+    │   │                                  clearAuth (logout/401)
     │   ├── sessionFilters.ts           ← status, agentId, environment, dateRange, q
     │   ├── alertFilters.ts             ← severity, status, ruleId
     │   ├── traceFilters.ts             ← active category on event timeline
@@ -137,19 +155,27 @@ dapplepot_ui/
     │
     ├── pages/                          ← one file per route
     │   ├── Login.tsx                   ← /login — full-screen, no AppShell chrome
+    │   ├── AcceptInvite.tsx            ← /accept-invite?token=... — set name + password, auto-login
+    │   ├── ForgotPassword.tsx          ← /forgot-password — email input, success state
+    │   ├── ResetPassword.tsx           ← /reset-password?token=... — new password form
     │   ├── Overview.tsx
     │   ├── Sessions.tsx
     │   ├── SessionDetail.tsx
     │   ├── Analytics.tsx
     │   ├── Detection.tsx
-    │   └── Security.tsx
+    │   ├── Security.tsx
+    │   └── Settings.tsx                ← /settings — profile form + user management (admin only)
     │
     ├── layout/
-    │   ├── AppShell.tsx                ← bypasses sidebar/topbar when pathname === '/login'
-    │   ├── Sidebar.tsx
-    │   └── Topbar.tsx
+    │   ├── AppShell.tsx                ← bypasses sidebar/topbar for auth routes; redirects
+    │   │                                  authenticated users away from auth routes
+    │   ├── Sidebar.tsx                 ← nav items, Settings link, user name/email, Sign out button
+    │   └── Topbar.tsx                  ← breadcrumbs (includes Settings)
     │
     ├── components/
+    │   ├── auth/                       ← LoginForm, ForgotPasswordForm, ResetPasswordForm,
+    │   │                                  InviteAcceptForm
+    │   ├── settings/                   ← ProfileForm, UserTable, InviteModal, RoleBadge
     │   ├── overview/                   ← MetricCards, SessionFeed, AlertPanel, AgentHealth
     │   ├── sessions/                   ← SessionTable, SessionRow, SessionFilters, StatusBadge, SessionPagination
     │   ├── trace/                      ← TraceLayout, TraceHeader, MetricStrip, EventTimeline,
@@ -197,31 +223,57 @@ cp .env.example .env
 ### 3. Start
 
 ```bash
-# Make sure dapplepot_api is running first (see platform startup sequence in DAPPLEPOT_MASTER_README.md)
+# Make sure dapplepot_api is running first
 pnpm dev     # Vite dev server on http://localhost:5173
 ```
 
 Vite proxies all `/v1/` requests to `dapplepot_api` so there are no CORS issues in development.
 
-**Full platform startup order (this repo is Step 7):**
-Infrastructure → Pipeline setup → Security migrations → Pipeline consumers → Security consumer → API → **UI** → smoke test.
-See `DAPPLEPOT_MASTER_README.md` § 5 for the complete sequence.
-
 ---
 
 ## Auth flow
 
-The UI uses JWT tokens stored in `localStorage` via the `useAuthStore` Zustand store (`src/stores/auth.ts`).
+The UI uses access + refresh tokens from `dapplepot_api`.
+
+### Token lifecycle
 
 | Step | Behaviour |
 |------|-----------|
-| Login | `POST /v1/auth/login` with `{ email, password }` → receives `{ token, expiresAt }` |
-| Token storage | Stored in `localStorage` under `dp_token`, loaded into Zustand on init |
-| Request auth | Every `ky` request adds `Authorization: Bearer <token>` via the `beforeRequest` hook |
-| 401 handling | `client.ts` clears the token and hard-navigates to `/login` |
-| Login route | `/login` renders `src/pages/Login.tsx` — bypasses `AppShell` (no sidebar/topbar) |
+| Login | `POST /v1/auth/login` → `{ accessToken, refreshToken, expiresIn, user }` |
+| Token storage | `accessToken` and `refreshToken` in `localStorage` (`dp_access_token`, `dp_refresh_token`). User profile stored in `dp_user`. All loaded into Zustand on init. |
+| Request auth | Every `ky` request adds `Authorization: Bearer <accessToken>` via `beforeRequest` hook in `client.ts` |
+| Auto-refresh | On 401, `client.ts` calls `POST /v1/auth/refresh`. On success: stores new tokens, retries the original GET request. POST/PATCH bodies cannot be replayed — token is refreshed silently and the mutation's error state is shown. On refresh failure: `clearAuth()` + redirect to `/login`. Concurrent 401s share a single refresh call (deduplicated). |
+| Logout | `POST /v1/auth/logout` with `{ refreshToken }` → `clearAuth()` → redirect to `/login`. Fires `onSettled` so local state always clears even if the API call fails. |
 
-**Note:** JWT issuer, expiry, and refresh strategy must be confirmed once `dapplepot_api` README is available. Token refresh is not yet implemented — expiry currently requires the user to log in again.
+### Auth routes (no AppShell chrome)
+
+| Route | Page | Notes |
+|-------|------|-------|
+| `/login` | `Login.tsx` | Authenticated users are redirected to `/` |
+| `/forgot-password` | `ForgotPassword.tsx` | Shows success state on submit; no redirect |
+| `/reset-password?token=...` | `ResetPassword.tsx` | Shows error if token param is missing |
+| `/accept-invite?token=...` | `AcceptInvite.tsx` | Auto-logs in on success, navigates to `/` |
+
+### Role-based UI gating
+
+The user's `role` (`admin` | `editor` | `viewer`) comes from `useMe()` (server-fresh). Use it to:
+
+| Role | Visible actions |
+|------|----------------|
+| admin | Everything — kill-switch, rules CRUD, channels CRUD, user management (UserTable + InviteModal), alert acknowledge |
+| editor | Rules create/edit, alert acknowledge/resolve, kill-switch/interrupt — no channel config, no user management |
+| viewer | Read-only — all dashboards, no action buttons |
+
+Hide action buttons (not just disable) for roles that can't use them. The API enforces the same
+permissions server-side — the UI gating is cosmetic but important for UX.
+
+### Default local dev credentials
+
+After running `pnpm seed-admin` in `dapplepot_api`:
+```
+Email:    admin@dapplepot.dev
+Password: changeme123
+```
 
 ---
 
@@ -265,7 +317,7 @@ pnpm sync-types
 # equivalent to: cp ../dapplepot-api/src/types/*.ts src/types/
 ```
 
-TypeScript will immediately flag any UI component that needs updating. Add this step to CI after the API build to catch contract drift automatically.
+TypeScript will immediately flag any UI component that needs updating.
 
 ---
 
@@ -283,3 +335,9 @@ TypeScript will immediately flag any UI component that needs updating. Add this 
 | 8 | SSE updates React Query cache via `setQueryData` | Avoids a redundant HTTP re-fetch when SSE delivers fresh data |
 | 9 | Fetch-based SSE polyfill (`@microsoft/fetch-event-source`) | Native `EventSource` doesn't support `Authorization` headers |
 | 10 | shadcn/ui primitives copied in, not installed as a package | Allows full customisation without a dependency on shadcn releases |
+| 11 | Access + refresh tokens with rotation | Short access (15m) limits leaked-token blast radius; refresh rotation detects theft |
+| 12 | `api/auth.ts` uses a separate bare ky instance | Avoids circular dependency — `client.ts` imports `refresh` from `auth.ts`; `auth.ts` must not import `apiClient` |
+| 13 | Only GET/HEAD requests are retried after token refresh | POST/PATCH body ReadableStream is consumed before `afterResponse` fires and cannot be replayed; token is still refreshed so the next action works |
+| 14 | Role check in Settings uses `useMe()`, not Zustand store | Zustand `user.role` is set at login and stale mid-session; `useMe()` is server-fresh |
+| 15 | Auth routes bypass AppShell; authenticated users redirected away | Login/invite/reset pages are full-screen — no sidebar/topbar chrome. Logged-in users hitting `/login` redirect to `/` |
+| 16 | `useLogout` uses `onSettled`, not `onSuccess` | Local auth state must be cleared even if the server-side logout call fails |

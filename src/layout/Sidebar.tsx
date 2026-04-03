@@ -5,11 +5,15 @@ import {
   BarChart2,
   Bell,
   Shield,
+  Settings,
+  LogOut,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { useUiStore } from '../stores/ui'
+import { useLogout } from '../hooks/useAuth'
+import { useAuthStore } from '../stores/auth'
 
 const NAV_ITEMS = [
   { path: '/',           label: 'Overview',   icon: LayoutDashboard },
@@ -17,13 +21,15 @@ const NAV_ITEMS = [
   { path: '/analytics',  label: 'Analytics',  icon: BarChart2 },
   { path: '/detection',  label: 'Detection',  icon: Bell },
   { path: '/security',   label: 'Security',   icon: Shield },
+  { path: '/settings',   label: 'Settings',   icon: Settings },
 ]
 
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
-  const toggle = useUiStore((s) => s.toggleSidebar)
-  const routerState = useRouterState()
-  const currentPath = routerState.location.pathname
+  const toggle    = useUiStore((s) => s.toggleSidebar)
+  const pathname  = useRouterState({ select: (s) => s.location.pathname })
+  const user      = useAuthStore((s) => s.user)
+  const logout    = useLogout()
 
   return (
     <aside
@@ -46,8 +52,8 @@ export function Sidebar() {
       <nav className="flex-1 space-y-0.5 px-2 py-3">
         {NAV_ITEMS.map(({ path, label, icon: Icon }) => {
           const isActive = path === '/'
-            ? currentPath === '/'
-            : currentPath.startsWith(path)
+            ? pathname === '/'
+            : pathname.startsWith(path)
           return (
             <Link
               key={path}
@@ -66,8 +72,26 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Collapse toggle */}
-      <div className="border-t border-slate-200 p-2">
+      {/* User + logout */}
+      <div className="border-t border-slate-200 px-2 py-2 space-y-1">
+        {!collapsed && user && (
+          <div className="px-2 py-1.5">
+            <p className="truncate text-xs font-medium text-slate-900">{user.name}</p>
+            <p className="truncate text-xs text-slate-500">{user.email}</p>
+          </div>
+        )}
+
+        <button
+          onClick={() => logout.mutate()}
+          disabled={logout.isPending}
+          className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-50 hover:text-red-600 disabled:opacity-50"
+          aria-label="Sign out"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>Sign out</span>}
+        </button>
+
+        {/* Collapse toggle */}
         <button
           onClick={toggle}
           className="flex w-full items-center justify-center rounded-md p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600"

@@ -35,49 +35,30 @@ React frontend that serves the platform dashboard. It talks exclusively to
 | Framework | `react` | 19 | Latest stable, concurrent features |
 | Build tool | `vite` | ≥ 6 | Instant HMR, fast build |
 | Language | TypeScript | 5.x strict | Full type safety |
-| Routing | `@tanstack/react-router` | ≥ 1.x | Type-safe routes, file-based, search params typed |
+| Routing | `@tanstack/react-router` | ≥ 1.x | Type-safe routes, search params typed, `beforeLoad` auth guard |
 | Server state | `@tanstack/react-query` | v5 | Caching, background refetch, SSE streaming |
-| UI state | `zustand` | ≥ 4 | Filter state, selected rows, sidebar, active tabs |
+| UI state | `zustand` | ≥ 5 | Auth tokens, filter state, sidebar, active tabs |
 | Styling | `tailwindcss` | v4 | Utility-first, no config file, co-located styles |
 | Components | `shadcn/ui` | latest | Unstyled radix primitives + Tailwind — copy into `src/components/ui/` |
 | Charts | `recharts` | ≥ 2.12 | LineChart, BarChart, ResponsiveContainer |
-| HTTP client | `ky` | ≥ 1.5 | Fetch wrapper, typed, interceptors for JWT |
+| HTTP client | `ky` | ≥ 1.5 | Fetch wrapper, typed, interceptors for JWT + auto-refresh |
 | Package manager | `pnpm` | ≥ 9 | Matches dapplepot_api |
 
 ### Shared types
 
-API response types are imported directly from `dapplepot_api` using per-module imports:
+Types are **copied** into `src/types/` from `dapplepot_api/src/types/`. Repos
+deploy separately so a path alias to `../dapplepot_api` does not work in CI.
+Run `pnpm sync-types` after API type changes; TypeScript immediately flags mismatches.
+
 ```typescript
-import type { SessionDetail, TracePage } from '@dapplepot/types/session'
-import type { OverviewMetrics }          from '@dapplepot/types/analytics'
-import type { AlertSummary }             from '@dapplepot/types/alert'
-import type { PolicyRule }               from '@dapplepot/types/rule'
-import type { DeliveryChannel }          from '@dapplepot/types/channel'
-import type { Paginated }                from '@dapplepot/types/common'
+import type { SessionDetail, TracePage }     from '@dapplepot/types/session'
+import type { OverviewMetrics }              from '@dapplepot/types/analytics'
+import type { AlertSummary }                 from '@dapplepot/types/alert'
+import type { Paginated }                    from '@dapplepot/types/common'
+import type { UserSummary, LoginResponse }   from '@dapplepot/types/auth'
 ```
 
-Configure in `tsconfig.json`:
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "@dapplepot/types/*": ["../dapplepot_api/src/types/*"]
-    }
-  }
-}
-```
-
-And in `vite.config.ts`:
-```typescript
-resolve: {
-  alias: {
-    '@dapplepot/types': path.resolve(__dirname, '../dapplepot_api/src/types'),
-  }
-}
-```
-
-This means UI components always use the exact same TypeScript types that
-the API produces — zero contract drift, no manual sync required.
+`@dapplepot/types/*` resolves to `src/types/*` (tsconfig paths + vite alias).
 
 ---
 
@@ -89,7 +70,6 @@ dapplepot_ui/
 │   # Project root
 ├── agent.md                                ← this file
 ├── README.md                               ← human setup guide
-├── DAPPLEPOT_MASTER_README.md              ← platform-wide alignment + cross-repo dependency map
 ├── package.json
 ├── pnpm-lock.yaml
 ├── tsconfig.json                           ← strict, paths alias for @dapplepot/types → src/types/
@@ -97,17 +77,19 @@ dapplepot_ui/
 ├── tailwind.css                            ← @import "tailwindcss" — v4 style
 ├── .env.example
 │
-├── public/
-│   └── favicon.svg
-│
 └── src/
     ├── main.tsx                            ← React root, QueryClient setup, RouterProvider
-    ├── router.tsx                          ← TanStack Router route tree (incl. /login)
+    ├── router.tsx                          ← TanStack Router route tree; requireAuth guard on all
+    │                                          protected routes; auth routes: /login, /forgot-password,
+    │                                          /reset-password?token=, /accept-invite?token=
     │
     │   # API client — single source of truth for all HTTP calls
     ├── api/
-    │   ├── client.ts                       ← ky instance with JWT interceptor + base URL; 401 → /login
-    │   ├── auth.ts                         ← login(): POST /v1/auth/login → { token, expiresAt }
+    │   ├── client.ts                       ← ky instance with JWT interceptor; on 401: auto-refresh
+    │   │                                      → retry (GET only); on refresh failure: clearAuth + /login
+    │   │                                      Concurrent 401s share one refresh call (deduplicated)
+    │   ├── auth.ts                         ← bare ky (no auth header): login, refresh, logout,
+    │   │                                      forgotPassword, resetPassword, acceptInvite
     │   ├── sessions.ts                     ← getSessionList, getSessionDetail, getTrace, getStateHistory
     │   ├── analytics.ts                    ← getOverview, getLlmUsage, getErrorRates, getLatency, getCost
     │   ├── alerts.ts                       ← getAlerts, getAlertDetail, updateAlertStatus, getAlertStats
@@ -118,16 +100,25 @@ dapplepot_ui/
     │
     │   # TanStack Query hooks — one file per resource
     ├── hooks/
+    │   ├── useAuth.ts                      ← useLogin, useLogout, useForgotPassword,
+    │   │                                      useResetPassword, useAcceptInvite
+    │   ├── useUsers.ts                     ← useMe, useUpdateMe, useUsers, useInviteUser,
+    │   │                                      useInvites, useChangeRole, useChangeStatus
     │   ├── useSessions.ts                  ← useSessionList, useSessionDetail, useSessionTrace
     │   ├── useAnalytics.ts                 ← useOverview, useLlmUsage, useErrorRates, useLatency, useCost
     │   ├── useAlerts.ts                    ← useAlerts, useAlertDetail, useAlertStats
     │   ├── useRules.ts                     ← useRules, useCreateRule, useUpdateRule
     │   ├── useChannels.ts                  ← useChannels, useCreateChannel, useUpdateChannel
-    │   └── useControl.ts                   ← useKillSwitch, useInterrupt, useControlChannel (SSE)
+    │   ├── useControl.ts                   ← useKillSwitch, useInterrupt
+    │   └── useSecurity.ts                  ← useSecurityOverview, useSessionSecurity, useRemediation
     │
     │   # Zustand stores — UI state only (not server state)
     ├── stores/
-    │   ├── auth.ts                         ← JWT token (localStorage key: dp_token)
+    │   ├── auth.ts                         ← accessToken + refreshToken (localStorage: dp_access_token,
+    │   │                                      dp_refresh_token) + user profile (dp_user JSON)
+    │   │                                      setTokens(access, refresh, user) — login / accept-invite
+    │   │                                      setAccessToken(access, refresh)  — token refresh
+    │   │                                      clearAuth()                      — logout / 401 failure
     │   ├── sessionFilters.ts               ← status, agentId, environment, dateRange, searchQuery
     │   ├── alertFilters.ts                 ← severity, status, ruleId filters
     │   ├── traceFilters.ts                 ← active category filter on event timeline
@@ -135,71 +126,88 @@ dapplepot_ui/
     │
     │   # Pages — one file per route
     ├── pages/
-    │   ├── Login.tsx                       ← /login — email+password form, no AppShell chrome
+    │   ├── Login.tsx                       ← /login — delegates to LoginForm; no AppShell chrome
+    │   ├── ForgotPassword.tsx              ← /forgot-password — delegates to ForgotPasswordForm
+    │   ├── ResetPassword.tsx               ← /reset-password?token= — delegates to ResetPasswordForm
+    │   ├── AcceptInvite.tsx                ← /accept-invite?token= — delegates to InviteAcceptForm
     │   ├── Overview.tsx                    ← Surface 1: live overview home screen
     │   ├── Sessions.tsx                    ← Surface 2: session list with filters
     │   ├── SessionDetail.tsx               ← Surface 3: trace view for one session
     │   ├── Analytics.tsx                   ← Surface 4: charts + cost table
     │   ├── Detection.tsx                   ← Surface 5: alert inbox + rules + channels
-    │   └── Security.tsx                    ← Surface 6: security posture overview
+    │   ├── Security.tsx                    ← Surface 6: security posture overview
+    │   └── Settings.tsx                    ← Surface 7: profile form + user mgmt (admin: UserTable + InviteModal)
     │
     │   # Layout
     ├── layout/
-    │   ├── AppShell.tsx                    ← sidebar + topbar wrapper; bypasses chrome on /login
-    │   ├── Sidebar.tsx                     ← nav items, agent selector, collapse toggle
-    │   └── Topbar.tsx                      ← breadcrumb, env selector, user menu
+    │   ├── AppShell.tsx                    ← bypasses sidebar/topbar for auth routes; redirects
+    │   │                                      authenticated users away from auth routes to /
+    │   ├── Sidebar.tsx                     ← nav items, Settings link, user name/email, Sign out button
+    │   └── Topbar.tsx                      ← breadcrumbs (Overview / Sessions / … / Settings)
     │
     │   # Feature components — grouped by surface
     ├── components/
     │   │
+    │   ├── auth/                           ← full-screen form components for auth pages
+    │   │   ├── LoginForm.tsx               ← email + password + "Forgot password?" link
+    │   │   ├── ForgotPasswordForm.tsx      ← email input; success state on submit
+    │   │   ├── ResetPasswordForm.tsx       ← password + confirm; reads token from search params
+    │   │   └── InviteAcceptForm.tsx        ← name + password + confirm; reads token from search params
+    │   │
+    │   ├── settings/
+    │   │   ├── ProfileForm.tsx             ← name + optional password change; calls useUpdateMe
+    │   │   ├── UserTable.tsx               ← searchable user list; role select + suspend/reactivate per row
+    │   │   ├── InviteModal.tsx             ← email + role select modal; calls useInviteUser
+    │   │   └── RoleBadge.tsx               ← coloured pill: admin (violet) / editor (blue) / viewer (slate)
+    │   │
     │   ├── overview/
-    │   │   ├── MetricCards.tsx             ← 4-up grid: live sessions, completed, tokens, p95 latency
-    │   │   ├── SessionFeed.tsx             ← SSE-driven session list, status badges, live pulse dots
-    │   │   ├── AlertPanel.tsx              ← recent 4 alerts with severity dots
-    │   │   └── AgentHealth.tsx             ← error rate bars per agent
+    │   │   ├── MetricCards.tsx
+    │   │   ├── SessionFeed.tsx
+    │   │   ├── AlertPanel.tsx
+    │   │   └── AgentHealth.tsx
     │   │
     │   ├── sessions/
-    │   │   ├── SessionTable.tsx            ← filterable, sortable table, 20 rows/page
-    │   │   ├── SessionRow.tsx              ← single row + inline expand drawer
-    │   │   ├── SessionFilters.tsx          ← search + 4 filter selects + clear button
-    │   │   ├── SessionPagination.tsx       ← page controls, smart ellipsis
-    │   │   └── StatusBadge.tsx             ← stub/open/interrupted/killed/finalised/error with colours
+    │   │   ├── SessionTable.tsx
+    │   │   ├── SessionRow.tsx
+    │   │   ├── SessionFilters.tsx
+    │   │   ├── SessionPagination.tsx
+    │   │   └── StatusBadge.tsx
     │   │
     │   ├── trace/
-    │   │   ├── TraceLayout.tsx             ← two-column: timeline left, detail panel right
-    │   │   ├── TraceHeader.tsx             ← session ID, agent, status pill, kill button
-    │   │   ├── MetricStrip.tsx             ← 5-up: duration, tokens in, tokens out, tools, nodes
-    │   │   ├── EventTimeline.tsx           ← virtualised event list, category filter pills
-    │   │   ├── EventRow.tsx                ← single event row: timestamp, dot, type, desc, badge
-    │   │   ├── EventPayload.tsx            ← expandable JSON payload panel
-    │   │   ├── RightPanel.tsx              ← tab container: GraphState / Session / Alerts / Security
-    │   │   ├── GraphStateTab.tsx           ← pretty-printed graph_state JSONB
-    │   │   ├── SessionInfoTab.tsx          ← metadata key-value table
-    │   │   ├── AlertsTab.tsx               ← session-scoped alerts list
-    │   │   └── SecurityTab.tsx             ← risk score badge + findings list
+    │   │   ├── TraceLayout.tsx
+    │   │   ├── TraceHeader.tsx
+    │   │   ├── MetricStrip.tsx
+    │   │   ├── EventTimeline.tsx
+    │   │   ├── EventRow.tsx
+    │   │   ├── EventPayload.tsx
+    │   │   ├── RightPanel.tsx
+    │   │   ├── GraphStateTab.tsx
+    │   │   ├── SessionInfoTab.tsx
+    │   │   ├── AlertsTab.tsx
+    │   │   └── SecurityTab.tsx
     │   │
     │   ├── analytics/
-    │   │   ├── DateRangePicker.tsx         ← 24h / 7d / 30d segmented control + agent filter
-    │   │   ├── TokenChart.tsx              ← Recharts LineChart, tokens by model over time
-    │   │   ├── ErrorRateChart.tsx          ← Recharts BarChart (horizontal), error % per agent
-    │   │   ├── LatencyChart.tsx            ← Recharts LineChart, avg/p95 latency over time
-    │   │   └── CostTable.tsx               ← agent cost attribution table with bar indicators
+    │   │   ├── DateRangePicker.tsx
+    │   │   ├── TokenChart.tsx
+    │   │   ├── ErrorRateChart.tsx
+    │   │   ├── LatencyChart.tsx
+    │   │   └── CostTable.tsx
     │   │
     │   ├── detection/
-    │   │   ├── AlertFeed.tsx               ← filtered alert list, severity pills, status badges
-    │   │   ├── AlertDrawer.tsx             ← inline detail drawer: fields + ack/resolve buttons
-    │   │   ├── RuleList.tsx                ← rule table with enable/disable toggles
-    │   │   ├── RuleForm.tsx                ← create/edit rule form with dry-run preview
-    │   │   ├── DryRunPreview.tsx           ← live preview: fires N times in last 7 days
-    │   │   └── ChannelList.tsx             ← webhook / Slack / PD cards with toggle
+    │   │   ├── AlertFeed.tsx
+    │   │   ├── AlertDrawer.tsx
+    │   │   ├── RuleList.tsx
+    │   │   ├── RuleForm.tsx
+    │   │   ├── DryRunPreview.tsx
+    │   │   └── ChannelList.tsx
     │   │
     │   ├── security/
-    │   │   ├── RiskDistribution.tsx        ← band breakdown bars: clean/low/medium/high/critical
-    │   │   ├── OwaspFrequency.tsx          ← OWASP hit frequency horizontal bars
-    │   │   ├── HighRiskTable.tsx           ← top 5 highest-risk sessions with score + signals
-    │   │   ├── SessionRiskPanel.tsx        ← per-session: score, breakdown, OWASP exposure
-    │   │   ├── FindingsList.tsx            ← expandable security findings with matched text
-    │   │   └── RemediationGuide.tsx        ← ranked remediation cards by signal frequency
+    │   │   ├── RiskDistribution.tsx
+    │   │   ├── OwaspFrequency.tsx
+    │   │   ├── HighRiskTable.tsx
+    │   │   ├── SessionRiskPanel.tsx
+    │   │   ├── FindingsList.tsx
+    │   │   └── RemediationGuide.tsx
     │   │
     │   └── ui/                             ← shadcn/ui primitives (copy from shadcn CLI)
     │       ├── button.tsx
@@ -209,7 +217,7 @@ dapplepot_ui/
     │       ├── table.tsx
     │       ├── tabs.tsx
     │       ├── toggle.tsx
-    │       └── skeleton.tsx                ← loading skeletons for all data-heavy components
+    │       └── skeleton.tsx
     │
     │   # Utilities
     └── utils/
@@ -220,7 +228,7 @@ dapplepot_ui/
 
 ---
 
-## 3. The six surfaces — what each page renders
+## 3. The seven surfaces — what each page renders
 
 ### Surface 1: Overview (`pages/Overview.tsx`)
 
@@ -250,15 +258,10 @@ const { data: health } = useQuery({ ... staleTime: 60_000 })
 
 **Key component behaviours:**
 - `SessionFeed`: rows flash blue briefly when a new session arrives or an
-  existing session's status/token count changes. Implemented with a
-  `useRef` to track previous data and a brief CSS class toggle.
-- `MetricCards`: `live sessions` count is derived from the SSE feed, not
-  from the analytics query, so it stays real-time.
-- `AgentHealth`: error rate bars use a non-linear scale — 15% error rate
-  fills the bar 100%. Never use a 0–100% linear scale (a 10% error rate
-  would look negligible).
-- `AlertPanel`: severity dot colors — red = critical, amber = warning,
-  orange = medium, blue = info. Always three dots max per alert row.
+  existing session's status/token count changes.
+- `MetricCards`: `live sessions` count derived from SSE feed, not analytics query.
+- `AgentHealth`: error rate bars use a non-linear scale — 15% fills the bar 100%.
+- `AlertPanel`: severity dot colors — red = critical, amber = warning, orange = medium, blue = info.
 
 ---
 
@@ -266,20 +269,8 @@ const { data: health } = useQuery({ ... staleTime: 60_000 })
 
 Filterable, sortable session table.
 
-**Layout:** header (title + count pill) → filter bar → table card → pagination
-
-**Filter bar components (left to right):**
-- Free-text search input (debounced 300ms, searches session_id prefix + user_context_id)
-- Status select: all / stub / open / finalised / interrupted / killed / error
-- Agent select: all agents + one option per agent in tenant
-- Environment select: all / production / staging / dev
-- Date range select: last 24h / 7d / 30d
-- "Clear filters ×" link — only visible when any filter is active
-
-**Filter state lives in Zustand `sessionFilters` store**, not in URL search
-params. This preserves filter state when you navigate to a session detail
-and come back. TanStack Router search params are used for pagination only
-(`?page=2`).
+**Filter state lives in Zustand `sessionFilters` store**, not in URL search params.
+TanStack Router search params are used for pagination only (`?page=2`).
 
 **Table columns:**
 ```
@@ -287,22 +278,13 @@ Session ID  | Agent        | Status | Env     | Started | Duration | Tokens    |
 (8-char)    | agent_xxx    | badge  | badge   | "3m ago" | "47.8s" | bar+num  | count | view
 ```
 
-**Inline expand on row click:**
-- Expands a sub-row with: full session_id, user_context_id, deployment_id,
-  exit_reason, exact token count, "Open trace ↗" button
-- Only one row expanded at a time
-- Clicking the expanded row collapses it
-
-**Sort:** clicking any column header sorts by that column. Active column
-shows `↑` or `↓` suffix. Default: `started_at DESC`.
-
 **Data:**
 ```typescript
 const { data } = useQuery({
   queryKey: ['sessions', filters, sort, page],
   queryFn: () => api.sessions.getList({ ...filters, sort, page, limit: 20 }),
   staleTime: 10_000,
-  keepPreviousData: true,   // don't flash blank on page change
+  keepPreviousData: true,
 })
 ```
 
@@ -310,268 +292,122 @@ const { data } = useQuery({
 
 ### Surface 3: Session detail / trace view (`pages/SessionDetail.tsx`)
 
-The core product screen. Deepest view in the platform.
-
-**Layout:** two-column fixed — timeline (left, ~60% width) + right panel (~40%)
-
-**TraceHeader:**
-```
-019063ab-cafe-7abc-8def-000000000001
-agent_checkout_v3 · v1.4.2 · production
-[finalised]              [Alerts (1) ↗]  [Kill session — disabled if not open]
-```
-
-**MetricStrip** (5 metric cards in a row below header):
-- Duration (from pgRow.duration_ms)
-- Tokens in (from chTokens.totalInputTokens)
-- Tokens out (from chTokens.totalOutputTokens)
-- Tool calls (from chStats.toolCallCount)
-- Nodes (from chStats.nodeCount)
+**Layout:** two-column fixed — timeline (left, ~60%) + right panel (~40%)
 
 **EventTimeline:**
-- Category filter pills: All / Graph / Nodes / LLM / Tools / State
-- Events rendered in `sequence_index` ASC order
-- Each row: `+0.1s` timestamp | colored dot | event_type (monospace) | description | optional badge
-- Dot color per category:
-  - graph lifecycle: `#7F77DD` (purple)
-  - node lifecycle: `#1D9E75` (teal)
-  - llm calls: `#BA7517` (amber)
-  - tool calls: `#D85A30` (coral)
-  - state/control: `#378ADD` (blue)
-- Clicking a row expands the payload JSON inline (pretty-printed, monospace, ZSTD decompressed by API)
-- **Cursor pagination**: "Load more" button at bottom fetches next 100 events
-  (`after_seq = last seen sequence_index`). Never use page numbers on trace.
-- Virtualise the list with `@tanstack/react-virtual` — sessions can have 500+ events
+- Virtualised with `@tanstack/react-virtual` (sessions can have 500+ events)
+- Cursor pagination: "Load more" fetches next 100 events
+- Dot colors per category: graph `#7F77DD`, node `#1D9E75`, llm `#BA7517`, tool `#D85A30`, state `#378ADD`
 
-**Right panel tabs:**
-1. **Graph state** — pretty-printed JSON of `pgRow.graphState` (last snapshot)
-2. **Session** — key/value table of all session metadata
-3. **Alerts (N)** — session-scoped alerts with ack/resolve buttons
-4. **Security** — risk score badge + signal breakdown (only if session has findings)
-
-**Data (parallel fetch):**
+**Data:**
 ```typescript
-// useSessionDetail: GET /v1/sessions/:id — staleTime: depends on status
-const { data: session } = useQuery({
-  queryKey: ['session', sessionId],
-  queryFn: () => api.sessions.getDetail(sessionId),
-  staleTime: session?.status === 'finalised' ? Infinity : 5_000,
-  refetchInterval: session?.status === 'open' ? 5_000 : false,
-})
-
-// useSessionTrace: GET /v1/sessions/:id/trace — cursor-paginated
-const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
-  queryKey: ['trace', sessionId],
-  queryFn: ({ pageParam = 0 }) =>
-    api.sessions.getTrace(sessionId, { afterSeq: pageParam, limit: 100 }),
-  getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-  staleTime: session?.status === 'finalised' ? Infinity : 5_000,
-})
-
-// useSessionAlerts: GET /v1/sessions/:id/alerts
-const { data: alerts } = useQuery({ queryKey: ['session-alerts', sessionId], ... })
+// staleTime: Infinity for finalised sessions; 5_000 + refetchInterval for open
+const { data: session } = useQuery({ queryKey: ['session', sessionId], ... })
+const { data, fetchNextPage } = useInfiniteQuery({ queryKey: ['trace', sessionId], ... })
 ```
 
 ---
 
 ### Surface 4: Analytics (`pages/Analytics.tsx`)
 
-Time-series charts and cost table.
-
-**Layout:** header → filter bar → metric cards → token chart (full width)
-          → two-column (error rate | latency) → cost table
-
-**Date range picker:** segmented control (24h / 7d / 30d) + agent select.
-Changing either re-fetches all charts simultaneously. State in Zustand.
-
-**TokenChart (Recharts `LineChart`):**
-```typescript
-// Data: LlmUsagePoint[] from GET /v1/analytics/llm-usage
-// Two lines: claude-sonnet-4-6 (purple), claude-haiku-4-5 (teal)
-// Y-axis: format to "1.2k" or "1.4M"
-// X-axis: formatted hour/day labels depending on window
-// Tooltip: model, tokens, avg latency
-```
-
-**ErrorRateChart (Recharts `BarChart`, horizontal):**
-```typescript
-// Data: ErrorRatePoint[] from GET /v1/analytics/error-rates
-// Horizontal bars, one per agent
-// Bar color: green < 4%, amber 4–8%, red > 8%
-// X-axis: 0% to 14% (non-linear scale, capped at 14% for readability)
-// No legend — colour encodes meaning directly
-```
-
-**LatencyChart (Recharts `LineChart`):**
-```typescript
-// Data: LatencyStat[] from GET /v1/analytics/latency
-// Two lines: avg (blue), p95 (amber)
-// Note: p50 and p99 are NOT available from the API (not stored in the aggregate table)
-// Y-axis: format to "1.2s"
-// A rising p95 line diverging from avg = tail latency problem signal
-```
-
-**CostTable:**
-```typescript
-// Data: CostAttribution[] from GET /v1/analytics/cost
-// Columns: Agent | Tokens | Est. cost | Share of spend (bar + %)
-// Bar width = share * 1.8px, max ~56px at 31%
-// Clicking a row navigates to sessions list filtered to that agent
-```
-
-**All analytics queries use staleTime that matches API cache TTL:**
-```typescript
-staleTime: 60_000   // analytics/llm-usage, error-rates, latency
-staleTime: 300_000  // analytics/cost
-staleTime: 30_000   // analytics/overview
-```
+Time-series charts and cost table. All `staleTime` values match API cache TTLs:
+- `60_000` — llm-usage, error-rates, latency
+- `300_000` — cost
+- `30_000` — overview
 
 ---
 
 ### Surface 5: Detection (`pages/Detection.tsx`)
 
-Alert inbox + rule management + channel config.
-
-**Layout:** header (title + "New rule" button) → three tabs (Alert inbox / Rules / Channels)
-
-#### Alert inbox tab
-
-- Severity filter pills: All / Critical / Warning / Medium / Info
-- Status filter select: All / Open / Acknowledged / Resolved
-- Alert list: severity dot | title + agent + rule | time ago | status badge
-- Clicking a row opens the inline `AlertDrawer` above the list
-
-**AlertDrawer fields:**
-- Agent, Session ID (links to trace view), Rule, Measured value, Threshold, Status
-- Action buttons: "Acknowledge" (if open), "Resolve" (if not resolved), "View trace ↗"
-- Ack/resolve call `PUT /v1/alerts/:id/status` then invalidates `['alerts']` query
-
-#### Rules tab
-
-- Table: Rule name | Agent | Type badge | Severity | Fires/7d | Enable toggle
-- Disabled rules fade to 45% opacity
-- Toggle calls `PUT /v1/rules/:id` with `{ enabled: true/false }` then invalidates rules cache
-- "New rule" button shows the `RuleForm` above the table
-
-**RuleForm:**
-- Fields: name, agent select, rule type select, field select, threshold input, severity select
-- No live preview while typing — the API has no preview-only endpoint
-- Preview is returned automatically by `POST /v1/rules` after save (see DryRunPreview below)
-- Save button calls `POST /v1/rules` — the API always runs a dry-run preview against the last 7 days before saving and returns `{ rule: PolicyRule, preview: { wouldHaveFired: number, sessions: [...] } }` (HTTP 201)
-- On save: show the preview result to the user, invalidate `['rules']` query + show success toast
-
-**DryRunPreview component:**
-```typescript
-// Rendered AFTER save, using the preview data returned by POST /v1/rules
-// The API always returns { rule, preview: { wouldHaveFired, sessions } } on create
-// Shows: "Would have fired 3 times in last 7 days"
-// Shows up to 3 example sessions with their measured values
-// Sessions that would have fired highlighted in red with ↑ arrow
-// There is no live preview-while-typing endpoint — preview only available post-save
-```
-
-#### Channels tab
-
-- Three channel cards: Webhook / Slack / PagerDuty
-- Each shows: icon | name + URL | severity filter | enable toggle
-- Toggle calls `PUT /v1/channels/:id`
-- "Platform inbox" section at bottom — always-on, no config, explanatory text
-- "+ Add channel" button (stub for future channel types)
+Three tabs: Alert inbox / Rules / Channels. Rules toggle calls `PUT /v1/rules/:id`.
+DryRunPreview shows after save using the preview returned by `POST /v1/rules`.
 
 ---
 
 ### Surface 6: Security (`pages/Security.tsx`)
 
-Security posture for the tenant.
+Three tabs: Overview / Session detail / Remediation. Proxies to `dapplepot_security`
+via `dapplepot_api`. All security endpoints under `/v1/security/`.
 
-**Layout:** header → three tabs (Overview / Session detail / Remediation)
+---
 
-#### Overview tab
+### Surface 7: Settings (`pages/Settings.tsx`)
 
-- 4 metric cards: sessions scored, high/critical count, avg score, top signal
-- Two side-by-side panels: risk distribution bars + OWASP signal frequency
-- Highest-risk sessions table: session_id | agent | score | risk band | signals fired
+Two sections:
+1. **Profile** — `ProfileForm` (name + optional password change) for all roles
+2. **Users** — `UserTable` + "Invite user" button (admin only, gated on `me.role === 'admin'`)
 
-#### Session detail tab
-
-Shown when navigating from the highest-risk sessions table or from the
-`SecurityTab` in the trace view right panel.
-
-- Session ID + agent in header
-- Two side-by-side cards:
-  - Risk score card: large score number + band label + "3 signals · scored 0.8s after session_end"
-    + score breakdown table (signal name, points contributed)
-  - OWASP exposure card: one pill per OWASP category that was triggered (red = confirmed)
-- Findings list: severity icon | finding title | signal ID + OWASP + timestamp | points | ↓ expand
-  - Expanded: matched text excerpt + "View in trace ↗" button (links to trace view at that sequence_index)
-
-#### Remediation tab
-
-- Remediation guidance cards, ranked by signal frequency
-- Each card: signal name + OWASP ID | description + actionable fix | SDK config snippet if applicable
-- Top card always highlighted (most frequent signal = highest priority fix)
-
-**Data sources:**
-```typescript
-// GET /v1/security/overview — from dapplepot_security service
-// GET /v1/security/sessions/:id/score — risk score + findings
-// GET /v1/security/remediation — ranked guidance
-// Note: these endpoints live in dapplepot_api which proxies to dapplepot_security
-```
+Role check uses `useMe()` (server-fresh), not the Zustand store (set at login, potentially stale).
 
 ---
 
 ## 4. API client pattern
 
-All HTTP calls go through the typed `ky` client in `src/api/client.ts`.
+Two ky instances:
 
 ```typescript
-// src/api/client.ts
-import ky from 'ky'
-import { useAuthStore } from '../stores/auth'
+// src/api/auth.ts — bare client, no auth header, used for token-lifecycle endpoints
+const bare = ky.create({ prefixUrl: API_BASE, timeout: 30_000 })
+
+export function login(body: LoginRequest): Promise<LoginResponse> {
+  return bare.post('v1/auth/login', { json: body }).json()
+}
+export function refresh(body: RefreshRequest): Promise<RefreshResponse> {
+  return bare.post('v1/auth/refresh', { json: body }).json()
+}
+export async function logout(body: LogoutRequest): Promise<void> {
+  await bare.post('v1/auth/logout', { json: body })
+}
+// forgotPassword, resetPassword, acceptInvite follow same pattern
+```
+
+```typescript
+// src/api/client.ts — authenticated client used by all non-auth API calls
+import { refresh } from './auth'   // no circular dep: auth.ts does NOT import client.ts
+
+let refreshPromise: Promise<string | null> | null = null
+
+async function tryRefresh(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise   // deduplicate concurrent 401s
+  const { refreshToken, setAccessToken, clearAuth } = useAuthStore.getState()
+  if (!refreshToken) return null
+  refreshPromise = refresh({ refreshToken })
+    .then(r => { setAccessToken(r.accessToken, r.refreshToken); return r.accessToken })
+    .catch(() => { clearAuth(); return null })
+    .finally(() => { refreshPromise = null })
+  return refreshPromise
+}
 
 export const apiClient = ky.create({
-  prefixUrl: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000',
+  prefixUrl: API_BASE,
   hooks: {
-    beforeRequest: [
-      (request) => {
-        const token = useAuthStore.getState().token
-        if (token) request.headers.set('Authorization', `Bearer ${token}`)
-      },
-    ],
-    afterResponse: [
-      async (_request, _options, response) => {
-        if (response.status === 401) {
-          useAuthStore.getState().clearToken()
-          window.location.href = '/login'
-        }
-      },
-    ],
+    beforeRequest: [(request) => {
+      const token = useAuthStore.getState().accessToken
+      if (token) request.headers.set('Authorization', `Bearer ${token}`)
+    }],
+    afterResponse: [async (request, _opts, response) => {
+      if (response.status !== 401) return   // void → ky uses original response
+
+      const newToken = await tryRefresh()
+      if (!newToken) { window.location.href = '/login'; return }
+
+      // Only retry bodyless requests — POST/PATCH body stream is consumed by this point
+      if (request.body !== null) return
+
+      const headers: Record<string, string> = {}
+      request.headers.forEach((v, k) => { headers[k] = v })
+      headers['Authorization'] = `Bearer ${newToken}`
+      return fetch(request.url, { method: request.method, headers })
+    }],
   },
 })
 ```
 
-All API functions are typed against the shared `@dapplepot/types`:
+All non-auth API functions use `apiClient`:
 ```typescript
 // src/api/sessions.ts
-import type { SessionDetail, SessionSummary, TracePage } from '@dapplepot/types/session'
-import type { Paginated } from '@dapplepot/types/common'
-
 export async function getSessionDetail(sessionId: string): Promise<SessionDetail> {
   return apiClient.get(`v1/sessions/${sessionId}`).json<SessionDetail>()
-}
-
-export async function getSessionList(
-  params: SessionListParams
-): Promise<Paginated<SessionSummary>> {
-  return apiClient.get('v1/sessions', { searchParams: params }).json()
-}
-
-export async function getTrace(
-  sessionId: string,
-  params: { afterSeq: number; limit: number }
-): Promise<TracePage> {
-  return apiClient.get(`v1/sessions/${sessionId}/trace`, { searchParams: params }).json()
 }
 ```
 
@@ -579,89 +415,99 @@ export async function getTrace(
 
 ## 5. SSE hooks
 
-Native `EventSource` does not support custom headers, so all SSE connections
-use `@microsoft/fetch-event-source` which accepts an `Authorization` header.
-
-### useLiveSessions — live session feed
+Native `EventSource` does not support custom headers. All SSE connections use
+`@microsoft/fetch-event-source`.
 
 ```typescript
 // src/api/sse.ts
 export function useLiveSessions() {
   const queryClient = useQueryClient()
-
   useEffect(() => {
     const controller = new AbortController()
-
     const connect = async () => {
-      const token = useAuthStore.getState().token
+      const token = useAuthStore.getState().accessToken   // ← accessToken, not token
       await fetchEventSource(`${API_BASE}/v1/sessions/live`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         signal: controller.signal,
         onmessage(event) {
           if (event.event === 'sessions') {
             const sessions = JSON.parse(event.data) as SessionSummary[]
-            // Update the React Query cache directly — no re-fetch needed
             queryClient.setQueryData(['sessions', 'live'], sessions)
           }
         },
-        onerror() {
-          // fetchEventSource retries automatically on error
-        },
+        onerror() { /* fetchEventSource retries automatically */ },
       })
     }
-
     void connect()
     return () => controller.abort()
   }, [queryClient])
 
   return useQuery({
     queryKey: ['sessions', 'live'],
-    queryFn: () => [] as SessionSummary[],   // initial empty state
-    staleTime: Infinity,                      // SSE pushes updates directly into cache
+    queryFn: () => [] as SessionSummary[],
+    staleTime: Infinity,
   })
-}
-```
-
-### useControlChannel — SDK kill-switch SSE
-
-```typescript
-// src/api/sse.ts
-export function useControlChannel(sessionId: string) {
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const connect = async () => {
-      const token = useAuthStore.getState().token
-      await fetchEventSource(
-        `${API_BASE}/v1/control/channel?session_id=${encodeURIComponent(sessionId)}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          signal: controller.signal,
-          onmessage() { /* command events handled by caller */ },
-          onerror() { /* auto-retry */ },
-        }
-      )
-    }
-
-    void connect()
-    return () => controller.abort()
-  }, [sessionId])
 }
 ```
 
 ---
 
-## 6. TanStack Query key conventions
-
-All query keys follow a consistent structure so `invalidateQueries` is predictable:
+## 6. Auth store
 
 ```typescript
+// src/stores/auth.ts
+interface AuthState {
+  accessToken:    string | null   // localStorage key: dp_access_token
+  refreshToken:   string | null   // localStorage key: dp_refresh_token
+  user:           UserSummary | null  // localStorage key: dp_user (JSON)
+  setTokens:      (access: string, refresh: string, user: UserSummary) => void
+  setAccessToken: (access: string, refresh: string) => void
+  clearAuth:      () => void
+}
+```
+
+- `setTokens` — called by `useLogin.onSuccess` and `useAcceptInvite.onSuccess`
+- `setAccessToken` — called by `tryRefresh` in `client.ts`
+- `clearAuth` — called by `useLogout.onSettled` and `tryRefresh` on failure
+
+---
+
+## 7. Auth hooks
+
+```typescript
+// src/hooks/useAuth.ts
+export function useLogin()           // mutate({ email, password }) → setTokens → navigate('/')
+export function useLogout()          // mutate() → POST /v1/auth/logout → onSettled: clearAuth + navigate('/login')
+export function useForgotPassword()  // mutate({ email })
+export function useResetPassword()   // mutate({ token, password })
+export function useAcceptInvite()    // mutate({ token, name, password }) → setTokens → navigate('/')
+
+// src/hooks/useUsers.ts
+export function useMe()              // GET /v1/users/me — staleTime: 5min
+export function useUpdateMe()        // PATCH /v1/users/me
+export function useUsers()           // GET /v1/users — staleTime: 1min (admin)
+export function useInviteUser()      // POST /v1/users/invite → invalidates ['invites']
+export function useInvites()         // GET /v1/users/invites
+export function useChangeRole(id)    // PATCH /v1/users/:id/role → invalidates ['users']
+export function useChangeStatus(id)  // PATCH /v1/users/:id/status → invalidates ['users']
+```
+
+---
+
+## 8. TanStack Query key conventions
+
+```typescript
+// Auth / users
+['me']
+['users']
+['invites']
+
 // Sessions
-['sessions', filters, sort, page]           // list
-['session', sessionId]                       // detail
-['trace', sessionId]                         // infinite trace pages
-['session-alerts', sessionId]                // session-scoped alerts
-['session-security', sessionId]              // session risk score + findings
+['sessions', filters, sort, page]
+['session', sessionId]
+['trace', sessionId]
+['session-alerts', sessionId]
+['session-security', sessionId]
 
 // Analytics
 ['analytics', 'overview', tenantId, window]
@@ -685,60 +531,67 @@ All query keys follow a consistent structure so `invalidateQueries` is predictab
 ['security', 'remediation', tenantId]
 ```
 
-On rule update: `queryClient.invalidateQueries({ queryKey: ['rules', tenantId] })`
-On alert status update: `queryClient.invalidateQueries({ queryKey: ['alerts'] })`
-
 ---
 
-## 7. Loading states and skeletons
+## 9. Loading states and skeletons
 
 Every data-heavy component renders a `Skeleton` while loading.
 Never show a blank layout or a spinner that blocks the whole page.
 
 ```typescript
-// Pattern for all data components:
 if (isLoading) return <MetricCardsSkeleton />
 if (isError)   return <ErrorCard message={error.message} />
 return <MetricCards data={data} />
 ```
 
-Skeleton components live alongside their data components:
-- `MetricCards.tsx` → `MetricCardsSkeleton.tsx` (same file, exported separately)
-- Skeletons use Tailwind `animate-pulse` on placeholder `div` blocks
-
 ---
 
-## 8. Routing (TanStack Router)
+## 10. Routing (TanStack Router)
 
 ```typescript
 // src/router.tsx
-// rootRoute uses AppShell as its component.
-// AppShell checks the current pathname and bypasses sidebar/topbar on /login.
-const rootRoute = createRootRoute({ component: AppShell })
+function requireAuth() {
+  const token = useAuthStore.getState().accessToken
+  if (!token) throw redirect({ to: '/login' })
+}
 
-const loginRoute       = createRoute({ path: '/login',          component: Login })
-const overviewRoute    = createRoute({ path: '/',               component: Overview })
-const sessionsRoute    = createRoute({ path: '/sessions',       component: Sessions,
-                                       validateSearch: sessionListSearchSchema })
-const sessionRoute     = createRoute({ path: '/sessions/$id',  component: SessionDetail })
-const analyticsRoute   = createRoute({ path: '/analytics',      component: Analytics })
-const detectionRoute   = createRoute({ path: '/detection',      component: Detection })
-const securityRoute    = createRoute({ path: '/security',       component: Security })
+// Auth routes — no requireAuth, token is optional on these params
+const loginRoute          = createRoute({ path: '/login',            component: Login })
+const forgotPasswordRoute = createRoute({ path: '/forgot-password',  component: ForgotPassword })
+const resetPasswordRoute  = createRoute({ path: '/reset-password',   component: ResetPassword,
+                                          validateSearch: z.object({ token: z.string().optional() }) })
+const acceptInviteRoute   = createRoute({ path: '/accept-invite',    component: AcceptInvite,
+                                          validateSearch: z.object({ token: z.string().optional() }) })
 
-// Session list search params are fully typed:
-const sessionListSearchSchema = z.object({
-  page: z.number().default(1),
-  // Filters are in Zustand, not URL — only page lives in URL
-})
+// Protected routes — all have beforeLoad: requireAuth
+const overviewRoute  = createRoute({ path: '/',              beforeLoad: requireAuth, component: Overview })
+const sessionsRoute  = createRoute({ path: '/sessions',      beforeLoad: requireAuth, component: Sessions,
+                                     validateSearch: z.object({ page: z.number().default(1) }) })
+const sessionRoute   = createRoute({ path: '/sessions/$id',  beforeLoad: requireAuth, component: SessionDetail })
+const analyticsRoute = createRoute({ path: '/analytics',     beforeLoad: requireAuth, component: Analytics })
+const detectionRoute = createRoute({ path: '/detection',     beforeLoad: requireAuth, component: Detection })
+const securityRoute  = createRoute({ path: '/security',      beforeLoad: requireAuth, component: Security })
+const settingsRoute  = createRoute({ path: '/settings',      beforeLoad: requireAuth, component: Settings })
 ```
 
-### AppShell login bypass
+### AppShell auth bypass + redirect
 
 ```typescript
 // src/layout/AppShell.tsx
+const AUTH_ROUTES = new Set(['/login', '/forgot-password', '/reset-password', '/accept-invite'])
+
 export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  if (pathname === '/login') return <Outlet />   // no sidebar or topbar
+  const navigate = useNavigate()
+  const isAuthed = useAuthStore((s) => !!s.accessToken)
+
+  // Redirect logged-in users away from auth pages
+  useEffect(() => {
+    if (isAuthed && AUTH_ROUTES.has(pathname)) void navigate({ to: '/' })
+  }, [isAuthed, pathname, navigate])
+
+  if (AUTH_ROUTES.has(pathname)) return <Outlet />   // no sidebar or topbar
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar />
@@ -751,87 +604,75 @@ export function AppShell() {
 }
 ```
 
-This keeps the route tree flat (all routes are children of `rootRoute`) so path types remain simple — `/sessions/$id` not `/_app/sessions/$id`.
+---
+
+## 11. Role-based UI gating
+
+```typescript
+// Always use me.role from useMe() — NOT useAuthStore(s => s.user?.role)
+// Zustand user is set at login and stale mid-session; useMe() is server-fresh
+const { data: me } = useMe()
+
+// Hide (not just disable) buttons for roles that can't use them
+{me?.role === 'admin' && <InviteUserButton />}
+{(me?.role === 'admin' || me?.role === 'editor') && <AcknowledgeButton />}
+```
+
+| Role | Capabilities |
+|------|-------------|
+| admin | Everything — kill-switch, rules CRUD, channels CRUD, user management, alert ack/resolve |
+| editor | Rules create/edit, alert ack/resolve, kill-switch/interrupt — no channel config, no user mgmt |
+| viewer | Read-only — all dashboards visible, no action buttons |
 
 ---
 
-## 9. Environment variables
+## 12. Environment variables
 
 ```bash
-# Required
-VITE_API_BASE_URL=http://localhost:3000    # dapplepot_api URL
-
-# Optional
+VITE_API_BASE_URL=http://localhost:3000    # dapplepot_api URL (default: localhost:3000)
 VITE_APP_ENV=development                   # 'development' | 'staging' | 'production'
 ```
 
 ---
 
-## 10. Auth flow
-
-```typescript
-// Token lifecycle
-// 1. User submits /login form → src/api/auth.ts login() → POST /v1/auth/login
-// 2. { token, expiresAt } stored in localStorage (key: dp_token) via useAuthStore
-// 3. Every ky request: beforeRequest hook reads token → Authorization: Bearer <token>
-// 4. On 401: afterResponse hook clears token + window.location.href = '/login'
-
-// src/api/auth.ts
-export interface LoginRequest  { email: string; password: string }
-export interface LoginResponse { token: string; expiresAt: string }
-export async function login(body: LoginRequest): Promise<LoginResponse> {
-  return ky.post(`${API_BASE}/v1/auth/login`, { json: body }).json()
-}
-```
-
-**Open:** JWT issuer, expiry duration, and refresh strategy are pending `dapplepot_api` README.
-Token refresh is not yet implemented — an expired token triggers a /login redirect.
-
----
-
-## 11. Local dev setup (this repo is Step 7)
+## 13. Local dev setup (this repo is Step 7)
 
 ```bash
-# dapplepot_api must be running first (this repo is Step 7 in the platform startup sequence)
-# See DAPPLEPOT_MASTER_README.md § 5 for the full sequence.
-# cd ../dapplepot_api && pnpm dev
-
+# dapplepot_api must be running first
 git clone https://github.com/dapplepot/dapplepot_ui
 cd dapplepot_ui
 pnpm install
 cp .env.example .env
 pnpm dev         # Vite dev server on http://localhost:5173
+
+# Default admin credentials (after pnpm seed-admin in dapplepot_api):
+# Email: admin@dapplepot.dev   Password: changeme123
 ```
 
-Vite is configured to proxy `/v1/` requests to `dapplepot_api` in dev:
+Vite proxies `/v1/` to `dapplepot_api`:
 ```typescript
 // vite.config.ts
-server: {
-  proxy: {
-    '/v1': { target: 'http://localhost:3000', changeOrigin: true }
-  }
-}
+server: { proxy: { '/v1': { target: 'http://localhost:3000', changeOrigin: true } } }
 ```
 
 ---
 
-## 12. Build order
-
-Build in this exact sequence. Each phase is independently testable.
+## 14. Build order
 
 ### Phase 1 — Foundation
 ```
-src/utils/cn.ts                    clsx + tailwind-merge helper
-src/utils/format.ts                formatTokens, formatDuration, formatAgo, formatBytes
-src/utils/eventColors.ts           category → hex color map
-src/stores/auth.ts                 JWT token store (localStorage key: dp_token) — must exist before client.ts
-src/api/client.ts                  ky instance with JWT interceptor + 401 → /login redirect
-src/stores/ui.ts                   sidebarCollapsed, activeTab, selectedSessionId
+src/utils/cn.ts
+src/utils/format.ts
+src/utils/eventColors.ts
+src/types/auth.ts              ← UserSummary, LoginResponse, RefreshResponse, etc.
+src/stores/auth.ts             ← accessToken + refreshToken + user (dp_access_token / dp_refresh_token / dp_user)
+src/api/auth.ts                ← bare ky: login, refresh, logout, forgotPassword, resetPassword, acceptInvite
+src/api/client.ts              ← apiClient with JWT interceptor + 401 auto-refresh logic
+src/stores/ui.ts
 ```
 
 ### Phase 2 — API client functions (no UI yet)
 ```
-src/api/auth.ts          login(): POST /v1/auth/login → { token, expiresAt }
 src/api/sessions.ts
 src/api/analytics.ts
 src/api/alerts.ts
@@ -843,12 +684,15 @@ src/api/sse.ts
 
 ### Phase 3 — TanStack Query hooks
 ```
+src/hooks/useAuth.ts           ← useLogin, useLogout, useForgotPassword, useResetPassword, useAcceptInvite
+src/hooks/useUsers.ts          ← useMe, useUpdateMe, useUsers, useInviteUser, useInvites, useChangeRole, useChangeStatus
 src/hooks/useSessions.ts
 src/hooks/useAnalytics.ts
 src/hooks/useAlerts.ts
 src/hooks/useRules.ts
 src/hooks/useChannels.ts
 src/hooks/useControl.ts
+src/hooks/useSecurity.ts
 ```
 
 ### Phase 4 — Zustand stores
@@ -870,17 +714,33 @@ src/components/ui/toggle.tsx
 src/components/ui/skeleton.tsx
 ```
 
-### Phase 6 — Layout + Auth
+### Phase 6 — Auth components + pages + layout
 ```
-src/layout/Sidebar.tsx
-src/layout/Topbar.tsx
-src/layout/AppShell.tsx   (bypasses chrome when pathname === '/login')
-src/pages/Login.tsx       (email+password form → calls auth.ts login() → stores token → navigates to /)
-src/router.tsx            (add loginRoute; all routes are direct children of rootRoute)
+src/components/auth/LoginForm.tsx
+src/components/auth/ForgotPasswordForm.tsx
+src/components/auth/ResetPasswordForm.tsx
+src/components/auth/InviteAcceptForm.tsx
+src/pages/Login.tsx
+src/pages/ForgotPassword.tsx
+src/pages/ResetPassword.tsx
+src/pages/AcceptInvite.tsx
+src/layout/Sidebar.tsx         ← nav items, Settings link, user name/email, Sign out
+src/layout/Topbar.tsx          ← breadcrumbs
+src/layout/AppShell.tsx        ← auth bypass + authenticated redirect
+src/router.tsx                 ← all routes, requireAuth guard
 src/main.tsx
 ```
 
-### Phase 7 — Surface 1: Overview
+### Phase 7 — Settings surface
+```
+src/components/settings/RoleBadge.tsx
+src/components/settings/ProfileForm.tsx
+src/components/settings/InviteModal.tsx
+src/components/settings/UserTable.tsx
+src/pages/Settings.tsx
+```
+
+### Phase 8 — Surface 1: Overview
 ```
 src/components/overview/MetricCards.tsx
 src/components/overview/SessionFeed.tsx
@@ -889,7 +749,7 @@ src/components/overview/AgentHealth.tsx
 src/pages/Overview.tsx
 ```
 
-### Phase 8 — Surface 2: Sessions
+### Phase 9 — Surface 2: Sessions
 ```
 src/components/sessions/StatusBadge.tsx
 src/components/sessions/SessionFilters.tsx
@@ -899,7 +759,7 @@ src/components/sessions/SessionPagination.tsx
 src/pages/Sessions.tsx
 ```
 
-### Phase 9 — Surface 3: Trace view
+### Phase 10 — Surface 3: Trace view
 ```
 src/components/trace/MetricStrip.tsx
 src/components/trace/EventRow.tsx
@@ -915,7 +775,7 @@ src/components/trace/TraceLayout.tsx
 src/pages/SessionDetail.tsx
 ```
 
-### Phase 10 — Surface 4: Analytics
+### Phase 11 — Surface 4: Analytics
 ```
 src/components/analytics/DateRangePicker.tsx
 src/components/analytics/TokenChart.tsx
@@ -925,7 +785,7 @@ src/components/analytics/CostTable.tsx
 src/pages/Analytics.tsx
 ```
 
-### Phase 11 — Surface 5: Detection
+### Phase 12 — Surface 5: Detection
 ```
 src/components/detection/AlertDrawer.tsx
 src/components/detection/AlertFeed.tsx
@@ -936,7 +796,7 @@ src/components/detection/ChannelList.tsx
 src/pages/Detection.tsx
 ```
 
-### Phase 12 — Surface 6: Security
+### Phase 13 — Surface 6: Security
 ```
 src/components/security/RiskDistribution.tsx
 src/components/security/OwaspFrequency.tsx
@@ -949,53 +809,64 @@ src/pages/Security.tsx
 
 ---
 
-## 13. Locked design decisions — do not change
+## 15. Locked design decisions — do not change
 
 | # | Decision | Reason |
 |---|----------|--------|
-| 1 | TanStack Query `staleTime` matches API cache TTL | Prevents redundant re-fetches that would bypass the API cache |
+| 1 | `staleTime` matches API cache TTL per endpoint | Prevents redundant re-fetches that bypass the API cache |
 | 2 | `staleTime: Infinity` for finalised session detail + trace | Session is immutable once finalised; never re-fetch |
-| 3 | Cursor pagination on trace, never OFFSET | Matches the API — `sequence_index > $cursor` is O(1); OFFSET is O(N) |
+| 3 | Cursor pagination on trace, never OFFSET | `sequence_index > $cursor` is O(1); OFFSET is O(N) |
 | 4 | Filter state in Zustand, pagination in URL | Filters persist on back-navigation; page resets on filter change |
 | 5 | Virtualise the event timeline with `@tanstack/react-virtual` | Sessions can have 500+ events; rendering all at once causes jank |
-| 6 | Types **copied** into `src/types/`, not imported from `dapplepot_api` via path alias | Repos deploy separately — a path alias to `../dapplepot-api` does not work in CI. Run `pnpm sync-types` after API changes; TypeScript immediately surfaces mismatches. |
+| 6 | Types **copied** into `src/types/` — run `pnpm sync-types` after API changes | Repos deploy separately — path alias to `../dapplepot-api` does not work in CI |
 | 7 | Non-linear scale on error rate bars (100% at 15%) | A 10% error rate should look alarming, not negligible |
 | 8 | SSE updates React Query cache directly via `setQueryData` | Avoids a redundant HTTP re-fetch when SSE delivers fresh data |
-| 9 | Use `@microsoft/fetch-event-source` for all SSE connections | Native `EventSource` API does not support custom headers; this polyfill allows `Authorization: Bearer <jwt>` on every SSE request |
-| 10 | shadcn/ui primitives copied in, not installed as package | Allows full customisation of each primitive without dependency on shadcn releases |
+| 9 | `@microsoft/fetch-event-source` for all SSE connections | Native `EventSource` does not support `Authorization` headers |
+| 10 | shadcn/ui primitives copied in, not installed as package | Allows full customisation without dependency on shadcn releases |
+| 11 | `api/auth.ts` uses a separate bare ky instance, does not import `apiClient` | Avoids circular dependency — `client.ts` imports `refresh()` from `auth.ts` |
+| 12 | Only GET/HEAD requests are retried after token refresh | POST/PATCH body ReadableStream is consumed before `afterResponse` fires; cannot replay |
+| 13 | Concurrent 401s share one refresh call via `refreshPromise` deduplication | Prevents multiple simultaneous `POST /v1/auth/refresh` calls racing each other |
+| 14 | Role check uses `useMe().data.role`, not `useAuthStore().user.role` | Zustand `user` is set at login and stale mid-session; `useMe()` is server-fresh |
+| 15 | `useLogout` uses `onSettled`, not `onSuccess` | Local auth must be cleared even if the server-side logout call fails |
+| 16 | Auth routes bypass AppShell; authenticated users are redirected away from them | Login/invite/reset are full-screen — no sidebar/topbar; also prevents logged-in users re-seeing login |
 
 ---
 
-## 14. What done looks like
+## 16. What done looks like
 
-**Phase 7 done:** Overview page loads, metric cards show real numbers,
+**Auth done:** `/login` renders full-screen without sidebar or topbar. Valid
+credentials store `accessToken` + `refreshToken` + `user` in localStorage and
+navigate to `/`. An expired access token triggers a 401 — the client silently
+refreshes, retries GET requests, and only redirects to `/login` if the refresh
+itself fails. Logout clears all auth state and redirects regardless of API
+response. Admin users see UserTable + Invite button on `/settings`; non-admins
+see only the profile form. Navigating to `/login` while already authenticated
+redirects to `/`.
+
+**Phase 8 done:** Overview page loads, metric cards show real numbers,
 session feed updates live via SSE, alert dots appear with correct severity
 colours, agent health bars render with non-linear scale.
 
-**Phase 9 done:** Navigate to a session, timeline renders all events in
+**Phase 10 done:** Navigate to a session, timeline renders all events in
 order with correct dot colours, clicking an event expands its payload JSON,
 right panel tabs switch correctly, "Load more" fetches next 100 events.
 
-**Phase 11 done:** Alert feed filters by severity and status, clicking a row
+**Phase 12 done:** Alert feed filters by severity and status, clicking a row
 opens the inline drawer with all fields, "Acknowledge" button updates status
-immediately (optimistic update), rule toggle correctly invalidates rule cache
-on both API and pipeline, dry-run preview updates as threshold slider moves.
+immediately, rule toggle correctly invalidates rule cache, dry-run preview
+shows after save using data returned by `POST /v1/rules`.
 
-**Phase 12 done:** `/security` page loads, overview metrics show real numbers,
+**Phase 13 done:** `/security` page loads, overview metrics show real numbers,
 risk distribution bars render for all 5 bands, OWASP frequency chart shows
 signal IDs, highest-risk table links to session detail, remediation tab ranks
 cards by frequency.
 
-**Auth done:** `/login` renders full-screen without sidebar or topbar. Submitting
-valid credentials stores the JWT in localStorage and navigates to `/`. An
-expired or invalid token triggers a 401, clears the token, and redirects back
-to `/login`.
-
-**Full build done:** All six pages + login navigate correctly, no TypeScript
-errors, no console errors, all loading states show skeletons (not blanks), all
-error states show error cards (not crashes).
+**Full build done:** All seven pages + four auth routes navigate correctly,
+`requireAuth` redirects unauthenticated users to `/login`, no TypeScript
+errors, no console errors, all loading states show skeletons, all error states
+show error cards.
 
 ---
 
-*Single source of truth for `dapplepot_ui` MVP.
+*Single source of truth for `dapplepot_ui`.
 Build in phase order. Do not skip phases.*
