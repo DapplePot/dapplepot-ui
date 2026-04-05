@@ -39,7 +39,7 @@ React frontend that serves the platform dashboard. It talks exclusively to
 | Server state | `@tanstack/react-query` | v5 | Caching, background refetch, SSE streaming |
 | UI state | `zustand` | ≥ 5 | Auth tokens, filter state, sidebar, active tabs |
 | Styling | `tailwindcss` | v4 | Utility-first, no config file, co-located styles |
-| Components | `shadcn/ui` | latest | Unstyled radix primitives + Tailwind — copy into `src/components/ui/` |
+| Components | Custom (Tailwind + CVA) | — | Hand-crafted with `class-variance-authority` — no external component library |
 | Charts | `recharts` | ≥ 2.12 | LineChart, BarChart, ResponsiveContainer |
 | HTTP client | `ky` | ≥ 1.5 | Fetch wrapper, typed, interceptors for JWT + auto-refresh |
 | Package manager | `pnpm` | ≥ 9 | Matches dapplepot_api |
@@ -49,16 +49,6 @@ React frontend that serves the platform dashboard. It talks exclusively to
 Types are **copied** into `src/types/` from `dapplepot_api/src/types/`. Repos
 deploy separately so a path alias to `../dapplepot_api` does not work in CI.
 Run `pnpm sync-types` after API type changes; TypeScript immediately flags mismatches.
-
-```typescript
-import type { SessionDetail, TracePage }     from '@dapplepot/types/session'
-import type { OverviewMetrics }              from '@dapplepot/types/analytics'
-import type { AlertSummary }                 from '@dapplepot/types/alert'
-import type { Paginated }                    from '@dapplepot/types/common'
-import type { UserSummary, LoginResponse }   from '@dapplepot/types/auth'
-```
-
-`@dapplepot/types/*` resolves to `src/types/*` (tsconfig paths + vite alias).
 
 ---
 
@@ -72,7 +62,7 @@ dapplepot_ui/
 ├── README.md                               ← human setup guide
 ├── package.json
 ├── pnpm-lock.yaml
-├── tsconfig.json                           ← strict, paths alias for @dapplepot/types → src/types/
+├── tsconfig.json                           ← strict mode; no custom path aliases (types copied locally)
 ├── vite.config.ts                          ← path aliases, proxy to dapplepot_api in dev
 ├── tailwind.css                            ← @import "tailwindcss" — v4 style
 ├── .env.example
@@ -83,6 +73,27 @@ dapplepot_ui/
     │                                          protected routes; auth routes: /login, /forgot-password,
     │                                          /reset-password?token=, /accept-invite?token=
     │
+    │   # Types — copied from dapplepot_api/src/types/ (run pnpm sync-types to update)
+    ├── types/
+    │   ├── auth.ts                         ← UserRole ('superadmin'|'admin'|'editor'|'viewer'),
+    │   │                                      UserStatus, UserSummary (incl. tenantId: string|null),
+    │   │                                      LoginRequest/Response, RefreshRequest/Response,
+    │   │                                      LogoutRequest, ForgotPasswordRequest,
+    │   │                                      ResetPasswordRequest, AcceptInviteRequest,
+    │   │                                      InviteSummary, InviteUserRequest,
+    │   │                                      UpdateMeRequest, ChangeRoleRequest, ChangeStatusRequest
+    │   ├── tenant.ts                       ← TenantSummary, TenantWithStats (+ adminUser + userCount),
+    │   │                                      OnboardClientRequest, OnboardClientResponse
+    │   ├── agent.ts                        ← AgentSummary, CreateAgentRequest
+    │   ├── sdkKey.ts                       ← SdkKeySummary (maskedKey), SdkKeyRevealResponse
+    │   ├── session.ts
+    │   ├── analytics.ts
+    │   ├── alert.ts
+    │   ├── rule.ts
+    │   ├── channel.ts
+    │   ├── common.ts                       ← Paginated<T>, ApiError, ListParams, error classes
+    │   └── security.ts
+    │
     │   # API client — single source of truth for all HTTP calls
     ├── api/
     │   ├── client.ts                       ← ky instance with JWT interceptor; on 401: auto-refresh
@@ -90,20 +101,30 @@ dapplepot_ui/
     │   │                                      Concurrent 401s share one refresh call (deduplicated)
     │   ├── auth.ts                         ← bare ky (no auth header): login, refresh, logout,
     │   │                                      forgotPassword, resetPassword, acceptInvite
+    │   ├── tenants.ts                      ← onboardClient (POST /v1/tenants/onboard),
+    │   │                                      getTenants (GET /v1/tenants)
+    │   ├── agents.ts                       ← getAgents (GET /v1/agents),
+    │   │                                      createAgent (POST /v1/agents)
+    │   ├── sdkKeys.ts                      ← getSdkKeys (GET /v1/sdk-keys),
+    │   │                                      revealSdkKey (GET /v1/sdk-keys/:id/reveal)
     │   ├── sessions.ts                     ← getSessionList, getSessionDetail, getTrace, getStateHistory
     │   ├── analytics.ts                    ← getOverview, getLlmUsage, getErrorRates, getLatency, getCost
     │   ├── alerts.ts                       ← getAlerts, getAlertDetail, updateAlertStatus, getAlertStats
     │   ├── rules.ts                        ← getRules, createRule, updateRule
     │   ├── channels.ts                     ← getChannels, createChannel, updateChannel
     │   ├── control.ts                      ← killSwitch, interrupt
+    │   ├── security.ts                     ← security overview, session risk, remediation
     │   └── sse.ts                          ← useLiveSessions hook, useControlChannel hook
     │
     │   # TanStack Query hooks — one file per resource
     ├── hooks/
     │   ├── useAuth.ts                      ← useLogin, useLogout, useForgotPassword,
     │   │                                      useResetPassword, useAcceptInvite
-    │   ├── useUsers.ts                     ← useMe, useUpdateMe, useUsers, useInviteUser,
-    │   │                                      useInvites, useChangeRole, useChangeStatus
+    │   ├── useUsers.ts                     ← useMe, useUpdateMe, useUsers (unwraps Paginated<UserSummary>),
+    │   │                                      useInviteUser, useInvites, useChangeRole, useChangeStatus
+    │   ├── useTenants.ts                   ← useOnboardClient (mutation), useTenants (query)
+    │   ├── useAgents.ts                    ← useAgents (query), useCreateAgent (mutation, invalidates ['agents'])
+    │   ├── useSdkKeys.ts                   ← useSdkKeys (query), useRevealSdkKey (mutation)
     │   ├── useSessions.ts                  ← useSessionList, useSessionDetail, useSessionTrace
     │   ├── useAnalytics.ts                 ← useOverview, useLlmUsage, useErrorRates, useLatency, useCost
     │   ├── useAlerts.ts                    ← useAlerts, useAlertDetail, useAlertStats
@@ -130,20 +151,24 @@ dapplepot_ui/
     │   ├── ForgotPassword.tsx              ← /forgot-password — delegates to ForgotPasswordForm
     │   ├── ResetPassword.tsx               ← /reset-password?token= — delegates to ResetPasswordForm
     │   ├── AcceptInvite.tsx                ← /accept-invite?token= — delegates to InviteAcceptForm
-    │   ├── Overview.tsx                    ← Surface 1: live overview home screen
-    │   ├── Sessions.tsx                    ← Surface 2: session list with filters
-    │   ├── SessionDetail.tsx               ← Surface 3: trace view for one session
-    │   ├── Analytics.tsx                   ← Surface 4: charts + cost table
-    │   ├── Detection.tsx                   ← Surface 5: alert inbox + rules + channels
-    │   ├── Security.tsx                    ← Surface 6: security posture overview
-    │   └── Settings.tsx                    ← Surface 7: profile form + user mgmt (admin: UserTable + InviteModal)
+    │   ├── Overview.tsx                    ← / — SuperAdminHome for superadmin; tenant dashboard otherwise
+    │   ├── Sessions.tsx                    ← /sessions — session list with filters
+    │   ├── SessionDetail.tsx               ← /sessions/:id — trace view for one session
+    │   ├── Analytics.tsx                   ← /analytics — charts + cost table
+    │   ├── Detection.tsx                   ← /detection — alert inbox + rules + channels
+    │   ├── Security.tsx                    ← /security — security posture overview
+    │   ├── Agents.tsx                      ← /agents — agent registry (AgentTable); create gated to admin
+    │   ├── Settings.tsx                    ← /settings — profile + SDK keys + user mgmt (admin only)
+    │   ├── Tenants.tsx                     ← /tenants — all tenants with admin user + user count (superadmin only)
+    │   └── OnboardClient.tsx               ← /onboard-client — OnboardingWizard; role-gated to superadmin
     │
     │   # Layout
     ├── layout/
     │   ├── AppShell.tsx                    ← bypasses sidebar/topbar for auth routes; redirects
     │   │                                      authenticated users away from auth routes to /
-    │   ├── Sidebar.tsx                     ← nav items, Settings link, user name/email, Sign out button
-    │   └── Topbar.tsx                      ← breadcrumbs (Overview / Sessions / … / Settings)
+    │   ├── Sidebar.tsx                     ← exclude-based role filtering; superadmin sees only
+    │   │                                      Tenants + Onboard Client; tenants see all other items
+    │   └── Topbar.tsx                      ← breadcrumbs + tenant ID badge (tenant users only, copyable)
     │
     │   # Feature components — grouped by surface
     ├── components/
@@ -154,17 +179,28 @@ dapplepot_ui/
     │   │   ├── ResetPasswordForm.tsx       ← password + confirm; reads token from search params
     │   │   └── InviteAcceptForm.tsx        ← name + password + confirm; reads token from search params
     │   │
+    │   ├── onboarding/                     ← client onboarding wizard (superadmin only)
+    │   │   ├── TenantInfoStep.tsx          ← Step 1: name, token budget, rate limit
+    │   │   ├── AdminAccountStep.tsx        ← Step 2: admin name, email, password + confirm
+    │   │   └── OnboardingWizard.tsx        ← step indicator, state, success screen; calls useOnboardClient
+    │   │
     │   ├── settings/
     │   │   ├── ProfileForm.tsx             ← name + optional password change; calls useUpdateMe
+    │   │   ├── SdkKeySection.tsx           ← masked key list; admin can reveal full key + copy
     │   │   ├── UserTable.tsx               ← searchable user list; role select + suspend/reactivate per row
     │   │   ├── InviteModal.tsx             ← email + role select modal; calls useInviteUser
-    │   │   └── RoleBadge.tsx               ← coloured pill: admin (violet) / editor (blue) / viewer (slate)
+    │   │   └── RoleBadge.tsx               ← coloured pill: superadmin (rose) / admin (violet) / editor (blue) / viewer (slate)
+    │   │
+    │   ├── agents/
+    │   │   ├── AgentTable.tsx              ← searchable agent list; copyable agent ID; New agent button (admin only)
+    │   │   └── CreateAgentModal.tsx        ← name (required) + latestVersion (optional); calls useCreateAgent
     │   │
     │   ├── overview/
     │   │   ├── MetricCards.tsx
     │   │   ├── SessionFeed.tsx
     │   │   ├── AlertPanel.tsx
-    │   │   └── AgentHealth.tsx
+    │   │   ├── AgentHealth.tsx
+    │   │   └── SuperAdminHome.tsx          ← welcome screen for superadmin with link to /onboard-client
     │   │
     │   ├── sessions/
     │   │   ├── SessionTable.tsx
@@ -209,7 +245,7 @@ dapplepot_ui/
     │   │   ├── FindingsList.tsx
     │   │   └── RemediationGuide.tsx
     │   │
-    │   └── ui/                             ← shadcn/ui primitives (copy from shadcn CLI)
+    │   └── ui/                             ← shared primitives (Tailwind + CVA, no external library)
     │       ├── button.tsx
     │       ├── badge.tsx
     │       ├── input.tsx
@@ -228,13 +264,17 @@ dapplepot_ui/
 
 ---
 
-## 3. The seven surfaces — what each page renders
+## 3. The surfaces — what each page renders
 
 ### Surface 1: Overview (`pages/Overview.tsx`)
 
-The home screen. Auto-refreshes. An engineer leaves this open.
+Route: `/`
 
-**Layout:** header row → 4 metric cards → two-column (session feed left, right column stacked: alerts + agent health)
+For **superadmin**: renders `SuperAdminHome` — welcome screen with a link to `/onboard-client`. All tenant data hooks are still called (React hooks rules) but the page returns early before rendering them.
+
+For **tenant users**: the live overview home screen. An engineer leaves this open.
+
+**Layout (tenant):** header row → 4 metric cards → two-column (session feed left, right column stacked: alerts + agent health)
 
 **Data sources and refresh rates:**
 ```typescript
@@ -333,11 +373,63 @@ via `dapplepot_api`. All security endpoints under `/v1/security/`.
 
 ### Surface 7: Settings (`pages/Settings.tsx`)
 
-Two sections:
+Route: `/settings`
+
+Three sections:
 1. **Profile** — `ProfileForm` (name + optional password change) for all roles
-2. **Users** — `UserTable` + "Invite user" button (admin only, gated on `me.role === 'admin'`)
+2. **SDK Keys** — `SdkKeySection` — `maskedKey` shown for all roles; admin can click **Show** to reveal full key via `GET /v1/sdk-keys/:id/reveal`. Full key cached in component state after first reveal; subsequent Show/Hide toggles don't re-fetch.
+3. **Users** — `UserTable` + "Invite user" button (admin only, gated on `me.role === 'admin'`)
 
 Role check uses `useMe()` (server-fresh), not the Zustand store (set at login, potentially stale).
+
+---
+
+### Surface 8: Agents (`pages/Agents.tsx`)
+
+Route: `/agents`
+
+Agent registry — searchable table of all tenant agents. Columns: Name, Agent ID (copyable), Latest Version, Created.
+
+"New agent" button only shown when `me?.role === 'admin'` — opens `CreateAgentModal`.
+
+Agent IDs are copyable: each row has a Copy icon that copies the full ID to clipboard with a momentary checkmark.
+
+---
+
+### Surface SA-1: SuperAdmin Home (`components/overview/SuperAdminHome.tsx`)
+
+Rendered by `Overview.tsx` when `user.role === 'superadmin'`. Welcome screen with a prominent "Onboard a client" link button to `/onboard-client`.
+
+---
+
+### Surface SA-2: Tenants (`pages/Tenants.tsx`)
+
+Route: `/tenants` — superadmin only (sidebar item excluded for tenant roles).
+
+Searchable table of all tenants. Columns: Tenant Name + ID, Admin (name/email or "No admin assigned"), Users, Status badge, Created.
+Search filters across tenant name, admin name, and admin email.
+
+---
+
+### Surface SA-3: Onboard Client (`pages/OnboardClient.tsx`)
+
+Route: `/onboard-client` — visible in sidebar only for `superadmin` role.
+
+Two-step wizard. All data is collected locally before a single API call fires:
+
+**Step 1 — Tenant Info** (`TenantInfoStep`):
+- `name` (required, unique) → `tenants.name`
+- `tokenBudget` (optional number) → `tenants.token_budget`
+- `rateLimit` (optional number) → `tenants.rate_limit`
+
+**Step 2 — Admin Account** (`AdminAccountStep`):
+- `name`, `email`, `password`, `confirmPassword` → `users` row with `role='admin'`
+
+**Submit**: `useOnboardClient().mutate({ tenant, admin })` → `POST /v1/tenants/onboard`
+
+**Success screen**: displays `tenantId`, `tenant.name`, `admin.email`.
+
+Backend contract: see `docs/api-onboarding-contract.md`.
 
 ---
 
@@ -485,11 +577,23 @@ export function useAcceptInvite()    // mutate({ token, name, password }) → se
 // src/hooks/useUsers.ts
 export function useMe()              // GET /v1/users/me — staleTime: 5min
 export function useUpdateMe()        // PATCH /v1/users/me
-export function useUsers()           // GET /v1/users — staleTime: 1min (admin)
+export function useUsers()           // GET /v1/users — unwraps Paginated<UserSummary> → data array
 export function useInviteUser()      // POST /v1/users/invite → invalidates ['invites']
 export function useInvites()         // GET /v1/users/invites
 export function useChangeRole(id)    // PATCH /v1/users/:id/role → invalidates ['users']
 export function useChangeStatus(id)  // PATCH /v1/users/:id/status → invalidates ['users']
+
+// src/hooks/useTenants.ts
+export function useOnboardClient()   // POST /v1/tenants/onboard (mutation)
+export function useTenants()         // GET /v1/tenants — queryKey: ['tenants']
+
+// src/hooks/useAgents.ts
+export function useAgents()          // GET /v1/agents — queryKey: ['agents']
+export function useCreateAgent()     // POST /v1/agents → invalidates ['agents']
+
+// src/hooks/useSdkKeys.ts
+export function useSdkKeys()         // GET /v1/sdk-keys — queryKey: ['sdk-keys']
+export function useRevealSdkKey()    // GET /v1/sdk-keys/:id/reveal (mutation pattern)
 ```
 
 ---
@@ -497,6 +601,16 @@ export function useChangeStatus(id)  // PATCH /v1/users/:id/status → invalidat
 ## 8. TanStack Query key conventions
 
 ```typescript
+// Tenants (superadmin)
+['tenants']
+// useOnboardClient is a mutation — no query key
+
+// Agents
+['agents']
+
+// SDK keys
+['sdk-keys']
+
 // Auth / users
 ['me']
 ['users']
@@ -571,8 +685,13 @@ const sessionRoute   = createRoute({ path: '/sessions/$id',  beforeLoad: require
 const analyticsRoute = createRoute({ path: '/analytics',     beforeLoad: requireAuth, component: Analytics })
 const detectionRoute = createRoute({ path: '/detection',     beforeLoad: requireAuth, component: Detection })
 const securityRoute  = createRoute({ path: '/security',      beforeLoad: requireAuth, component: Security })
-const settingsRoute  = createRoute({ path: '/settings',      beforeLoad: requireAuth, component: Settings })
+const settingsRoute       = createRoute({ path: '/settings',        beforeLoad: requireAuth, component: Settings })
+const agentsRoute         = createRoute({ path: '/agents',          beforeLoad: requireAuth, component: Agents })
+const tenantsRoute        = createRoute({ path: '/tenants',         beforeLoad: requireAuth, component: Tenants })
+const onboardClientRoute  = createRoute({ path: '/onboard-client',  beforeLoad: requireAuth, component: OnboardClient })
 ```
+
+Role gating for superadmin-only routes (`/tenants`, `/onboard-client`) and tenant-only routes is done at the **component level** — the route requires a valid JWT, but the page component renders an access-denied view if the role doesn't match. This avoids redirect loops and keeps route declarations clean.
 
 ### AppShell auth bypass + redirect
 
@@ -618,11 +737,14 @@ const { data: me } = useMe()
 {(me?.role === 'admin' || me?.role === 'editor') && <AcknowledgeButton />}
 ```
 
-| Role | Capabilities |
-|------|-------------|
-| admin | Everything — kill-switch, rules CRUD, channels CRUD, user management, alert ack/resolve |
-| editor | Rules create/edit, alert ack/resolve, kill-switch/interrupt — no channel config, no user mgmt |
-| viewer | Read-only — all dashboards visible, no action buttons |
+| Role | Sidebar | Key capabilities |
+|------|---------|-----------------|
+| `superadmin` | Tenants, Onboard Client | Create tenants + first admin; list all tenants. Sees SuperAdminHome at `/` instead of tenant dashboard |
+| `admin` | All tenant surfaces | SDK key reveal, user management (invite/role/suspend), agent creation, rule/channel CRUD, alert ack/resolve, kill-switch |
+| `editor` | All tenant surfaces | Alert ack/resolve, rule create/edit, kill-switch/interrupt — no channel config, no user mgmt, no SDK key reveal |
+| `viewer` | All tenant surfaces | Read-only — all dashboards visible, no action buttons |
+
+Sidebar uses an **exclude list** per item — `superadmin` is excluded from all tenant nav items; tenant roles (`admin`, `editor`, `viewer`) are excluded from superadmin nav items. Adding a new nav item only requires adding exclusions where needed.
 
 ---
 
@@ -673,6 +795,9 @@ src/stores/ui.ts
 
 ### Phase 2 — API client functions (no UI yet)
 ```
+src/api/tenants.ts
+src/api/agents.ts
+src/api/sdkKeys.ts
 src/api/sessions.ts
 src/api/analytics.ts
 src/api/alerts.ts
@@ -685,7 +810,10 @@ src/api/sse.ts
 ### Phase 3 — TanStack Query hooks
 ```
 src/hooks/useAuth.ts           ← useLogin, useLogout, useForgotPassword, useResetPassword, useAcceptInvite
-src/hooks/useUsers.ts          ← useMe, useUpdateMe, useUsers, useInviteUser, useInvites, useChangeRole, useChangeStatus
+src/hooks/useUsers.ts          ← useMe, useUpdateMe, useUsers (Paginated unwrap), useInviteUser, useInvites, useChangeRole, useChangeStatus
+src/hooks/useTenants.ts        ← useOnboardClient, useTenants
+src/hooks/useAgents.ts         ← useAgents, useCreateAgent
+src/hooks/useSdkKeys.ts        ← useSdkKeys, useRevealSdkKey
 src/hooks/useSessions.ts
 src/hooks/useAnalytics.ts
 src/hooks/useAlerts.ts
@@ -733,20 +861,41 @@ src/main.tsx
 
 ### Phase 7 — Settings surface
 ```
+src/types/sdkKey.ts
 src/components/settings/RoleBadge.tsx
+src/components/settings/SdkKeySection.tsx
 src/components/settings/ProfileForm.tsx
 src/components/settings/InviteModal.tsx
 src/components/settings/UserTable.tsx
 src/pages/Settings.tsx
 ```
 
-### Phase 8 — Surface 1: Overview
+### Phase 7b — Agents surface
+```
+src/types/agent.ts
+src/components/agents/CreateAgentModal.tsx
+src/components/agents/AgentTable.tsx
+src/pages/Agents.tsx
+```
+
+### Phase 7c — Superadmin surfaces (Tenants + Onboard Client)
+```
+src/types/tenant.ts
+src/components/overview/SuperAdminHome.tsx
+src/components/onboarding/TenantInfoStep.tsx
+src/components/onboarding/AdminAccountStep.tsx
+src/components/onboarding/OnboardingWizard.tsx
+src/pages/Tenants.tsx
+src/pages/OnboardClient.tsx
+```
+
+### Phase 8 — Surface 1: Overview (tenant dashboard)
 ```
 src/components/overview/MetricCards.tsx
 src/components/overview/SessionFeed.tsx
 src/components/overview/AlertPanel.tsx
 src/components/overview/AgentHealth.tsx
-src/pages/Overview.tsx
+src/pages/Overview.tsx                 ← renders SuperAdminHome for superadmin, tenant dashboard otherwise
 ```
 
 ### Phase 9 — Surface 2: Sessions
@@ -822,13 +971,20 @@ src/pages/Security.tsx
 | 7 | Non-linear scale on error rate bars (100% at 15%) | A 10% error rate should look alarming, not negligible |
 | 8 | SSE updates React Query cache directly via `setQueryData` | Avoids a redundant HTTP re-fetch when SSE delivers fresh data |
 | 9 | `@microsoft/fetch-event-source` for all SSE connections | Native `EventSource` does not support `Authorization` headers |
-| 10 | shadcn/ui primitives copied in, not installed as package | Allows full customisation without dependency on shadcn releases |
+| 10 | Custom Tailwind + CVA components — no external component library | Full control over styling with no dependency on shadcn releases |
 | 11 | `api/auth.ts` uses a separate bare ky instance, does not import `apiClient` | Avoids circular dependency — `client.ts` imports `refresh()` from `auth.ts` |
 | 12 | Only GET/HEAD requests are retried after token refresh | POST/PATCH body ReadableStream is consumed before `afterResponse` fires; cannot replay |
 | 13 | Concurrent 401s share one refresh call via `refreshPromise` deduplication | Prevents multiple simultaneous `POST /v1/auth/refresh` calls racing each other |
-| 14 | Role check uses `useMe().data.role`, not `useAuthStore().user.role` | Zustand `user` is set at login and stale mid-session; `useMe()` is server-fresh |
+| 14 | Role check uses `useMe().data.role` in Settings, not `useAuthStore().user.role` | Zustand `user` is set at login and stale mid-session; `useMe()` is server-fresh |
 | 15 | `useLogout` uses `onSettled`, not `onSuccess` | Local auth must be cleared even if the server-side logout call fails |
 | 16 | Auth routes bypass AppShell; authenticated users are redirected away from them | Login/invite/reset are full-screen — no sidebar/topbar; also prevents logged-in users re-seeing login |
+| 17 | Sidebar uses exclude list, not allow list | Adding a new nav item doesn't require updating every role — only add exclusions where needed |
+| 18 | Onboarding wizard collects all data before submitting | Single atomic `POST /v1/tenants/onboard` — no orphaned tenants if user abandons step 2 |
+| 19 | `superadmin` gated at component level, not route level | Route requires valid JWT; role check inside the page renders access-denied instead of redirecting |
+| 20 | SDK key masking done by backend, reveal via separate endpoint | `key_hash` is one-way — backend stores `masked_key` + `raw_key` at creation; UI never derives the mask |
+| 21 | `useUsers` unwraps `Paginated<UserSummary>` with `.then(r => r.data)` | Backend returns paginated envelope; UserTable expects a plain array — unwrap in the hook, not the component |
+| 22 | Tenant ID shown in Topbar from Zustand store, not `useMe()` | Already in memory from login — no extra network call on every page |
+| 23 | SDK key reveal uses per-row mutation with local state cache | Full key fetched once per row per session; Show/Hide toggles after first reveal don't re-fetch |
 
 ---
 
@@ -842,6 +998,12 @@ itself fails. Logout clears all auth state and redirects regardless of API
 response. Admin users see UserTable + Invite button on `/settings`; non-admins
 see only the profile form. Navigating to `/login` while already authenticated
 redirects to `/`.
+
+**Phase 7 done (Settings):** Profile form saves. SDK key section shows masked keys (`dp_sk_••••…`) for all roles. Admin sees Show/Hide button — clicking Show fetches and displays the full key; subsequent toggles don't re-fetch. Admin sees UserTable + Invite button; non-admins see only the profile and masked keys.
+
+**Phase 7b done (Agents):** `/agents` renders agent table with Name, copyable Agent ID, Latest Version, Created columns. Admin sees "New agent" button; others don't. Copy icon writes agent ID to clipboard with checkmark feedback.
+
+**Phase 7c done (Superadmin):** `superadmin` logging in sees SuperAdminHome at `/` with "Onboard a client" button. `/tenants` shows all tenants with admin name/email and user count. `/onboard-client` two-step wizard completes with a single `POST /v1/tenants/onboard`; success screen shows `tenantId`, tenant name, admin email. Tenant users navigating to `/tenants` or `/onboard-client` see an access-denied message, not a redirect.
 
 **Phase 8 done:** Overview page loads, metric cards show real numbers,
 session feed updates live via SSE, alert dots appear with correct severity

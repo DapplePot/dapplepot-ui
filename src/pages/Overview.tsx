@@ -5,6 +5,8 @@ import { MetricCards, MetricCardsSkeleton } from '../components/overview/MetricC
 import { SessionFeed, SessionFeedSkeleton } from '../components/overview/SessionFeed'
 import { AlertPanel, AlertPanelSkeleton } from '../components/overview/AlertPanel'
 import { AgentHealth, AgentHealthSkeleton } from '../components/overview/AgentHealth'
+import { SuperAdminHome } from '../components/overview/SuperAdminHome'
+import { useAuthStore } from '../stores/auth'
 
 function ErrorCard({ message }: { message: string }) {
   return (
@@ -15,10 +17,13 @@ function ErrorCard({ message }: { message: string }) {
 }
 
 export function Overview() {
+  const role = useAuthStore((s) => s.user?.role)
   const overview = useOverview('24h')
   const liveSessions = useLiveSessions()
   const alerts = useAlerts({ limit: 4, sort: 'triggered_at:desc' })
   const errorRates = useErrorRates('1h')
+
+  if (role === 'superadmin') return <SuperAdminHome />
 
   return (
     <div className="space-y-6">

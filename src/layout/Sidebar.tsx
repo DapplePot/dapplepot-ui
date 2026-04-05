@@ -6,6 +6,9 @@ import {
   Bell,
   Shield,
   Settings,
+  Bot,
+  Building2,
+  UserPlus,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -16,13 +19,16 @@ import { useLogout } from '../hooks/useAuth'
 import { useAuthStore } from '../stores/auth'
 
 const NAV_ITEMS = [
-  { path: '/',           label: 'Overview',   icon: LayoutDashboard },
-  { path: '/sessions',   label: 'Sessions',   icon: List },
-  { path: '/analytics',  label: 'Analytics',  icon: BarChart2 },
-  { path: '/detection',  label: 'Detection',  icon: Bell },
-  { path: '/security',   label: 'Security',   icon: Shield },
-  { path: '/settings',   label: 'Settings',   icon: Settings },
-]
+  { path: '/',                label: 'Overview',       icon: LayoutDashboard, exclude: ['superadmin'] },
+  { path: '/sessions',        label: 'Sessions',       icon: List,            exclude: ['superadmin'] },
+  { path: '/analytics',       label: 'Analytics',      icon: BarChart2,       exclude: ['superadmin'] },
+  { path: '/detection',       label: 'Detection',      icon: Bell,            exclude: ['superadmin'] },
+  { path: '/security',        label: 'Security',       icon: Shield,          exclude: ['superadmin'] },
+  { path: '/agents',          label: 'Agents',         icon: Bot,             exclude: ['superadmin'] },
+  { path: '/settings',        label: 'Settings',       icon: Settings,        exclude: ['superadmin'] },
+  { path: '/tenants',         label: 'Tenants',         icon: Building2,       exclude: ['admin', 'editor', 'viewer'] },
+  { path: '/onboard-client',  label: 'Onboard Client',  icon: UserPlus,        exclude: ['admin', 'editor', 'viewer'] },
+] as const
 
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
@@ -50,7 +56,9 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 space-y-0.5 px-2 py-3">
-        {NAV_ITEMS.map(({ path, label, icon: Icon }) => {
+        {NAV_ITEMS.filter(({ exclude }) =>
+          !exclude.includes(user?.role as 'superadmin')
+        ).map(({ path, label, icon: Icon }) => {
           const isActive = path === '/'
             ? pathname === '/'
             : pathname.startsWith(path)

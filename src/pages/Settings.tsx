@@ -4,6 +4,7 @@ import { useMe } from '../hooks/useUsers'
 import { ProfileForm } from '../components/settings/ProfileForm'
 import { UserTable } from '../components/settings/UserTable'
 import { InviteModal } from '../components/settings/InviteModal'
+import { SdkKeySection } from '../components/settings/SdkKeySection'
 
 export function Settings() {
   const { data: me, isLoading } = useMe()
@@ -45,6 +46,12 @@ export function Settings() {
           <UserTable />
         </section>
       )}
+
+      {/* SDK Keys — visible to all, reveal only for admin */}
+      <section>
+        <h2 className="mb-4 text-base font-semibold text-slate-900">SDK Keys</h2>
+        <SdkKeySection isAdmin={me.role === 'admin'} />
+      </section>
 
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
     </div>

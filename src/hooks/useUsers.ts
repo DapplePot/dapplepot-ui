@@ -8,6 +8,7 @@ import type {
   ChangeRoleRequest,
   ChangeStatusRequest,
 } from '../types/auth'
+import type { Paginated } from '../types/common'
 
 export function useMe() {
   return useQuery({
@@ -31,7 +32,7 @@ export function useUpdateMe() {
 export function useUsers() {
   return useQuery({
     queryKey: ['users'],
-    queryFn:  () => apiClient.get('v1/users').json<UserSummary[]>(),
+    queryFn:  () => apiClient.get('v1/users').json<Paginated<UserSummary>>().then((r) => r.data),
     staleTime: 60_000,
   })
 }
