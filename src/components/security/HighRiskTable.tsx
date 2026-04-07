@@ -46,7 +46,7 @@ export function HighRiskTable({ sessions, onSelect }: HighRiskTableProps) {
               className="cursor-pointer hover:bg-slate-50 transition-colors"
             >
               <td className="px-4 py-3 font-mono text-xs text-violet-600">
-                {s.sessionId.slice(0, 8)}
+                {s.sessionId.slice(0, 8)}…
               </td>
               <td className="px-4 py-3 text-xs text-slate-600">{s.agentId}</td>
               <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">

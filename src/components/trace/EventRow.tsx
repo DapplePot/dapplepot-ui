@@ -17,7 +17,7 @@ export function EventRow({ event, baseTime }: EventRowProps) {
     : null
   const relativeLabel =
     relativeMs != null
-      ? `+${(relativeMs / 1000).toFixed(1)}s`
+      ? `+${relativeMs}ms`
       : '—'
 
   const dotColor = getEventColor(event.eventCategory)
@@ -37,7 +37,7 @@ export function EventRow({ event, baseTime }: EventRowProps) {
         </span>
 
         {/* Relative time */}
-        <span className="w-14 shrink-0 font-mono text-xs text-slate-400">{relativeLabel}</span>
+        <span className="w-20 shrink-0 font-mono text-xs text-slate-400">{relativeLabel}</span>
 
         {/* Colour dot */}
         <span

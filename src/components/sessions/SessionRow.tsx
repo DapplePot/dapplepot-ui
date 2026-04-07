@@ -11,9 +11,10 @@ interface SessionRowProps {
   session: SessionSummary
   isExpanded: boolean
   onToggle: () => void
+  agentName?: string
 }
 
-export function SessionRow({ session, isExpanded, onToggle }: SessionRowProps) {
+export function SessionRow({ session, isExpanded, onToggle, agentName }: SessionRowProps) {
   return (
     <>
       <TableRow
@@ -29,12 +30,12 @@ export function SessionRow({ session, isExpanded, onToggle }: SessionRowProps) {
               <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
             )}
             <span className="font-mono text-xs text-slate-700">
-              {session.sessionId.slice(0, 8)}
+              {session.sessionId.slice(0, 8)}…
             </span>
           </div>
         </TableCell>
         <TableCell className="text-xs text-slate-600">
-          {session.agentId ?? '—'}
+          {agentName ?? '—'}
         </TableCell>
         <TableCell>
           <StatusBadge status={session.status} />

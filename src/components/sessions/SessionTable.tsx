@@ -14,6 +14,7 @@ interface SessionTableProps {
   sort: SortKey
   sortDir: SortDir
   onSort: (key: SortKey) => void
+  agentMap?: Record<string, string>
 }
 
 const COLUMNS: { key: SortKey | null; label: string }[] = [
@@ -27,7 +28,7 @@ const COLUMNS: { key: SortKey | null; label: string }[] = [
   { key: null,        label: '' },
 ]
 
-export function SessionTable({ sessions, sort, sortDir, onSort }: SessionTableProps) {
+export function SessionTable({ sessions, sort, sortDir, onSort, agentMap = {} }: SessionTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const toggle = (id: string) => setExpandedId((prev) => (prev === id ? null : id))
@@ -58,6 +59,7 @@ export function SessionTable({ sessions, sort, sortDir, onSort }: SessionTablePr
               session={session}
               isExpanded={expandedId === session.sessionId}
               onToggle={() => toggle(session.sessionId)}
+              agentName={session.agentId ? (agentMap[session.agentId] ?? session.agentId.slice(0, 8)) : undefined}
             />
           ))}
           {sessions.length === 0 && (

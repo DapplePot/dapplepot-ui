@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { TraceEvent } from '@dapplepot/types/session'
 import { useTraceFilters } from '../../stores/traceFilters'
@@ -35,10 +35,19 @@ export function EventTimeline({
 }: EventTimelineProps) {
   const { activeCategory, setActiveCategory } = useTraceFilters()
 
+  // Reset filter when navigating to a different session trace
+  useEffect(() => {
+    setActiveCategory('all')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const filtered =
     activeCategory === 'all'
       ? events
-      : events.filter((e) => e.eventCategory === activeCategory)
+      : events.filter((e) =>
+          e.eventCategory === activeCategory ||
+          e.eventCategory.startsWith(`${activeCategory}_`) ||
+          e.eventType.startsWith(`${activeCategory}_`)
+        )
 
   const parentRef = useRef<HTMLDivElement>(null)
 
@@ -47,10 +56,12 @@ export function EventTimeline({
     getScrollElement: () => parentRef.current,
     estimateSize: () => 44,
     overscan: 10,
+    measureElement: (el) => el.getBoundingClientRect().height,
+    paddingEnd: 16,
   })
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Category pills */}
       <div className="flex gap-1 border-b border-slate-100 px-4 py-2 shrink-0">
         {CATEGORY_PILLS.map(({ key, label }) => (
@@ -79,6 +90,8 @@ export function EventTimeline({
             return (
               <div
                 key={event.eventId}
+                data-index={virtualItem.index}
+                ref={rowVirtualizer.measureElement}
                 style={{
                   position: 'absolute',
                   top: 0,

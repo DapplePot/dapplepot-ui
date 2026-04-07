@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useSessionList } from '../hooks/useSessions'
+import { useAgents } from '../hooks/useAgents'
 import { useSessionFilters } from '../stores/sessionFilters'
 import { SessionTable, SessionTableSkeleton } from '../components/sessions/SessionTable'
 import { SessionFilters } from '../components/sessions/SessionFilters'
@@ -27,6 +28,11 @@ export function Sessions() {
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
   const { status, agentId, environment, dateRange, searchQuery } = useSessionFilters()
+
+  const { data: agentsData } = useAgents()
+  const agentMap = Object.fromEntries(
+    (agentsData ?? []).map((a) => [a.agentId, a.name])
+  )
 
   const { data, isLoading, isError, error, refetch } = useSessionList({
     page,
@@ -90,6 +96,7 @@ export function Sessions() {
             sort={sort}
             sortDir={sortDir}
             onSort={handleSort}
+            agentMap={agentMap}
           />
           <SessionPagination
             page={page}

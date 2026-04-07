@@ -17,6 +17,7 @@ import { cn } from '../utils/cn'
 import { useUiStore } from '../stores/ui'
 import { useLogout } from '../hooks/useAuth'
 import { useAuthStore } from '../stores/auth'
+import { useTenant } from '../hooks/useTenants'
 
 const NAV_ITEMS = [
   { path: '/',                label: 'Overview',       icon: LayoutDashboard, exclude: ['superadmin'] },
@@ -36,6 +37,7 @@ export function Sidebar() {
   const pathname  = useRouterState({ select: (s) => s.location.pathname })
   const user      = useAuthStore((s) => s.user)
   const logout    = useLogout()
+  const { data: tenant } = useTenant(user?.tenantId ?? null)
 
   return (
     <aside
@@ -50,7 +52,9 @@ export function Sidebar() {
           <span className="text-xs font-bold text-white">dp</span>
         </div>
         {!collapsed && (
-          <span className="ml-2.5 text-sm font-semibold text-slate-900">Dapplepot</span>
+          <span className="ml-2.5 truncate text-sm font-semibold text-slate-900">
+            {tenant?.name ?? 'Dapplepot'}
+          </span>
         )}
       </div>
 
