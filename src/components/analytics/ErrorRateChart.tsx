@@ -3,6 +3,7 @@ import {
 } from 'recharts'
 import type { ErrorRatePoint } from '@dapplepot/types/analytics'
 import { Skeleton } from '../ui/skeleton'
+import { useAgents } from '../../hooks/useAgents'
 
 function barColor(rate: number): string {
   if (rate > 0.08) return '#ef4444'
@@ -15,6 +16,9 @@ interface ErrorRateChartProps {
 }
 
 export function ErrorRateChart({ data }: ErrorRateChartProps) {
+  const { data: agentsData } = useAgents()
+  const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
+
   // Aggregate to latest rate per agent
   const byAgent = data.reduce<Record<string, { errors: number; total: number }>>((acc, pt) => {
     if (!acc[pt.agentId]) acc[pt.agentId] = { errors: 0, total: 0 }
@@ -25,6 +29,7 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
 
   const chartData = Object.entries(byAgent).map(([agentId, { errors, total }]) => ({
     agentId,
+    agentName: agentMap[agentId] ?? agentId,
     rate: total > 0 ? errors / total : 0,
   }))
 
@@ -44,7 +49,7 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
         />
         <YAxis
           type="category"
-          dataKey="agentId"
+          dataKey="agentName"
           tick={{ fontSize: 11, fill: '#64748b' }}
           width={120}
         />

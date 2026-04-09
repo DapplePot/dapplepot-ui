@@ -1,7 +1,8 @@
 import { apiClient } from './client'
 import type {
   SecurityOverview, SessionRiskScore,
-  SecurityFinding, RemediationCard
+  SecurityFinding, RemediationCard, AgentRiskEntry, AgentProfile,
+  SignalRegistryEntry,
 } from '../types/security'
 
 export async function getSecurityOverview(
@@ -33,4 +34,27 @@ export async function getRemediation(
     .get('v1/security/remediation', { searchParams: params })
     .json<{ remediation: RemediationCard[] }>()
   return data.remediation
+}
+
+export async function getTopAgents(): Promise<AgentRiskEntry[]> {
+  const data = await apiClient
+    .get('v1/security/agents')
+    .json<{ agents: AgentRiskEntry[] }>()
+  return data.agents
+}
+
+export async function getAgentProfile(agentId: string): Promise<AgentProfile | null> {
+  try {
+    return await apiClient.get(`v1/security/agents/${agentId}`).json()
+  } catch (e: any) {
+    if (e.response?.status === 404) return null
+    throw e
+  }
+}
+
+export async function getSignalRegistry(): Promise<SignalRegistryEntry[]> {
+  const data = await apiClient
+    .get('v1/security/signals')
+    .json<{ signals: SignalRegistryEntry[] }>()
+  return data.signals
 }

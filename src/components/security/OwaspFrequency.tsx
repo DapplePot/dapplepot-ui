@@ -1,10 +1,10 @@
-interface OwaspEntry {
-  owaspId: string
+interface SignalFrequencyEntry {
+  signalId: string
   count: number
 }
 
 interface OwaspFrequencyProps {
-  entries: OwaspEntry[]
+  entries: SignalFrequencyEntry[]
 }
 
 export function OwaspFrequency({ entries }: OwaspFrequencyProps) {
@@ -12,10 +12,10 @@ export function OwaspFrequency({ entries }: OwaspFrequencyProps) {
 
   return (
     <div className="space-y-2">
-      {entries.map(({ owaspId, count }) => (
-        <div key={owaspId}>
+      {entries.map(({ signalId, count }) => (
+        <div key={signalId}>
           <div className="mb-1 flex justify-between text-xs">
-            <span className="text-slate-600 font-mono">{owaspId}</span>
+            <span className="text-slate-600 font-mono">{signalId}</span>
             <span className="font-medium text-slate-800">{count}</span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -27,7 +27,7 @@ export function OwaspFrequency({ entries }: OwaspFrequencyProps) {
         </div>
       ))}
       {entries.length === 0 && (
-        <p className="text-sm text-slate-400">No OWASP signals detected</p>
+        <p className="text-sm text-slate-400">No signals detected</p>
       )}
     </div>
   )

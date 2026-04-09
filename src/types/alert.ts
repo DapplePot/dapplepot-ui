@@ -5,6 +5,7 @@ export interface AlertSummary {
   ruleId: string | null
   ruleName: string
   ruleType: string
+  source: 'security' | 'policy'
   sessionId: string | null
   agentId: string | null
   severity: 'info' | 'warning' | 'medium' | 'critical'

@@ -10,7 +10,8 @@ import { Security }       from './pages/Security'
 import { Settings }       from './pages/Settings'
 import { OnboardClient }  from './pages/OnboardClient'
 import { Tenants }        from './pages/Tenants'
-import { Agents }         from './pages/Agents'
+import { Agents }                from './pages/Agents'
+import { AgentSecurityProfile } from './pages/AgentSecurityProfile'
 import { Login }          from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword }  from './pages/ResetPassword'
@@ -133,6 +134,13 @@ const agentsRoute = createRoute({
   component: Agents,
 })
 
+const agentSecurityProfileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/agents/$agentId',
+  beforeLoad: requireAuth,
+  component: AgentSecurityProfile,
+})
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   forgotPasswordRoute,
@@ -148,6 +156,7 @@ const routeTree = rootRoute.addChildren([
   onboardClientRoute,
   tenantsRoute,
   agentsRoute,
+  agentSecurityProfileRoute,
 ])
 
 export const router = createRouter({ routeTree })

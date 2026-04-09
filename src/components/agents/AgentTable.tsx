@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Plus, Copy, Check } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 import { useAgents } from '../../hooks/useAgents'
 import { useMe } from '../../hooks/useUsers'
 import { CreateAgentModal } from './CreateAgentModal'
@@ -84,6 +85,7 @@ export function AgentTable() {
                 <th className="px-4 py-3">Agent ID</th>
                 <th className="px-4 py-3">Latest Version</th>
                 <th className="px-4 py-3">Created</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -103,6 +105,15 @@ export function AgentTable() {
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-500">
                     {formatDate(agent.createdAt)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      to="/agents/$agentId"
+                      params={{ agentId: agent.agentId }}
+                      className="text-xs text-violet-600 hover:underline"
+                    >
+                      Security profile
+                    </Link>
                   </td>
                 </tr>
               ))}

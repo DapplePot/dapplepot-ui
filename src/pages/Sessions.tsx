@@ -62,10 +62,7 @@ export function Sessions() {
     void navigate({ search: { page: p } })
   }
 
-  // Extract unique agent IDs from current data for the agent filter
-  const agents = Array.from(
-    new Set((data?.data ?? []).map((s) => s.agentId).filter(Boolean) as string[])
-  )
+  const agents = (agentsData ?? []).map((a) => ({ value: a.agentId, label: a.name }))
 
   return (
     <div className="space-y-4">

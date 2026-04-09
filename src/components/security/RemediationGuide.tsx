@@ -17,7 +17,7 @@ export function RemediationGuide({ cards }: RemediationGuideProps) {
     <div className="space-y-4">
       {cards.map((card, i) => (
         <div
-          key={card.signalId}
+          key={card.owaspSignalId}
           className={`rounded-lg border bg-white p-5 ${
             i === 0 ? 'border-amber-300 bg-amber-50' : 'border-slate-200'
           }`}
@@ -26,7 +26,7 @@ export function RemediationGuide({ cards }: RemediationGuideProps) {
             <div>
               <p className="text-sm font-semibold text-slate-900">{card.title}</p>
               <p className="mt-0.5 font-mono text-xs text-slate-500">
-                {card.signalId} · {card.owaspId}
+                {card.owaspSignalId}
               </p>
             </div>
             <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">

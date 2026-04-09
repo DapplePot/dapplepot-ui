@@ -1,5 +1,6 @@
 import type { ErrorRatePoint } from '@dapplepot/types/analytics'
 import { Skeleton } from '../ui/skeleton'
+import { useAgents } from '../../hooks/useAgents'
 
 /** Non-linear scale: bar fills 100% at 15% error rate */
 function toBarWidth(errorRate: number): number {
@@ -17,6 +18,9 @@ interface AgentHealthProps {
 }
 
 export function AgentHealth({ data }: AgentHealthProps) {
+  const { data: agentsData } = useAgents()
+  const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
+
   // Aggregate per agent (sum across hours)
   const byAgent = data.reduce<Record<string, { errors: number; total: number }>>((acc, pt) => {
     if (!acc[pt.agentId]) acc[pt.agentId] = { errors: 0, total: 0 }
@@ -43,7 +47,7 @@ export function AgentHealth({ data }: AgentHealthProps) {
       {agents.map(({ agentId, errorRate }) => (
         <div key={agentId}>
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-xs text-slate-600 truncate max-w-[70%]">{agentId}</span>
+            <span className="text-xs text-slate-600 truncate max-w-[70%]">{agentMap[agentId] ?? agentId}</span>
             <span className="text-xs font-medium text-slate-700">
               {(errorRate * 100).toFixed(1)}%
             </span>

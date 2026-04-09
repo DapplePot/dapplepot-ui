@@ -27,8 +27,13 @@ const DATE_OPTIONS = [
   { value: '30d', label: 'Last 30d' },
 ]
 
+interface AgentOption {
+  value: string
+  label: string
+}
+
 interface SessionFiltersProps {
-  agents: string[]
+  agents: AgentOption[]
   onFiltersChange: () => void
 }
 
@@ -50,7 +55,7 @@ export function SessionFilters({ agents, onFiltersChange }: SessionFiltersProps)
 
   const agentOptions = [
     { value: '', label: 'All agents' },
-    ...agents.map((a) => ({ value: a, label: a })),
+    ...agents,
   ]
 
   return (

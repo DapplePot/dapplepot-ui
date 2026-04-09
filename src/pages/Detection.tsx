@@ -16,11 +16,12 @@ export function Detection() {
   const [tab, setTab] = useState<Tab>('alerts')
   const [showRuleForm, setShowRuleForm] = useState(false)
 
-  const { severity, status } = useAlertFilters()
+  const { severity, status, source } = useAlertFilters()
 
   const alerts = useAlerts({
     severity: severity || undefined,
     status: status || undefined,
+    source: source || undefined,
     limit: 50,
     sort: 'triggered_at:desc',
   })

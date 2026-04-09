@@ -1,11 +1,12 @@
 import { Badge } from '../ui/badge'
+import { useAgents } from '../../hooks/useAgents'
 
 interface HighRiskSession {
-  sessionId: string
-  agentId: string
-  riskScore: number
-  riskBand: string
-  signalIds: string[]
+  sessionId:      string
+  agentId:        string
+  llmScore:       number
+  llmBand:        string
+  owaspSignalIds: string[]
 }
 
 interface HighRiskTableProps {
@@ -22,6 +23,9 @@ const BAND_VARIANT: Record<string, 'destructive' | 'warning' | 'info' | 'seconda
 }
 
 export function HighRiskTable({ sessions, onSelect }: HighRiskTableProps) {
+  const { data: agentsData } = useAgents()
+  const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
+
   if (sessions.length === 0) {
     return <p className="py-6 text-center text-sm text-slate-400">No high-risk sessions</p>
   }
@@ -48,18 +52,18 @@ export function HighRiskTable({ sessions, onSelect }: HighRiskTableProps) {
               <td className="px-4 py-3 font-mono text-xs text-violet-600">
                 {s.sessionId.slice(0, 8)}…
               </td>
-              <td className="px-4 py-3 text-xs text-slate-600">{s.agentId}</td>
+              <td className="px-4 py-3 text-xs text-slate-600">{agentMap[s.agentId] ?? s.agentId}</td>
               <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
-                {s.riskScore.toFixed(1)}
+                {s.llmScore.toFixed(1)}
               </td>
               <td className="px-4 py-3">
-                <Badge variant={BAND_VARIANT[s.riskBand] ?? 'secondary'}>
-                  {s.riskBand}
+                <Badge variant={BAND_VARIANT[s.llmBand] ?? 'secondary'}>
+                  {s.llmBand}
                 </Badge>
               </td>
               <td className="px-4 py-3 text-xs text-slate-500">
-                {s.signalIds.slice(0, 3).join(', ')}
-                {s.signalIds.length > 3 && ` +${s.signalIds.length - 3}`}
+                {s.owaspSignalIds.slice(0, 3).join(', ')}
+                {s.owaspSignalIds.length > 3 && ` +${s.owaspSignalIds.length - 3}`}
               </td>
             </tr>
           ))}

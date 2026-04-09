@@ -1,4 +1,4 @@
-import type { SessionDetail, SessionSummary, TracePage, StateHistory } from '@dapplepot/types/session'
+import type { SessionDetail, SessionSummary, TracePage } from '@dapplepot/types/session'
 import type { Paginated, SessionListParams } from '@dapplepot/types/common'
 import { apiClient } from './client'
 
@@ -19,8 +19,4 @@ export async function getTrace(
   return apiClient
     .get(`v1/sessions/${sessionId}/trace`, { searchParams: params as Record<string, number> })
     .json()
-}
-
-export async function getStateHistory(sessionId: string): Promise<StateHistory> {
-  return apiClient.get(`v1/sessions/${sessionId}/state-history`).json()
 }

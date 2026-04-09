@@ -4,6 +4,7 @@ import type { SessionSummary } from '@dapplepot/types/session'
 import { Skeleton } from '../ui/skeleton'
 import { formatAgo } from '../../utils/format'
 import { cn } from '../../utils/cn'
+import { useAgents } from '../../hooks/useAgents'
 
 const STATUS_DOT: Record<string, string> = {
   open:        'bg-emerald-500',
@@ -19,6 +20,8 @@ interface SessionFeedProps {
 }
 
 export function SessionFeed({ sessions }: SessionFeedProps) {
+  const { data: agentsData } = useAgents()
+  const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
   const prevIds = useRef<Set<string>>(new Set())
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set())
 
@@ -73,7 +76,7 @@ export function SessionFeed({ sessions }: SessionFeedProps) {
               {session.sessionId.slice(0, 8)}
             </Link>
             {session.agentId && (
-              <span className="ml-2 text-xs text-slate-400">{session.agentId}</span>
+              <span className="ml-2 text-xs text-slate-400">{agentMap[session.agentId] ?? session.agentId}</span>
             )}
           </div>
 

@@ -1,15 +1,19 @@
 import type { SessionDetail } from '@dapplepot/types/session'
 import { formatAgo, formatDuration } from '../../utils/format'
+import { useAgents } from '../../hooks/useAgents'
 
 interface SessionInfoTabProps {
   session: SessionDetail
 }
 
 export function SessionInfoTab({ session }: SessionInfoTabProps) {
+  const { data: agentsData } = useAgents()
+  const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
+
   const rows: { label: string; value: string | number | null }[] = [
     { label: 'Session ID',    value: session.sessionId },
     { label: 'Status',        value: session.status },
-    { label: 'Agent',         value: session.agentId },
+    { label: 'Agent',         value: session.agentId ? (agentMap[session.agentId] ?? session.agentId) : null },
     { label: 'Version',       value: session.agentVersion },
     { label: 'Environment',   value: session.environment },
     { label: 'Deployment',    value: session.deploymentId },

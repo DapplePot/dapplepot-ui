@@ -3,6 +3,7 @@ import type { CostPoint } from '@dapplepot/types/analytics'
 import { useSessionFilters } from '../../stores/sessionFilters'
 import { formatTokens, formatCost } from '../../utils/format'
 import { Skeleton } from '../ui/skeleton'
+import { useAgents } from '../../hooks/useAgents'
 
 interface CostTableProps {
   data: CostPoint[]
@@ -11,6 +12,8 @@ interface CostTableProps {
 export function CostTable({ data }: CostTableProps) {
   const navigate = useNavigate()
   const setAgentId = useSessionFilters((s) => s.setAgentId)
+  const { data: agentsData } = useAgents()
+  const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
 
   const total = data.reduce((sum, d) => sum + d.estimatedCostUsd, 0)
 
@@ -39,7 +42,7 @@ export function CostTable({ data }: CostTableProps) {
                 onClick={() => handleRowClick(row.agentId)}
                 className="cursor-pointer hover:bg-slate-50 transition-colors"
               >
-                <td className="px-4 py-3 text-xs text-slate-700">{row.agentId}</td>
+                <td className="px-4 py-3 text-xs text-slate-700">{agentMap[row.agentId] ?? row.agentId}</td>
                 <td className="px-4 py-3 text-right text-xs text-slate-600">
                   {formatTokens(row.totalTokens)}
                 </td>

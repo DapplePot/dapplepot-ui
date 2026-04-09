@@ -2,7 +2,6 @@ import { useState } from 'react'
 import type { SessionDetail } from '@dapplepot/types/session'
 import type { AlertSummary } from '@dapplepot/types/alert'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
-import { GraphStateTab } from './GraphStateTab'
 import { SessionInfoTab } from './SessionInfoTab'
 import { AlertsTab } from './AlertsTab'
 import { SecurityTab } from './SecurityTab'
@@ -13,12 +12,11 @@ interface RightPanelProps {
 }
 
 export function RightPanel({ session, alerts }: RightPanelProps) {
-  const [tab, setTab] = useState('graph')
+  const [tab, setTab] = useState('session')
 
   return (
     <Tabs value={tab} onValueChange={setTab} className="flex h-full flex-col">
       <TabsList className="mx-4 mt-3 shrink-0 justify-start">
-        <TabsTrigger value="graph">Graph state</TabsTrigger>
         <TabsTrigger value="session">Session</TabsTrigger>
         <TabsTrigger value="alerts">
           Alerts {alerts.length > 0 && `(${alerts.length})`}
@@ -27,9 +25,6 @@ export function RightPanel({ session, alerts }: RightPanelProps) {
       </TabsList>
 
       <div className="flex-1 overflow-y-auto px-4 pb-4">
-        <TabsContent value="graph">
-          <GraphStateTab graphState={session.graphState} />
-        </TabsContent>
         <TabsContent value="session">
           <SessionInfoTab session={session} />
         </TabsContent>
@@ -37,7 +32,7 @@ export function RightPanel({ session, alerts }: RightPanelProps) {
           <AlertsTab alerts={alerts} />
         </TabsContent>
         <TabsContent value="security">
-          <SecurityTab />
+          <SecurityTab sessionId={session.sessionId} />
         </TabsContent>
       </div>
     </Tabs>

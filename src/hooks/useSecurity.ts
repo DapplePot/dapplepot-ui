@@ -36,3 +36,32 @@ export function useRemediation(windowHours = 168) {
     staleTime: 300_000,
   })
 }
+
+// Top agents by composite risk — refreshes every 2 minutes
+export function useTopAgents() {
+  return useQuery({
+    queryKey: ['security', 'agents'],
+    queryFn:  () => securityApi.getTopAgents(),
+    staleTime: 120_000,
+    refetchInterval: 120_000,
+  })
+}
+
+// Full security profile for a single agent
+export function useAgentProfile(agentId: string) {
+  return useQuery({
+    queryKey: ['security', 'agent', agentId],
+    queryFn:  () => securityApi.getAgentProfile(agentId),
+    staleTime: 300_000,
+    enabled:  !!agentId,
+  })
+}
+
+// Signal registry — 121 sub-checks for all 20 OW signals; rarely changes
+export function useSignalRegistry() {
+  return useQuery({
+    queryKey: ['security', 'signals'],
+    queryFn:  () => securityApi.getSignalRegistry(),
+    staleTime: 3_600_000,  // 1 hour — registry is static
+  })
+}

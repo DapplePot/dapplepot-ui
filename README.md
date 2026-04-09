@@ -1,3 +1,4 @@
+
 # dapplepot_ui
 
 **Dapplepot — Dashboard UI**
@@ -295,3 +296,90 @@ pnpm sync-types     # Copy updated types from ../dapplepot-api/src/types/ → sr
 | 18 | SDK key masking done by backend, reveal via separate endpoint | `key_hash` is one-way — backend must store `masked_key` + `raw_key` at creation; UI never derives the mask itself |
 | 19 | `useUsers` unwraps `Paginated<UserSummary>` with `.then(r => r.data)` | Backend returns paginated envelope; UserTable expects a plain array |
 | 20 | Tenant ID shown in Topbar from Zustand store, not `useMe()` | Already in memory from login — no extra network call on every page |
+
+---
+
+## Security findings surface (`/security`)
+
+The Security page (`src/pages/Security.tsx`) consumes risk scores and OWASP findings
+produced by `dapplepot_security` (Zone 6) and served by `dapplepot_api` security endpoints.
+
+### Page structure — three tabs
+
+```
+/security
+├── Overview tab
+│     ├── Metric cards: sessions scored · high/critical count · avg risk score · top signal
+│     ├── RiskDistribution    — donut/bar chart of band counts (clean/low/medium/high/critical)
+│     ├── OwaspFrequency      — bar chart of LLM01–LLM10 hit frequency
+│     └── HighRiskTable       — top 5 highest-risk sessions; click row → opens Session detail tab
+│
+├── Session detail tab
+│     ├── SessionRiskPanel    — risk score (0–100), band badge, signal list, scorer version, scored_at
+│     └── FindingsList        — per-finding rows: signalId · owaspId · severity · detectionPhase · detail
+│
+└── Remediation tab
+      └── RemediationGuide    — one card per top firing signal: title · description · fix steps · SDK snippet
+```
+
+### Hooks (`src/hooks/useSecurity.ts`)
+
+| Hook | API endpoint | `staleTime` | Refresh |
+|------|-------------|-------------|---------|
+| `useSecurityOverview(windowHours?)` | `GET /v1/security/overview` | 120 000 ms | every 120s |
+| `useSessionSecurity(sessionId)` | `GET /v1/security/sessions/:id/score` + `.../findings` | 300 000 ms | on mount |
+| `useRemediation(windowHours?)` | `GET /v1/security/remediation` | 300 000 ms | on mount |
+
+`staleTime` values deliberately match the API-side Redis cache TTLs — polling sooner would hit stale data anyway.
+
+### API client (`src/api/security.ts`)
+
+```typescript
+getSecurityOverview({ windowHours? })     → SecurityOverview
+getSessionScore(sessionId)                → SessionRiskScore | null   // null = not yet scored
+getSessionFindings(sessionId)             → SecurityFinding[]
+getRemediation({ windowHours? })          → RemediationCard[]
+```
+
+### Findings data model
+
+| Type | Key fields | Source |
+|------|-----------|--------|
+| `SecurityFinding` | `signalId` (INJ-001, OUT-001, PII-004, L-06…), `owaspId` (LLM01–LLM10), `severity`, `matchedText` (always redacted), `detectionPhase` (online \| post_session), `scoreContrib` | `security_findings` table |
+| `SessionRiskScore` | `riskScore` (0–100), `riskBand` (clean/low/medium/high/critical), `signalIds[]`, `scorerVersion`, `scoredAt` | `session_risk_scores` table |
+| `SecurityOverview` | `bandDistribution`, `owaspFrequency`, `highRiskSessions` (top 5) | aggregated from both tables |
+| `RemediationCard` | `title`, `description`, `fixSteps[]`, `sdkSnippet` (optional), `frequency` | findings aggregate + static guide |
+
+### OWASP LLM Top 10 coverage
+
+| OWASP ID | Threat | Signal(s) | How detected |
+|----------|--------|-----------|-------------|
+| LLM01 | Prompt injection | INJ-001 – INJ-005 | Online — regex + tenant blocklist on `llm_start` messages |
+| LLM02 | Insecure output handling | OUT-001 | Online — LCS ratio of LLM output vs tool input |
+| LLM04 | Model DoS | L-10 | Post-session — token count > 4σ above agent baseline |
+| LLM06 | Sensitive info disclosure | PII-001 – PII-006 | Online — PII scanner on `llm_end` + `tool_end` payloads |
+| LLM07 | Insecure plugin design | L-06 | Post-session — tool invoked outside declared manifest |
+| LLM08 | Excessive agency | L-05, L-06, L-07 | Post-session — excessive tool calls, out-of-scope tools, write on read-only intent |
+| LLM09 | Overreliance | L-08 | Post-session — high-stakes action completed without HITL interrupt |
+| LLM10 | Model theft | L-09 | Post-session — cross-session probe cohort pattern |
+
+### Risk band colour mapping (in `Security.tsx`)
+
+| Band | Colour |
+|------|--------|
+| `clean` | `#10b981` (green) |
+| `low` | `#60a5fa` (blue) |
+| `medium` | `#f59e0b` (amber) |
+| `high` | `#f97316` (orange) |
+| `critical` | `#ef4444` (red) |
+
+### Components (`src/components/security/`)
+
+| Component | Props | What it renders |
+|-----------|-------|----------------|
+| `RiskDistribution` | `bands[]`, `total` | Bar/donut of session counts per risk band |
+| `OwaspFrequency` | `entries[]` | Horizontal bar chart — OWASP IDs by hit count |
+| `HighRiskTable` | `sessions[]`, `onSelect` | Table of top-5 sessions; row click sets selected session ID |
+| `SessionRiskPanel` | `riskScore`, `riskBand`, `signalCount`, `signalIds[]`, `scoredAt`, `scorerVersion` | Score badge + signal tag list |
+| `FindingsList` | `findings[]` | Findings table — one row per `SecurityFinding` |
+| `RemediationGuide` | `cards[]` | Expandable cards — one per top firing signal |

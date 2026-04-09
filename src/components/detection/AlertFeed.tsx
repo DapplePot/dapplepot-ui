@@ -6,6 +6,7 @@ import { Skeleton } from '../ui/skeleton'
 import { useAlertFilters } from '../../stores/alertFilters'
 import { formatAgo } from '../../utils/format'
 import { cn } from '../../utils/cn'
+import { useAgents } from '../../hooks/useAgents'
 
 const SEVERITY_DOT: Record<string, string> = {
   critical: 'bg-red-500',
@@ -15,6 +16,7 @@ const SEVERITY_DOT: Record<string, string> = {
 }
 
 type AlertSeverity = 'info' | 'warning' | 'medium' | 'critical' | ''
+type AlertSource   = 'security' | 'policy' | ''
 
 const SEVERITY_PILLS: { value: AlertSeverity; label: string }[] = [
   { value: '',         label: 'All' },
@@ -24,20 +26,26 @@ const SEVERITY_PILLS: { value: AlertSeverity; label: string }[] = [
   { value: 'info',     label: 'Info' },
 ]
 
+const SOURCE_PILLS: { value: AlertSource; label: string }[] = [
+  { value: '',          label: 'All sources' },
+  { value: 'security',  label: 'Security' },
+  { value: 'policy',    label: 'Policy' },
+]
+
 interface AlertFeedProps {
   alerts: AlertSummary[]
 }
 
 export function AlertFeed({ alerts }: AlertFeedProps) {
-  const { severity, setSeverity } = useAlertFilters()
+  const { severity, setSeverity, source, setSource } = useAlertFilters()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-
-  const selected = alerts.find((a) => a.alertId === selectedId) ?? null
+  const { data: agentsData } = useAgents()
+  const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
 
   return (
     <div className="space-y-3">
       {/* Severity pills */}
-      <div className="flex gap-1">
+      <div className="flex flex-wrap gap-1">
         {SEVERITY_PILLS.map(({ value, label }) => (
           <button
             key={value}
@@ -52,50 +60,65 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
             {label}
           </button>
         ))}
+        <span className="mx-1 self-center text-slate-300">|</span>
+        {SOURCE_PILLS.map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => setSource(value)}
+            className={cn(
+              'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+              source === value
+                ? 'bg-violet-700 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            )}
+          >
+            {label}
+          </button>
+        ))}
       </div>
-
-      {/* Selected drawer */}
-      {selected && (
-        <AlertDrawer alert={selected} onClose={() => setSelectedId(null)} />
-      )}
 
       {/* Alert list */}
       <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
         {alerts.length === 0 ? (
           <div className="py-12 text-center text-sm text-slate-400">No alerts</div>
         ) : (
-          alerts.map((alert) => (
-            <div
-              key={alert.alertId}
-              onClick={() => setSelectedId(alert.alertId === selectedId ? null : alert.alertId)}
-              className={cn(
-                'flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors hover:bg-slate-50',
-                selectedId === alert.alertId && 'bg-slate-50'
-              )}
-            >
-              <span
-                className={`mt-1 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[alert.severity] ?? 'bg-slate-400'}`}
+          alerts.map((alert) =>
+            alert.alertId === selectedId ? (
+              <AlertDrawer
+                key={alert.alertId}
+                alert={alert}
+                onClose={() => setSelectedId(null)}
               />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-800">{alert.title}</p>
-                <p className="mt-0.5 truncate text-xs text-slate-400">
-                  {alert.agentId ?? '—'} · {alert.ruleName}
-                </p>
+            ) : (
+              <div
+                key={alert.alertId}
+                onClick={() => setSelectedId(alert.alertId)}
+                className="flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors hover:bg-slate-50"
+              >
+                <span
+                  className={`mt-1 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[alert.severity] ?? 'bg-slate-400'}`}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-800">{alert.title}</p>
+                  <p className="mt-0.5 truncate text-xs text-slate-400">
+                    {alert.agentId ? (agentMap[alert.agentId] ?? alert.agentId) : '—'} · {alert.ruleName}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="text-xs text-slate-400">{formatAgo(alert.triggeredAt)}</span>
+                  <Badge
+                    variant={
+                      alert.status === 'resolved' ? 'success'
+                      : alert.status === 'acknowledged' ? 'warning'
+                      : 'outline'
+                    }
+                  >
+                    {alert.status}
+                  </Badge>
+                </div>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="text-xs text-slate-400">{formatAgo(alert.triggeredAt)}</span>
-                <Badge
-                  variant={
-                    alert.status === 'resolved' ? 'success'
-                    : alert.status === 'acknowledged' ? 'warning'
-                    : 'outline'
-                  }
-                >
-                  {alert.status}
-                </Badge>
-              </div>
-            </div>
-          ))
+            )
+          )
         )}
       </div>
     </div>

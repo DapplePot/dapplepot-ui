@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import type { AlertSummary } from '@dapplepot/types/alert'
 import { Skeleton } from '../ui/skeleton'
 import { formatAgo } from '../../utils/format'
+import { useAgents } from '../../hooks/useAgents'
 
 const SEVERITY_DOT: Record<string, string> = {
   critical: 'bg-red-500',
@@ -15,6 +16,9 @@ interface AlertPanelProps {
 }
 
 export function AlertPanel({ alerts }: AlertPanelProps) {
+  const { data: agentsData } = useAgents()
+  const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
+
   if (alerts.length === 0) {
     return (
       <div className="flex h-20 items-center justify-center text-sm text-slate-400">
@@ -33,7 +37,7 @@ export function AlertPanel({ alerts }: AlertPanelProps) {
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-slate-800">{alert.title}</p>
             <p className="mt-0.5 truncate text-xs text-slate-400">
-              {alert.agentId ?? '—'} · {alert.ruleName}
+              {alert.agentId ? (agentMap[alert.agentId] ?? alert.agentId) : '—'} · {alert.ruleName}
             </p>
           </div>
           <span className="shrink-0 text-xs text-slate-400">

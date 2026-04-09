@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import { Link } from '@tanstack/react-router'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Button } from '../ui/button'
 import type { SecurityFinding } from '../../types/security'
 
 interface FindingsListProps {
@@ -10,8 +8,9 @@ interface FindingsListProps {
 
 const SEVERITY_ICON: Record<string, string> = {
   critical: '🔴',
-  warning:  '🟡',
-  info:     '🔵',
+  high:     '🟠',
+  medium:   '🟡',
+  low:      '🔵',
 }
 
 export function FindingsList({ findings }: FindingsListProps) {
@@ -31,12 +30,25 @@ export function FindingsList({ findings }: FindingsListProps) {
           >
             <span>{SEVERITY_ICON[f.severity] ?? '⚪'}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800">{f.signalId}</p>
-              <p className="text-xs text-slate-400">
-                {f.sigType} · {f.owaspId}
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-slate-800">
+                  {f.checkLabel}
+                </p>
+                <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                  f.framework === 'ASI'
+                    ? 'bg-violet-100 text-violet-700'
+                    : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {f.framework}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-mono">
+                {f.owaspSignalId}:{f.subCheckId} · {f.category}
               </p>
             </div>
-            <span className="text-xs font-semibold text-slate-700">+{f.scoreContrib}pts</span>
+            <span className="text-xs font-semibold text-slate-700">
+              {f.checkScore}
+            </span>
             {expandedId === f.findingId ? (
               <ChevronDown className="h-4 w-4 text-slate-400" />
             ) : (
@@ -60,13 +72,6 @@ export function FindingsList({ findings }: FindingsListProps) {
               <p className="text-xs text-slate-400">
                 {f.detectionPhase} · {f.eventType} · {new Date(f.createdAt).toLocaleString()}
               </p>
-              <div>
-                <Link to="/sessions/$id" params={{ id: f.sessionId }}>
-                  <Button size="sm" variant="outline">
-                    View in trace ↗
-                  </Button>
-                </Link>
-              </div>
             </div>
           )}
         </div>

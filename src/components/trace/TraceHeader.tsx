@@ -3,6 +3,7 @@ import { StatusBadge } from '../sessions/StatusBadge'
 import { Button } from '../ui/button'
 import { useKillSwitch } from '../../hooks/useControl'
 import { Link } from '@tanstack/react-router'
+import { useAgents } from '../../hooks/useAgents'
 
 interface TraceHeaderProps {
   session: SessionDetail
@@ -11,6 +12,8 @@ interface TraceHeaderProps {
 
 export function TraceHeader({ session, alertCount }: TraceHeaderProps) {
   const killSwitch = useKillSwitch()
+  const { data: agentsData } = useAgents()
+  const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
 
   return (
     <div className="flex items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white px-5 py-4">
@@ -19,7 +22,7 @@ export function TraceHeader({ session, alertCount }: TraceHeaderProps) {
           {session.sessionId}
         </p>
         <p className="mt-0.5 text-xs text-slate-500">
-          {session.agentId}
+          {session.agentId ? (agentMap[session.agentId] ?? session.agentId) : '—'}
           {session.agentVersion && ` · v${session.agentVersion}`}
           {` · ${session.environment}`}
         </p>
