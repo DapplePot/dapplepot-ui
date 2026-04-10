@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import type { SessionSummary } from '@dapplepot/types/session'
 import { API_BASE } from './client'
 import { useAuthStore } from '../stores/auth'
+import { getSessionList } from './sessions'
 
 /** SSE hook: connects to /v1/sessions/live, writes updates directly into React Query cache */
 export function useLiveSessions() {
@@ -18,9 +19,17 @@ export function useLiveSessions() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         signal: controller.signal,
         onmessage(event) {
-          if (event.event === 'sessions') {
-            const sessions = JSON.parse(event.data) as SessionSummary[]
-            queryClient.setQueryData(['sessions', 'live'], sessions)
+          // Handle both named 'sessions' events and default 'message' events
+          if (event.event === 'sessions' || event.event === 'message' || !event.event) {
+            if (!event.data) return
+            try {
+              const sessions = JSON.parse(event.data) as SessionSummary[]
+              if (Array.isArray(sessions)) {
+                queryClient.setQueryData(['sessions', 'live'], sessions)
+              }
+            } catch {
+              // ignore malformed frames
+            }
           }
         },
         onerror() {
@@ -35,8 +44,10 @@ export function useLiveSessions() {
 
   return useQuery({
     queryKey: ['sessions', 'live'],
-    queryFn: () => [] as SessionSummary[],
-    staleTime: Infinity, // SSE pushes updates directly
+    // Seed with open sessions from REST so the feed isn't empty before first SSE push
+    queryFn: () =>
+      getSessionList({ status: 'open', limit: 50, page: 1 }).then((r) => r.data),
+    staleTime: Infinity, // SSE owns updates after initial load
   })
 }
 

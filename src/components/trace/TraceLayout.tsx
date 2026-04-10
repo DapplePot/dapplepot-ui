@@ -31,8 +31,13 @@ export function TraceLayout({
 
       {/* Two-column layout */}
       <div className="flex flex-1 gap-4 overflow-hidden">
-        {/* Timeline — 60% */}
+        {/* Right panel — 60% */}
         <div className="flex w-3/5 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <RightPanel session={session} alerts={alerts} />
+        </div>
+
+        {/* Timeline — 40% */}
+        <div className="flex w-2/5 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-4 py-2.5">
             <h2 className="text-sm font-medium text-slate-700">
               Event timeline
@@ -48,11 +53,6 @@ export function TraceLayout({
             isFetchingMore={isFetchingMore}
             onLoadMore={onLoadMore}
           />
-        </div>
-
-        {/* Right panel — 40% */}
-        <div className="flex w-2/5 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <RightPanel session={session} alerts={alerts} />
         </div>
       </div>
     </div>

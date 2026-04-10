@@ -4,6 +4,7 @@ import type {
   ErrorRatePoint,
   LatencyStat,
   CostPoint,
+  SessionFunnel,
 } from '@dapplepot/types/analytics'
 import { apiClient } from './client'
 
@@ -41,4 +42,8 @@ export async function getLatency(params: {
 
 export async function getCost(params: { window: string }): Promise<CostPoint[]> {
   return apiClient.get('v1/analytics/cost', { searchParams: params }).json()
+}
+
+export async function getSessionFunnel(params: { window: string }): Promise<SessionFunnel> {
+  return apiClient.get('v1/analytics/session-funnel', { searchParams: params }).json()
 }

@@ -1,7 +1,8 @@
 import { useParams, Link } from '@tanstack/react-router'
 import { useAgentProfile } from '../hooks/useSecurity'
 import { Skeleton } from '../components/ui/skeleton'
-import type { RiskBand } from '../types/security'
+import { TrendingDown, TrendingUp, Minus } from 'lucide-react'
+import type { RiskBand, TrustTrend } from '../types/security'
 
 const BAND_COLOR: Record<RiskBand, string> = {
   clean:    'text-emerald-600',
@@ -19,6 +20,7 @@ const BAND_BG: Record<RiskBand, string> = {
   critical: 'bg-red-50 text-red-700 border-red-200',
 }
 
+
 function ScoreCard({ label, score, band }: { label: string; score: number; band: RiskBand }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5">
@@ -27,6 +29,36 @@ function ScoreCard({ label, score, band }: { label: string; score: number; band:
       <span className={`mt-2 inline-block rounded border px-2 py-0.5 text-xs font-medium capitalize ${BAND_BG[band]}`}>
         {band}
       </span>
+    </div>
+  )
+}
+
+function trustScoreColor(score: number): string {
+  if (score >= 71) return 'text-emerald-600'
+  if (score >= 41) return 'text-amber-500'
+  return 'text-red-600'
+}
+
+function TrustCard({ score, trend }: { score: number; trend?: TrustTrend }) {
+  const trendIcon =
+    trend === 'improving' ? <TrendingUp  className="h-4 w-4 text-green-500" /> :
+    trend === 'degrading' ? <TrendingDown className="h-4 w-4 text-red-500" />  :
+                            <Minus       className="h-4 w-4 text-slate-400" />
+
+  const trendColor =
+    trend === 'improving' ? 'text-green-600' :
+    trend === 'degrading' ? 'text-red-600'   : 'text-slate-500'
+
+  const rounded = Math.round(score)
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-5">
+      <p className="text-xs text-slate-500 mb-1">Agent trust score</p>
+      <p className={`text-3xl font-bold ${trustScoreColor(rounded)}`}>{rounded}</p>
+      <div className="mt-2 flex items-center gap-1.5">
+        {trendIcon}
+        <span className={`text-xs font-medium capitalize ${trendColor}`}>{trend ?? 'stable'}</span>
+      </div>
     </div>
   )
 }
@@ -112,14 +144,30 @@ export function AgentSecurityProfile() {
           {data.latestVersion && <p>v{data.latestVersion}</p>}
           <p>{data.sessionCount} sessions scored</p>
           {data.lastScoredAt && <p>Last scored {fmt(data.lastScoredAt)}</p>}
+          {data.trustTrend && (
+            <div className="flex items-center justify-end gap-1 mt-1">
+              {data.trustTrend === 'improving'
+                ? <TrendingUp  className="h-3 w-3 text-green-500" />
+                : data.trustTrend === 'degrading'
+                ? <TrendingDown className="h-3 w-3 text-red-500" />
+                : <Minus className="h-3 w-3 text-slate-400" />}
+              <span className={`capitalize ${
+                data.trustTrend === 'improving' ? 'text-green-600' :
+                data.trustTrend === 'degrading' ? 'text-red-500' : 'text-slate-400'
+              }`}>{data.trustTrend} trust</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Score cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className={`grid gap-4 ${data.trustScore !== undefined ? 'grid-cols-4' : 'grid-cols-3'}`}>
         <ScoreCard label="Composite risk (avg)" score={Math.round(data.compositeRisk)} band={compositeRiskBand} />
         <ScoreCard label="Avg LLM risk score"   score={Math.round(data.avgLlmScore)}   band={llmBand} />
         <ScoreCard label="Avg ASI risk score"   score={Math.round(data.avgAsiScore)}   band={asiBand} />
+        {data.trustScore !== undefined && (
+          <TrustCard score={data.trustScore} trend={data.trustTrend} />
+        )}
       </div>
 
       {/* Peak scores */}

@@ -49,42 +49,54 @@ export function SessionFeed({ sessions }: SessionFeedProps) {
   }
 
   return (
-    <div className="divide-y divide-slate-100">
-      {sessions.slice(0, 20).map((session) => (
-        <div
-          key={session.sessionId}
-          className={cn(
-            'flex items-center gap-3 px-4 py-2.5 transition-colors',
-            flashIds.has(session.sessionId) && 'bg-blue-50'
-          )}
-        >
-          {/* Status dot — pulses for open sessions */}
-          <span
+    <div>
+      {/* Column header */}
+      <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-2 bg-slate-50">
+        <span className="w-2 shrink-0" />
+        <span className="flex-1 text-xs font-medium text-slate-400 uppercase tracking-wide">Session / Agent</span>
+        <span className="w-20 shrink-0 text-xs font-medium text-slate-400 uppercase tracking-wide">Status</span>
+        <span className="w-16 shrink-0 text-right text-xs font-medium text-slate-400 uppercase tracking-wide">Started</span>
+      </div>
+
+      <div className="divide-y divide-slate-100">
+        {sessions.slice(0, 20).map((session) => (
+          <div
+            key={session.sessionId}
             className={cn(
-              'h-2 w-2 shrink-0 rounded-full',
-              STATUS_DOT[session.status] ?? 'bg-slate-400',
-              session.status === 'open' && 'animate-pulse'
+              'flex items-center gap-3 px-4 py-2.5 transition-colors',
+              flashIds.has(session.sessionId) && 'bg-blue-50'
             )}
-          />
+          >
+            {/* Status dot — pulses for open sessions */}
+            <span
+              className={cn(
+                'h-2 w-2 shrink-0 rounded-full',
+                STATUS_DOT[session.status] ?? 'bg-slate-400',
+                session.status === 'open' && 'animate-pulse'
+              )}
+            />
 
-          <div className="min-w-0 flex-1">
-            <Link
-              to="/sessions/$id"
-              params={{ id: session.sessionId }}
-              className="font-mono text-xs text-slate-700 hover:text-violet-600"
-            >
-              {session.sessionId.slice(0, 8)}
-            </Link>
-            {session.agentId && (
-              <span className="ml-2 text-xs text-slate-400">{agentMap[session.agentId] ?? session.agentId}</span>
-            )}
+            <div className="min-w-0 flex-1">
+              <Link
+                to="/sessions/$id"
+                params={{ id: session.sessionId }}
+                className="font-mono text-xs text-slate-700 hover:text-violet-600"
+              >
+                {session.sessionId.slice(0, 8)}
+              </Link>
+              {session.agentId && (
+                <span className="ml-2 text-xs text-slate-400">{agentMap[session.agentId] ?? session.agentId}</span>
+              )}
+            </div>
+
+            <span className="w-20 shrink-0 text-xs capitalize text-slate-500">{session.status}</span>
+
+            <span className="w-16 shrink-0 text-right text-xs text-slate-400">
+              {session.startedAt ? formatAgo(session.startedAt) : '—'}
+            </span>
           </div>
-
-          <span className="shrink-0 text-xs text-slate-400">
-            {session.startedAt ? formatAgo(session.startedAt) : '—'}
-          </span>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

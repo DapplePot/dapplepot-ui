@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { AlertSummary } from '@dapplepot/types/alert'
+import type { OwSignalStatus } from '@dapplepot/types/security'
 import { AlertDrawer } from './AlertDrawer'
+import { useAlertDetail } from '../../hooks/useAlerts'
 import { Badge } from '../ui/badge'
 import { Skeleton } from '../ui/skeleton'
 import { useAlertFilters } from '../../stores/alertFilters'
@@ -32,12 +34,34 @@ const SOURCE_PILLS: { value: AlertSource; label: string }[] = [
   { value: 'policy',    label: 'Policy' },
 ]
 
+function AlertCardTitle({ alert }: { alert: AlertSummary }) {
+  const { data: detail } = useAlertDetail(alert.alertId)
+
+  if (alert.source === 'security' && detail) {
+    const llm = detail.payload['llm_signal_status'] as Record<string, OwSignalStatus> | undefined
+    const asi = detail.payload['asi_signal_status'] as Record<string, OwSignalStatus> | undefined
+    const fired = [
+      ...Object.entries(llm ?? {}).filter(([, v]) => v.status === 'fired').map(([k]) => k),
+      ...Object.entries(asi ?? {}).filter(([, v]) => v.status === 'fired').map(([k]) => k),
+    ]
+    if (fired.length > 0) {
+      return (
+        <p className="truncate text-sm font-medium text-slate-800">
+          {fired.join(', ')} | {alert.title}
+        </p>
+      )
+    }
+  }
+
+  return <p className="truncate text-sm font-medium text-slate-800">{alert.title}</p>
+}
+
 interface AlertFeedProps {
   alerts: AlertSummary[]
 }
 
 export function AlertFeed({ alerts }: AlertFeedProps) {
-  const { severity, setSeverity, source, setSource } = useAlertFilters()
+  const { severity, setSeverity, status, setStatus, source, setSource } = useAlertFilters()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const { data: agentsData } = useAgents()
   const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
@@ -49,10 +73,10 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
         {SEVERITY_PILLS.map(({ value, label }) => (
           <button
             key={value}
-            onClick={() => setSeverity(value)}
+            onClick={() => { setSeverity(value); setStatus('') }}
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-              severity === value
+              severity === value && status === ''
                 ? 'bg-slate-900 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             )}
@@ -60,6 +84,39 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
             {label}
           </button>
         ))}
+        <button
+          onClick={() => { setSeverity(''); setStatus('open') }}
+          className={cn(
+            'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+            status === 'open'
+              ? 'bg-slate-900 text-white'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          )}
+        >
+          Live
+        </button>
+        <button
+          onClick={() => { setSeverity(''); setStatus('acknowledged') }}
+          className={cn(
+            'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+            status === 'acknowledged'
+              ? 'bg-slate-900 text-white'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          )}
+        >
+          Acknowledged
+        </button>
+        <button
+          onClick={() => { setSeverity(''); setStatus('resolved') }}
+          className={cn(
+            'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+            status === 'resolved'
+              ? 'bg-slate-900 text-white'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          )}
+        >
+          Resolved
+        </button>
         <span className="mx-1 self-center text-slate-300">|</span>
         {SOURCE_PILLS.map(({ value, label }) => (
           <button
@@ -99,9 +156,9 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
                   className={`mt-1 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[alert.severity] ?? 'bg-slate-400'}`}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-800">{alert.title}</p>
+                  <AlertCardTitle alert={alert} />
                   <p className="mt-0.5 truncate text-xs text-slate-400">
-                    {alert.agentId ? (agentMap[alert.agentId] ?? alert.agentId) : '—'} · {alert.ruleName}
+                    {alert.agentId ? (agentMap[alert.agentId] ?? alert.agentId) : '—'} · {alert.sessionId ? <span className="font-mono">{alert.sessionId.slice(0, 8)}…</span> : '—'}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">

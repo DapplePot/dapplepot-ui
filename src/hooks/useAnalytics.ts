@@ -1,5 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import * as analyticsApi from '../api/analytics'
+import * as securityApi from '../api/security'
+import * as alertsApi from '../api/alerts'
+
+function windowToHours(w: string): number {
+  if (w === '7d') return 168
+  if (w === '30d') return 720
+  return 24
+}
 
 export function useOverview(window: string) {
   return useQuery({
@@ -39,5 +47,29 @@ export function useCost(window: string) {
     queryKey: ['analytics', 'cost', window],
     queryFn: () => analyticsApi.getCost({ window }),
     staleTime: 300_000,
+  })
+}
+
+export function useSessionFunnel(window: string) {
+  return useQuery({
+    queryKey: ['analytics', 'session-funnel', window],
+    queryFn: () => analyticsApi.getSessionFunnel({ window }),
+    staleTime: 60_000,
+  })
+}
+
+export function useSecurityAnalytics(window: string) {
+  return useQuery({
+    queryKey: ['analytics', 'security-overview', window],
+    queryFn: () => securityApi.getSecurityOverview({ windowHours: windowToHours(window) }),
+    staleTime: 60_000,
+  })
+}
+
+export function useAlertStats(window: string) {
+  return useQuery({
+    queryKey: ['analytics', 'alert-stats', window],
+    queryFn: () => alertsApi.getAlertStats({ window }),
+    staleTime: 60_000,
   })
 }

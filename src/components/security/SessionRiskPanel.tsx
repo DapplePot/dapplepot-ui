@@ -1,17 +1,23 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Link2, ShieldAlert, TrendingDown, TrendingUp, Minus } from 'lucide-react'
 import { Badge } from '../ui/badge'
-import type { OwSignalStatus } from '../../types/security'
+import type { OwSignalStatus, ConfidenceTier, TrustTrend } from '../../types/security'
 
 interface SessionRiskPanelProps {
-  llmScore:         number
-  llmBand:          string
-  asiScore:         number
-  asiBand:          string
-  llmSignalStatus:  Record<string, OwSignalStatus>
-  asiSignalStatus:  Record<string, OwSignalStatus>
-  scoredAt:         string
-  scorerVersion:    string
+  llmScore:               number
+  llmBand:                string
+  asiScore:               number
+  asiBand:                string
+  llmSignalStatus:        Record<string, OwSignalStatus>
+  asiSignalStatus:        Record<string, OwSignalStatus>
+  scoredAt:               string
+  scorerVersion:          string
+  // v3
+  trustScore?:            number
+  trustTrend?:            TrustTrend
+  attackChainsDetected?:  string[]
+  amplification?:         number
+  confidenceBand?:        string
 }
 
 const BAND_VARIANT: Record<string, 'destructive' | 'warning' | 'info' | 'secondary'> = {
@@ -22,8 +28,32 @@ const BAND_VARIANT: Record<string, 'destructive' | 'warning' | 'info' | 'seconda
   clean:    'secondary',
 }
 
+const CONFIDENCE_TIER_VARIANT: Record<ConfidenceTier, string> = {
+  deterministic: 'bg-violet-100 text-violet-700',
+  high:          'bg-blue-100 text-blue-700',
+  medium:        'bg-amber-100 text-amber-700',
+  low:           'bg-orange-100 text-orange-700',
+  skeletal:      'bg-slate-100 text-slate-500',
+}
+
+const ATTACK_CHAIN_LABELS: Record<string, string> = {
+  indirect_injection_to_exfil:  'Injection → Exfiltration',
+  prompt_injection_to_agency:   'Injection → Rogue Agency',
+  pii_exfil_chain:              'PII Exfiltration Chain',
+  tool_abuse_to_exfil:          'Tool Abuse → Exfiltration',
+  trust_fraud:                  'Trust Fraud',
+  cascade_rogue:                'Cascade Rogue Agency',
+  supply_chain_to_injection:    'Supply Chain → Injection',
+}
+
 const LLM_SIGNAL_ORDER   = ['OW-LLM01','OW-LLM02','OW-LLM03','OW-LLM04','OW-LLM05','OW-LLM06','OW-LLM07','OW-LLM08','OW-LLM09','OW-LLM10']
 const AGENT_SIGNAL_ORDER = ['OW-ASI01','OW-ASI02','OW-ASI03','OW-ASI04','OW-ASI05','OW-ASI06','OW-ASI07','OW-ASI08','OW-ASI09','OW-ASI10']
+
+function TrustTrendIcon({ trend }: { trend: TrustTrend }) {
+  if (trend === 'improving')  return <TrendingUp  className="h-4 w-4 text-green-500" />
+  if (trend === 'degrading')  return <TrendingDown className="h-4 w-4 text-red-500" />
+  return <Minus className="h-4 w-4 text-slate-400" />
+}
 
 // Fired signal row — expandable sub-checks
 function FiredSignalRow({ signalId, s }: { signalId: string; s: OwSignalStatus }) {
@@ -31,6 +61,8 @@ function FiredSignalRow({ signalId, s }: { signalId: string; s: OwSignalStatus }
   const subChecks = Object.entries(s.sub_checks ?? {})
   const firedSubs = subChecks.filter(([, sc]) => sc.status === 'fired')
   const primaryLabel = firedSubs[0]?.[1].label ?? signalId
+  const displayScore = s.rawScore ?? s.score ?? 0
+  const effectiveScore = s.effectiveScore
 
   return (
     <div className="rounded-md border border-red-200 bg-red-50">
@@ -40,7 +72,12 @@ function FiredSignalRow({ signalId, s }: { signalId: string; s: OwSignalStatus }
       >
         <Badge variant="outline" className="font-mono text-xs shrink-0">{signalId}</Badge>
         <span className="text-xs text-slate-700 flex-1 min-w-0 truncate">{primaryLabel}</span>
-        <span className="font-mono text-xs font-semibold text-red-700 shrink-0">{s.score}</span>
+        <span className="font-mono text-xs font-semibold text-red-700 shrink-0">{displayScore}</span>
+        {effectiveScore !== undefined && effectiveScore !== displayScore && (
+          <span className="font-mono text-xs text-red-400 shrink-0">
+            (eff. {Math.round(effectiveScore)})
+          </span>
+        )}
         <Badge variant="destructive" className="text-xs shrink-0">fired</Badge>
         {subChecks.length > 0 && (
           expanded
@@ -57,7 +94,17 @@ function FiredSignalRow({ signalId, s }: { signalId: string; s: OwSignalStatus }
                 <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${sc.status === 'fired' ? 'bg-red-500' : 'bg-green-400'}`} />
                 <span className="font-mono text-xs text-slate-500 shrink-0">{id}</span>
                 <span className="text-xs text-slate-700 flex-1">{sc.label}</span>
+                {sc.confidenceTier && (
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium shrink-0 ${CONFIDENCE_TIER_VARIANT[sc.confidenceTier]}`}>
+                    {sc.confidenceTier}
+                  </span>
+                )}
                 <span className="font-mono text-xs text-slate-400 shrink-0">{sc.score}</span>
+                {sc.effectiveScore !== undefined && sc.effectiveScore !== sc.score && (
+                  <span className="font-mono text-xs text-slate-300 shrink-0">
+                    →{Math.round(sc.effectiveScore)}
+                  </span>
+                )}
               </div>
               {sc.detail && (
                 <p className="mt-0.5 text-xs text-slate-400 pl-4">{sc.detail}</p>
@@ -126,7 +173,7 @@ function OwSignalStatusSection({
                     <div key={id} className="flex items-center gap-2 rounded-md border border-green-100 bg-green-50 px-3 py-1.5">
                       <Badge variant="outline" className="font-mono text-xs shrink-0">{id}</Badge>
                       <span className="text-xs text-slate-400 flex-1">{id}</span>
-                      <span className="font-mono text-xs text-slate-400 shrink-0">{s?.score ?? 0}</span>
+                      <span className="font-mono text-xs text-slate-400 shrink-0">{s?.rawScore ?? s?.score ?? 0}</span>
                       <span className="text-xs font-medium text-green-700 shrink-0">✓ clean</span>
                     </div>
                   )
@@ -149,11 +196,19 @@ export function SessionRiskPanel({
   asiSignalStatus,
   scoredAt,
   scorerVersion,
+  trustScore,
+  trustTrend,
+  attackChainsDetected,
+  amplification,
+  confidenceBand,
 }: SessionRiskPanelProps) {
+  const hasTrust = trustScore !== undefined
+  const hasChains = attackChainsDetected && attackChainsDetected.length > 0
+
   return (
     <div className="space-y-4">
       {/* Score summary cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className={`grid gap-4 ${hasTrust ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <p className="text-xs font-medium text-slate-500">LLM risk score</p>
           <div className="mt-2 flex items-end gap-3">
@@ -166,6 +221,11 @@ export function SessionRiskPanel({
             scored {new Date(scoredAt).toLocaleString()}
           </p>
           <p className="mt-1 text-xs text-slate-400 font-mono">{scorerVersion}</p>
+          {confidenceBand && (
+            <p className="mt-1 text-xs text-slate-400">
+              confidence: <span className="font-medium">{confidenceBand}</span>
+            </p>
+          )}
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-4">
@@ -176,8 +236,62 @@ export function SessionRiskPanel({
               {asiBand}
             </Badge>
           </div>
+          {amplification !== undefined && amplification > 1.0 && (
+            <div className="mt-2 flex items-center gap-1.5">
+              <Link2 className="h-3 w-3 text-orange-500" />
+              <span className="text-xs text-orange-600 font-medium">
+                ×{amplification.toFixed(2)} chain amplification
+              </span>
+            </div>
+          )}
         </div>
+
+        {hasTrust && (
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="text-xs font-medium text-slate-500">Agent trust score</p>
+            <div className="mt-2 flex items-end gap-3">
+              <span className="text-5xl font-bold text-slate-900">{Math.round(trustScore!)}</span>
+              {trustTrend && (
+                <div className="mb-1 flex items-center gap-1">
+                  <TrustTrendIcon trend={trustTrend} />
+                  <span className={`text-xs font-medium ${
+                    trustTrend === 'improving' ? 'text-green-600' :
+                    trustTrend === 'degrading' ? 'text-red-600' : 'text-slate-500'
+                  }`}>{trustTrend}</span>
+                </div>
+              )}
+            </div>
+            <p className="mt-2 text-xs text-slate-400">Bayesian trust 0–100</p>
+          </div>
+        )}
       </div>
+
+      {/* Attack chains */}
+      {hasChains && (
+        <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldAlert className="h-4 w-4 text-orange-600" />
+            <p className="text-xs font-semibold text-orange-700">
+              Attack chains detected ({attackChainsDetected!.length})
+            </p>
+            {amplification !== undefined && amplification > 1.0 && (
+              <Badge variant="warning" className="ml-auto text-xs">
+                ×{amplification.toFixed(2)} amplification
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {attackChainsDetected!.map(chain => (
+              <span
+                key={chain}
+                className="rounded-full bg-orange-100 border border-orange-200 px-2.5 py-1 text-xs font-medium text-orange-800"
+              >
+                {ATTACK_CHAIN_LABELS[chain] ?? chain}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <OwSignalStatusSection
         title="LLM signals (OWASP LLM Top 10)"

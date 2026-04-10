@@ -5,7 +5,7 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { useUpdateAlertStatus, useAlertDetail } from '../../hooks/useAlerts'
 import { formatAgo } from '../../utils/format'
-import { X } from 'lucide-react'
+import { Link2, ShieldAlert, TrendingDown, TrendingUp, Minus, X } from 'lucide-react'
 import { useAgents } from '../../hooks/useAgents'
 
 interface AlertDrawerProps {
@@ -13,16 +13,32 @@ interface AlertDrawerProps {
   onClose: () => void
 }
 
+const ATTACK_CHAIN_LABELS: Record<string, string> = {
+  indirect_injection_to_exfil:  'Injection → Exfiltration',
+  prompt_injection_to_agency:   'Injection → Rogue Agency',
+  pii_exfil_chain:              'PII Exfiltration Chain',
+  tool_abuse_to_exfil:          'Tool Abuse → Exfiltration',
+  trust_fraud:                  'Trust Fraud',
+  cascade_rogue:                'Cascade Rogue Agency',
+  supply_chain_to_injection:    'Supply Chain → Injection',
+}
+
 function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
-  const llmScore       = payload['llm_score'] as number | undefined
-  const llmBand        = payload['llm_band'] as string | undefined
-  const asiScore       = payload['asi_score'] as number | undefined
-  const asiBand        = payload['asi_band'] as string | undefined
-  const summary        = payload['summary'] as Record<string, number> | undefined
+  const llmScore            = payload['llm_score'] as number | undefined
+  const llmBand             = payload['llm_band'] as string | undefined
+  const asiScore            = payload['asi_score'] as number | undefined
+  const asiBand             = payload['asi_band'] as string | undefined
+  const summary             = payload['summary'] as Record<string, number> | undefined
+  const trustScore          = payload['trust_score'] as number | undefined
+  const trustTrend          = payload['trust_trend'] as string | undefined
+  const attackChains        = payload['attack_chains_detected'] as string[] | undefined
+  const amplification       = payload['amplification'] as number | undefined
+  const confidenceBand      = payload['confidence_band'] as string | undefined
 
   const topFindings = payload['top_findings'] as Array<{
     owasp_signal_id: string; sub_check_id: string; check_label: string
     severity: string; detail: string | null; check_score?: number
+    confidence_tier?: string; effective_score?: number
   }> | undefined
 
   const llmSignalStatus = payload['llm_signal_status'] as Record<string, OwSignalStatus> | undefined
@@ -44,16 +60,21 @@ function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
     ...Object.entries(asiSignalStatus ?? {}).filter(([, v]) => v.status === 'fired').map(([k]) => k),
   ]
 
+  const hasChains = attackChains && attackChains.length > 0
+
   return (
     <div className="border-t border-slate-100 px-4 py-3 space-y-3">
       {/* Score row */}
-      <div className="flex gap-6">
+      <div className="flex flex-wrap gap-6">
         <div>
           <p className="text-xs font-medium text-slate-500">LLM Risk</p>
           <p className={`text-lg font-semibold ${BAND_COLOR[llmBand ?? ''] ?? 'text-slate-800'}`}>
             {llmScore ?? '—'}<span className="text-xs font-normal text-slate-400">/100</span>
           </p>
           <p className="text-xs text-slate-400 capitalize">{llmBand}</p>
+          {confidenceBand && (
+            <p className="text-xs text-slate-400">confidence: <span className="font-medium">{confidenceBand}</span></p>
+          )}
         </div>
         <div>
           <p className="text-xs font-medium text-slate-500">Agent Risk (ASI)</p>
@@ -61,13 +82,54 @@ function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
             {asiScore ?? '—'}<span className="text-xs font-normal text-slate-400">/100</span>
           </p>
           <p className="text-xs text-slate-400 capitalize">{asiBand}</p>
+          {amplification !== undefined && amplification > 1.0 && (
+            <div className="flex items-center gap-1 mt-0.5">
+              <Link2 className="h-3 w-3 text-orange-500" />
+              <span className="text-xs text-orange-600 font-medium">×{amplification.toFixed(2)} chain</span>
+            </div>
+          )}
         </div>
+        {trustScore !== undefined && (
+          <div>
+            <p className="text-xs font-medium text-slate-500">Trust</p>
+            <p className="text-lg font-semibold text-slate-800">
+              {Math.round(trustScore)}<span className="text-xs font-normal text-slate-400">/100</span>
+            </p>
+            {trustTrend && (
+              <div className="flex items-center gap-1">
+                {trustTrend === 'improving'
+                  ? <TrendingUp className="h-3 w-3 text-green-500" />
+                  : trustTrend === 'degrading'
+                  ? <TrendingDown className="h-3 w-3 text-red-500" />
+                  : <Minus className="h-3 w-3 text-slate-400" />}
+                <span className="text-xs text-slate-400 capitalize">{trustTrend}</span>
+              </div>
+            )}
+          </div>
+        )}
         {summary && (
-          <div className="ml-auto text-right">
+          <div className="ml-auto text-right self-start">
             <p className="text-xs text-slate-400">{summary['llm_signals_fired']} LLM · {summary['asi_signals_fired']} Agent signals fired</p>
           </div>
         )}
       </div>
+
+      {/* Attack chains */}
+      {hasChains && (
+        <div className="rounded-md border border-orange-200 bg-orange-50 px-3 py-2">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <ShieldAlert className="h-3.5 w-3.5 text-orange-600" />
+            <p className="text-xs font-semibold text-orange-700">Attack chains detected</p>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {attackChains!.map(chain => (
+              <span key={chain} className="rounded-full bg-orange-100 border border-orange-200 px-2 py-0.5 text-xs font-medium text-orange-800">
+                {ATTACK_CHAIN_LABELS[chain] ?? chain}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Top findings */}
       {topFindings && topFindings.length > 0 && (
@@ -78,8 +140,18 @@ function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
               <div key={`${f.owasp_signal_id}:${f.sub_check_id}`} className="flex items-start gap-2 rounded bg-slate-50 px-2 py-1.5">
                 <span className="font-mono text-xs text-violet-600 shrink-0">{f.owasp_signal_id}:{f.sub_check_id}</span>
                 <span className="text-xs text-slate-700 flex-1">{f.check_label ?? f.detail}</span>
+                {f.confidence_tier && (
+                  <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 shrink-0">
+                    {f.confidence_tier}
+                  </span>
+                )}
                 {f.check_score !== undefined && (
-                  <span className="font-mono text-xs text-slate-500 shrink-0">{f.check_score}</span>
+                  <span className="font-mono text-xs text-slate-500 shrink-0">
+                    {f.check_score}
+                    {f.effective_score !== undefined && f.effective_score !== f.check_score && (
+                      <span className="text-slate-300"> →{Math.round(f.effective_score)}</span>
+                    )}
+                  </span>
                 )}
                 <Badge variant={f.severity === 'critical' ? 'destructive' : 'warning'}>{f.severity}</Badge>
               </div>

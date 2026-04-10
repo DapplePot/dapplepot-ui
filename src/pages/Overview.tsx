@@ -1,10 +1,10 @@
-import { useOverview, useErrorRates } from '../hooks/useAnalytics'
+import { useOverview } from '../hooks/useAnalytics'
 import { useAlerts } from '../hooks/useAlerts'
 import { useLiveSessions } from '../hooks/useControl'
 import { MetricCards, MetricCardsSkeleton } from '../components/overview/MetricCards'
 import { SessionFeed, SessionFeedSkeleton } from '../components/overview/SessionFeed'
 import { AlertPanel, AlertPanelSkeleton } from '../components/overview/AlertPanel'
-import { AgentHealth, AgentHealthSkeleton } from '../components/overview/AgentHealth'
+import { AgentHealth } from '../components/overview/AgentHealth'
 import { SuperAdminHome } from '../components/overview/SuperAdminHome'
 import { useAuthStore } from '../stores/auth'
 
@@ -21,7 +21,6 @@ export function Overview() {
   const overview = useOverview('24h')
   const liveSessions = useLiveSessions()
   const alerts = useAlerts({ limit: 4, sort: 'triggered_at:desc' })
-  const errorRates = useErrorRates('1h')
 
   if (role === 'superadmin') return <SuperAdminHome />
 
@@ -72,15 +71,9 @@ export function Overview() {
 
           <div className="rounded-lg border border-slate-200 bg-white">
             <div className="border-b border-slate-100 px-4 py-3">
-              <h2 className="text-sm font-medium text-slate-700">Agent health</h2>
+              <h2 className="text-sm font-medium text-slate-700">Recent agents</h2>
             </div>
-            {errorRates.isLoading ? (
-              <AgentHealthSkeleton />
-            ) : errorRates.isError ? (
-              <ErrorCard message={errorRates.error.message} />
-            ) : (
-              <AgentHealth data={errorRates.data ?? []} />
-            )}
+            <AgentHealth liveSessions={liveSessions.data ?? []} />
           </div>
         </div>
       </div>

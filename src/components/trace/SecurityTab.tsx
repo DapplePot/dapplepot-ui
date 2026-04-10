@@ -45,6 +45,11 @@ export function SecurityTab({ sessionId }: SecurityTabProps) {
         asiSignalStatus={score.data.asiSignalStatus}
         scoredAt={score.data.scoredAt}
         scorerVersion={score.data.scorerVersion}
+        trustScore={score.data.trustScore}
+        trustTrend={score.data.trustTrend}
+        attackChainsDetected={score.data.attackChainsDetected}
+        amplification={score.data.amplification}
+        confidenceBand={score.data.confidenceBand}
       />
       <div>
         <h3 className="mb-2 text-xs font-medium text-slate-500">Findings</h3>

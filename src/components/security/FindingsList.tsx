@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import type { SecurityFinding } from '../../types/security'
+import type { SecurityFinding, ConfidenceTier } from '../../types/security'
 
 interface FindingsListProps {
   findings: SecurityFinding[]
@@ -11,6 +11,14 @@ const SEVERITY_ICON: Record<string, string> = {
   high:     '🟠',
   medium:   '🟡',
   low:      '🔵',
+}
+
+const CONFIDENCE_TIER_CLASS: Record<ConfidenceTier, string> = {
+  deterministic: 'bg-violet-100 text-violet-700',
+  high:          'bg-blue-100 text-blue-700',
+  medium:        'bg-amber-100 text-amber-700',
+  low:           'bg-orange-100 text-orange-700',
+  skeletal:      'bg-slate-100 text-slate-500',
 }
 
 export function FindingsList({ findings }: FindingsListProps) {
@@ -30,7 +38,7 @@ export function FindingsList({ findings }: FindingsListProps) {
           >
             <span>{SEVERITY_ICON[f.severity] ?? '⚪'}</span>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-sm font-medium text-slate-800">
                   {f.checkLabel}
                 </p>
@@ -41,14 +49,22 @@ export function FindingsList({ findings }: FindingsListProps) {
                 }`}>
                   {f.framework}
                 </span>
+                {f.confidenceTier && (
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${CONFIDENCE_TIER_CLASS[f.confidenceTier]}`}>
+                    {f.confidenceTier}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-400 font-mono">
                 {f.owaspSignalId}:{f.subCheckId} · {f.category}
               </p>
             </div>
-            <span className="text-xs font-semibold text-slate-700">
-              {f.checkScore}
-            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-xs font-semibold text-slate-700">{f.checkScore}</span>
+              {f.confidence !== undefined && (
+                <span className="text-xs text-slate-400">×{f.confidence.toFixed(1)}</span>
+              )}
+            </div>
             {expandedId === f.findingId ? (
               <ChevronDown className="h-4 w-4 text-slate-400" />
             ) : (
@@ -69,9 +85,21 @@ export function FindingsList({ findings }: FindingsListProps) {
                   </pre>
                 </>
               )}
-              <p className="text-xs text-slate-400">
-                {f.detectionPhase} · {f.eventType} · {new Date(f.createdAt).toLocaleString()}
-              </p>
+              <div className="flex items-center gap-3 text-xs text-slate-400">
+                <span className="capitalize">{f.detectionPhase}</span>
+                <span>·</span>
+                <span>{f.eventType}</span>
+                <span>·</span>
+                <span>{new Date(f.createdAt).toLocaleString()}</span>
+                {f.confidenceTier && (
+                  <>
+                    <span>·</span>
+                    <span>confidence: <span className="font-medium text-slate-500">{f.confidenceTier}</span>
+                      {f.confidence !== undefined && ` (${(f.confidence * 100).toFixed(0)}%)`}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
