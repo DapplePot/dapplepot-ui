@@ -1,8 +1,59 @@
+import { useState } from 'react'
 import { useParams, Link } from '@tanstack/react-router'
 import { useAgentProfile } from '../hooks/useSecurity'
 import { Skeleton } from '../components/ui/skeleton'
-import { TrendingDown, TrendingUp, Minus, Settings } from 'lucide-react'
+import { TrendingDown, TrendingUp, Minus, Settings, Copy, Check, HelpCircle } from 'lucide-react'
 import type { RiskBand, TrustTrend } from '../types/security'
+
+function AgentIdRow({ agentId }: { agentId: string }) {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    navigator.clipboard.writeText(agentId).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+
+  return (
+    <div className="mt-1 flex items-center gap-1.5">
+      <span className="text-xs text-slate-400">Agent ID:</span>
+      <span className="font-mono text-xs text-slate-500">{agentId}</span>
+      <button
+        onClick={handleCopy}
+        title="Copy agent ID"
+        className="ml-0.5 text-slate-300 hover:text-slate-500 transition-colors"
+      >
+        {copied
+          ? <Check className="h-3 w-3 text-emerald-500" />
+          : <Copy className="h-3 w-3" />}
+      </button>
+    </div>
+  )
+}
+
+function Tooltip({ text }: { text: string }) {
+  const [visible, setVisible] = useState(false)
+  return (
+    <span className="relative inline-flex">
+      <button
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onClick={() => setVisible(v => !v)}
+        className="text-slate-300 hover:text-slate-400 transition-colors"
+        type="button"
+        aria-label="More info"
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+      </button>
+      {visible && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal">
+          {text}
+        </span>
+      )}
+    </span>
+  )
+}
 
 const BAND_COLOR: Record<RiskBand, string> = {
   clean:    'text-emerald-600',
@@ -21,10 +72,13 @@ const BAND_BG: Record<RiskBand, string> = {
 }
 
 
-function ScoreCard({ label, score, band }: { label: string; score: number; band: RiskBand }) {
+function ScoreCard({ label, score, band, tooltip }: { label: string; score: number; band: RiskBand; tooltip: string }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5">
-      <p className="text-xs text-slate-500 mb-1">{label}</p>
+      <div className="flex items-center gap-1 mb-1">
+        <p className="text-xs text-slate-500">{label}</p>
+        <Tooltip text={tooltip} />
+      </div>
       <p className={`text-3xl font-bold ${BAND_COLOR[band]}`}>{score}</p>
       <span className={`mt-2 inline-block rounded border px-2 py-0.5 text-xs font-medium capitalize ${BAND_BG[band]}`}>
         {band}
@@ -53,7 +107,10 @@ function TrustCard({ score, trend }: { score: number; trend?: TrustTrend }) {
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5">
-      <p className="text-xs text-slate-500 mb-1">Agent trust score</p>
+      <div className="flex items-center gap-1 mb-1">
+        <p className="text-xs text-slate-500">Agent trust score</p>
+        <Tooltip text="Bayesian trust score (0–100). Starts at ~80. Each session updates the score: risky sessions (composite > 40) lower it, clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Below 50 for 3+ sessions in a row triggers a trust-degradation alert." />
+      </div>
       <p className={`text-3xl font-bold ${trustScoreColor(rounded)}`}>{rounded}</p>
       <div className="mt-2 flex items-center gap-1.5">
         {trendIcon}
@@ -130,58 +187,117 @@ export function AgentSecurityProfile() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <Link to="/agents" className="text-xs text-slate-400 hover:text-slate-600">
-            ← Agents
-          </Link>
-          <h1 className="mt-1 text-xl font-semibold text-slate-900">
+      <div>
+        <Link to="/agents" className="text-xs text-slate-400 hover:text-slate-600">
+          ← Agents
+        </Link>
+        <div className="mt-1 flex items-center justify-between gap-4">
+          <h1 className="text-xl font-semibold text-slate-900">
             {data.name ?? 'Agent Security Profile'}
           </h1>
-          <p className="mt-0.5 font-mono text-xs text-slate-400">{data.agentId}</p>
+          {/* Page navigation: Profile ↔ Config */}
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 shrink-0">
+            <span className="rounded bg-white px-3 py-1.5 text-xs font-medium text-violet-700 shadow-sm">
+              Profile
+            </span>
+            <Link
+              to="/agents/$agentId/config"
+              params={{ agentId }}
+              className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all"
+            >
+              <Settings className="h-3 w-3" /> Config
+            </Link>
+          </div>
         </div>
-        {/* Page navigation: Profile ↔ Config */}
-        <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-          <span className="rounded bg-white px-3 py-1.5 text-xs font-medium text-violet-700 shadow-sm">
-            Profile
-          </span>
-          <Link
-            to="/agents/$agentId/config"
-            params={{ agentId }}
-            className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all"
-          >
-            <Settings className="h-3 w-3" /> Config
-          </Link>
-        </div>
+        <AgentIdRow agentId={data.agentId} />
       </div>
 
-      {/* Metadata */}
-      <div className="flex justify-end">
-        <div className="text-right text-xs text-slate-400 space-y-0.5">
-          {data.latestVersion && <p>v{data.latestVersion}</p>}
-          <p>{data.sessionCount} sessions scored</p>
-          {data.lastScoredAt && <p>Last scored {fmt(data.lastScoredAt)}</p>}
-          {data.trustTrend && (
-            <div className="flex items-center justify-end gap-1 mt-1">
-              {data.trustTrend === 'improving'
-                ? <TrendingUp  className="h-3 w-3 text-green-500" />
-                : data.trustTrend === 'degrading'
-                ? <TrendingDown className="h-3 w-3 text-red-500" />
-                : <Minus className="h-3 w-3 text-slate-400" />}
-              <span className={`capitalize ${
-                data.trustTrend === 'improving' ? 'text-green-600' :
-                data.trustTrend === 'degrading' ? 'text-red-500' : 'text-slate-400'
-              }`}>{data.trustTrend} trust</span>
-            </div>
+      {/* ── Summary banner ── */}
+      <div className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-4 space-y-3">
+        {/* Stats row */}
+        <div className="flex items-center gap-5 flex-wrap">
+          <span className="text-xs text-violet-800">
+            <span className="font-semibold">{data.sessionCount}</span>
+            <span className="text-violet-500 ml-1">sessions scored</span>
+          </span>
+          {data.lastScoredAt && (
+            <span className="text-xs text-violet-800">
+              <span className="text-violet-500">Last scored</span>
+              <span className="font-semibold ml-1">{fmt(data.lastScoredAt)}</span>
+            </span>
           )}
+          {data.trustTrend && (
+            <span className="flex items-center gap-1 text-xs">
+              {data.trustTrend === 'improving'
+                ? <TrendingUp  className="h-3.5 w-3.5 text-emerald-600" />
+                : data.trustTrend === 'degrading'
+                ? <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+                : <Minus       className="h-3.5 w-3.5 text-slate-400" />}
+              <span className={`font-semibold capitalize ${
+                data.trustTrend === 'improving' ? 'text-emerald-700' :
+                data.trustTrend === 'degrading' ? 'text-red-600'     : 'text-slate-500'
+              }`}>{data.trustTrend} trust</span>
+            </span>
+          )}
+        </div>
+
+        {/* Legends row */}
+        <div className="flex flex-col gap-2">
+          {/* Risk bands */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-medium text-violet-500 uppercase tracking-wide mr-1">Risk</span>
+            {([
+              { color: 'bg-emerald-500', label: 'Clean',    range: '0–14'   },
+              { color: 'bg-blue-500',    label: 'Low',      range: '15–34'  },
+              { color: 'bg-amber-500',   label: 'Medium',   range: '35–59'  },
+              { color: 'bg-orange-500',  label: 'High',     range: '60–84'  },
+              { color: 'bg-red-600',     label: 'Critical', range: '85–100' },
+            ] as const).map(({ color, label, range }) => (
+              <span key={label} className="flex items-center gap-1 text-[11px] text-violet-700">
+                <span className={`inline-block h-2 w-2 rounded-full ${color}`} />
+                {label}
+                <span className="text-violet-400">{range}</span>
+              </span>
+            ))}
+          </div>
+          {/* Trust score markers */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-medium text-violet-500 uppercase tracking-wide mr-1">Trust</span>
+            {([
+              { color: 'bg-emerald-500', label: 'Trusted',  range: '≥75'  },
+              { color: 'bg-amber-400',   label: 'Caution',  range: '50–74' },
+              { color: 'bg-red-500',     label: 'At risk',  range: '<50'  },
+            ] as const).map(({ color, label, range }) => (
+              <span key={label} className="flex items-center gap-1 text-[11px] text-violet-700">
+                <span className={`inline-block h-2 w-2 rounded-full ${color}`} />
+                {label}
+                <span className="text-violet-400">{range}</span>
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Score cards */}
       <div className={`grid gap-4 ${data.trustScore !== undefined ? 'grid-cols-4' : 'grid-cols-3'}`}>
-        <ScoreCard label="Composite risk (avg)" score={Math.round(data.compositeRisk)} band={compositeRiskBand} />
-        <ScoreCard label="Avg LLM risk score"   score={Math.round(data.avgLlmScore)}   band={llmBand} />
-        <ScoreCard label="Avg ASI risk score"   score={Math.round(data.avgAsiScore)}   band={asiBand} />
+        <ScoreCard
+          label="Composite risk (avg)"
+          score={Math.round(data.compositeRisk)}
+          band={compositeRiskBand}
+          tooltip="Average of (avg LLM score + avg ASI score) / 2 across all scored sessions. Gives an overall picture of how risky this agent has been over time."
+        />
+        <ScoreCard
+          label="Avg LLM risk score"
+          score={Math.round(data.avgLlmScore)}
+          band={llmBand}
+          tooltip="Average OWASP LLM Top 10 composite score across all sessions. Per session: top fired signal × 60% + mean of rest × 40%, then amplified by attack chains (up to ×1.35). Bands: clean 0–14, low 15–34, medium 35–59, high 60–84, critical 85–100."
+        />
+        <ScoreCard
+          label="Avg ASI risk score"
+          score={Math.round(data.avgAsiScore)}
+          band={asiBand}
+          tooltip="Average OWASP Agentic Security Top 10 composite score across all sessions. Same formula as LLM — covers agentic threats like goal hijacking, tool misuse, inter-agent compromise, and rogue behaviour."
+        />
         {data.trustScore !== undefined && (
           <TrustCard score={data.trustScore} trend={data.trustTrend} />
         )}

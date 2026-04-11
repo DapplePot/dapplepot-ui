@@ -36,7 +36,9 @@ export interface SessionRiskScore {
   asiSignalStatus:       Record<string, OwSignalStatus>
   // v3 additions
   attackChainsDetected?: string[]
-  amplification?:        number
+  amplification?:        number       // attack-chain amplifier applied to composite
+  rawLlmComposite?:      number       // LLM composite before amplification
+  rawAsiComposite?:      number       // ASI composite before amplification
   confidenceBand?:       string
   trustScore?:           number
   trustTrend?:           TrustTrend
@@ -108,6 +110,8 @@ export interface SecurityOverview {
     agentId:        string
     llmScore:       number
     llmBand:        RiskBand
+    asiScore:       number
+    asiBand:        RiskBand
     owaspSignalIds: string[]
   }>
   topAgents: AgentRiskEntry[]

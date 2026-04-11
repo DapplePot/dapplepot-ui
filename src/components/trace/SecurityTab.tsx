@@ -49,6 +49,8 @@ export function SecurityTab({ sessionId }: SecurityTabProps) {
         trustTrend={score.data.trustTrend}
         attackChainsDetected={score.data.attackChainsDetected}
         amplification={score.data.amplification}
+        rawLlmComposite={score.data.rawLlmComposite}
+        rawAsiComposite={score.data.rawAsiComposite}
         confidenceBand={score.data.confidenceBand}
       />
       <div>

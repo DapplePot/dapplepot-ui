@@ -79,3 +79,61 @@ export async function setSubcheckOnline(
     })
     .json()
 }
+
+export interface AgentAlertConfig {
+  composite_threshold:     number
+  llm_composite_threshold: number | null  // null = platform default (60)
+  asi_composite_threshold: number | null  // null = platform default (60)
+  signal_thresholds:       Record<string, number>
+}
+
+export const PLATFORM_COMPOSITE_DEFAULT = 60
+
+export async function getAlertConfig(agentId: string): Promise<AgentAlertConfig> {
+  return apiClient.get(`v1/security/agents/${agentId}/alert-config`).json()
+}
+
+export async function updateCompositeThreshold(
+  agentId: string,
+  composite_threshold: number
+): Promise<void> {
+  await apiClient
+    .put(`v1/security/agents/${agentId}/alert-config`, {
+      json: { composite_threshold },
+    })
+    .json()
+}
+
+export async function updateLlmCompositeThreshold(
+  agentId: string,
+  threshold: number | null  // null = reset to platform default
+): Promise<void> {
+  await apiClient
+    .put(`v1/security/agents/${agentId}/alert-config`, {
+      json: { llm_composite_threshold: threshold },
+    })
+    .json()
+}
+
+export async function updateAsiCompositeThreshold(
+  agentId: string,
+  threshold: number | null  // null = reset to platform default
+): Promise<void> {
+  await apiClient
+    .put(`v1/security/agents/${agentId}/alert-config`, {
+      json: { asi_composite_threshold: threshold },
+    })
+    .json()
+}
+
+export async function updateSignalThreshold(
+  agentId: string,
+  signal_id: string,
+  threshold: number | null  // null = reset to platform default
+): Promise<void> {
+  await apiClient
+    .put(`v1/security/agents/${agentId}/alert-config`, {
+      json: { signal_id, threshold },
+    })
+    .json()
+}

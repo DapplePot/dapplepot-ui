@@ -6,6 +6,8 @@ interface HighRiskSession {
   agentId:        string
   llmScore:       number
   llmBand:        string
+  asiScore:       number
+  asiBand:        string
   owaspSignalIds: string[]
 }
 
@@ -20,6 +22,14 @@ const BAND_VARIANT: Record<string, 'destructive' | 'warning' | 'info' | 'seconda
   medium:   'warning',
   low:      'info',
   clean:    'secondary',
+}
+
+const SCORE_COLOR: Record<string, string> = {
+  critical: 'text-red-600',
+  high:     'text-orange-600',
+  medium:   'text-amber-600',
+  low:      'text-slate-500',
+  clean:    'text-emerald-600',
 }
 
 export function HighRiskTable({ sessions, onSelect }: HighRiskTableProps) {
@@ -37,8 +47,10 @@ export function HighRiskTable({ sessions, onSelect }: HighRiskTableProps) {
           <tr className="border-b border-slate-100">
             <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Session</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Agent</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">Score</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Band</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">LLM score</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">LLM band</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">ASI score</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">ASI band</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Signals</th>
           </tr>
         </thead>
@@ -53,13 +65,17 @@ export function HighRiskTable({ sessions, onSelect }: HighRiskTableProps) {
                 {s.sessionId.slice(0, 8)}…
               </td>
               <td className="px-4 py-3 text-xs text-slate-600">{agentMap[s.agentId] ?? s.agentId}</td>
-              <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
+              <td className={`px-4 py-3 text-right text-sm font-semibold ${SCORE_COLOR[s.llmBand] ?? 'text-slate-900'}`}>
                 {s.llmScore.toFixed(1)}
               </td>
               <td className="px-4 py-3">
-                <Badge variant={BAND_VARIANT[s.llmBand] ?? 'secondary'}>
-                  {s.llmBand}
-                </Badge>
+                <Badge variant={BAND_VARIANT[s.llmBand] ?? 'secondary'}>{s.llmBand}</Badge>
+              </td>
+              <td className={`px-4 py-3 text-right text-sm font-semibold ${SCORE_COLOR[s.asiBand] ?? 'text-slate-900'}`}>
+                {s.asiScore.toFixed(1)}
+              </td>
+              <td className="px-4 py-3">
+                <Badge variant={BAND_VARIANT[s.asiBand] ?? 'secondary'}>{s.asiBand}</Badge>
               </td>
               <td className="px-4 py-3 text-xs text-slate-500">
                 {s.owaspSignalIds.slice(0, 3).join(', ')}

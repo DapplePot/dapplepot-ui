@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Link2, ShieldAlert, TrendingDown, TrendingUp, Minus } from 'lucide-react'
+import { ChevronDown, ChevronRight, Link2, ShieldAlert, TrendingDown, TrendingUp, Minus, HelpCircle } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import type { OwSignalStatus, ConfidenceTier, TrustTrend } from '../../types/security'
 
@@ -17,6 +17,8 @@ interface SessionRiskPanelProps {
   trustTrend?:            TrustTrend
   attackChainsDetected?:  string[]
   amplification?:         number
+  rawLlmComposite?:       number
+  rawAsiComposite?:       number
   confidenceBand?:        string
 }
 
@@ -44,6 +46,32 @@ const ATTACK_CHAIN_LABELS: Record<string, string> = {
   trust_fraud:                  'Trust Fraud',
   cascade_rogue:                'Cascade Rogue Agency',
   supply_chain_to_injection:    'Supply Chain → Injection',
+}
+
+function Tooltip({ text, placement = 'top' }: { text: string; placement?: 'top' | 'bottom' }) {
+  const [visible, setVisible] = useState(false)
+  const posClass = placement === 'bottom'
+    ? 'top-full left-1/2 -translate-x-1/2 mt-1.5'
+    : 'bottom-full left-1/2 -translate-x-1/2 mb-1.5'
+  return (
+    <span className="relative inline-flex">
+      <button
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onClick={() => setVisible(v => !v)}
+        className="text-slate-300 hover:text-slate-400 transition-colors"
+        type="button"
+        aria-label="More info"
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+      </button>
+      {visible && (
+        <span className={`absolute ${posClass} z-20 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal`}>
+          {text}
+        </span>
+      )}
+    </span>
+  )
 }
 
 const LLM_SIGNAL_ORDER   = ['OW-LLM01','OW-LLM02','OW-LLM03','OW-LLM04','OW-LLM05','OW-LLM06','OW-LLM07','OW-LLM08','OW-LLM09','OW-LLM10']
@@ -202,7 +230,7 @@ export function SessionRiskPanel({
   amplification,
   confidenceBand,
 }: SessionRiskPanelProps) {
-  const hasTrust = trustScore !== undefined
+  const hasTrust  = trustScore !== undefined
   const hasChains = attackChainsDetected && attackChainsDetected.length > 0
 
   return (
@@ -210,7 +238,10 @@ export function SessionRiskPanel({
       {/* Score summary cards */}
       <div className={`grid gap-4 ${hasTrust ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <p className="text-xs font-medium text-slate-500">LLM risk score</p>
+          <div className="flex items-center gap-1">
+            <p className="text-xs font-medium text-slate-500">LLM risk score</p>
+            <Tooltip placement="bottom" text="OWASP LLM Top 10 composite score for this session (0–100). Computed as: top fired signal × 60% + mean of rest × 40%. If multiple signals match a known attack chain, the score is amplified by up to ×1.35. Bands: clean 0–14, low 15–34, medium 35–59, high 60–84, critical 85–100." />
+          </div>
           <div className="mt-2 flex items-end gap-3">
             <span className="text-5xl font-bold text-slate-900">{llmScore}</span>
             <Badge variant={BAND_VARIANT[llmBand] ?? 'secondary'} className="mb-1">
@@ -229,7 +260,10 @@ export function SessionRiskPanel({
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <p className="text-xs font-medium text-slate-500">Agent risk score (ASI)</p>
+          <div className="flex items-center gap-1">
+            <p className="text-xs font-medium text-slate-500">Agent risk score (ASI)</p>
+            <Tooltip placement="bottom" text="OWASP Agentic Security Top 10 composite score for this session (0–100). Same formula as LLM — covers agentic threats: goal hijacking, tool misuse, privilege abuse, inter-agent compromise, and rogue behaviour." />
+          </div>
           <div className="mt-2 flex items-end gap-3">
             <span className="text-5xl font-bold text-slate-900">{asiScore}</span>
             <Badge variant={BAND_VARIANT[asiBand] ?? 'secondary'} className="mb-1">
@@ -248,7 +282,10 @@ export function SessionRiskPanel({
 
         {hasTrust && (
           <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <p className="text-xs font-medium text-slate-500">Agent trust score</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs font-medium text-slate-500">Agent trust score</p>
+              <Tooltip placement="bottom" text="Bayesian trust score for this agent at the time of this session (0–100). Starts at ~80. Risky sessions lower it; clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Below 50 for 3+ sessions triggers a trust-degradation alert." />
+            </div>
             <div className="mt-2 flex items-end gap-3">
               <span className="text-5xl font-bold text-slate-900">{Math.round(trustScore!)}</span>
               {trustTrend && (
