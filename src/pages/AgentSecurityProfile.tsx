@@ -1,7 +1,7 @@
 import { useParams, Link } from '@tanstack/react-router'
 import { useAgentProfile } from '../hooks/useSecurity'
 import { Skeleton } from '../components/ui/skeleton'
-import { TrendingDown, TrendingUp, Minus } from 'lucide-react'
+import { TrendingDown, TrendingUp, Minus, Settings } from 'lucide-react'
 import type { RiskBand, TrustTrend } from '../types/security'
 
 const BAND_COLOR: Record<RiskBand, string> = {
@@ -140,6 +140,23 @@ export function AgentSecurityProfile() {
           </h1>
           <p className="mt-0.5 font-mono text-xs text-slate-400">{data.agentId}</p>
         </div>
+        {/* Page navigation: Profile ↔ Config */}
+        <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+          <span className="rounded bg-white px-3 py-1.5 text-xs font-medium text-violet-700 shadow-sm">
+            Profile
+          </span>
+          <Link
+            to="/agents/$agentId/config"
+            params={{ agentId }}
+            className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all"
+          >
+            <Settings className="h-3 w-3" /> Config
+          </Link>
+        </div>
+      </div>
+
+      {/* Metadata */}
+      <div className="flex justify-end">
         <div className="text-right text-xs text-slate-400 space-y-0.5">
           {data.latestVersion && <p>v{data.latestVersion}</p>}
           <p>{data.sessionCount} sessions scored</p>

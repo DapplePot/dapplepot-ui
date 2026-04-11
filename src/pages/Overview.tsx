@@ -29,13 +29,13 @@ export function Overview() {
       <h1 className="text-xl font-semibold text-slate-900">Overview</h1>
 
       {/* Metric cards */}
-      {overview.isLoading || liveSessions.isLoading ? (
+      {overview.isLoading || liveSessions.isLoading || !overview.data ? (
         <MetricCardsSkeleton />
       ) : overview.isError ? (
         <ErrorCard message={overview.error.message} />
       ) : (
         <MetricCards
-          overview={overview.data!}
+          overview={overview.data}
           liveSessions={liveSessions.data ?? []}
         />
       )}

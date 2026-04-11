@@ -58,3 +58,24 @@ export async function getSignalRegistry(): Promise<SignalRegistryEntry[]> {
     .json<{ signals: SignalRegistryEntry[] }>()
   return data.signals
 }
+
+export async function getSubcheckConfig(
+  agentId: string
+): Promise<Record<string, { online_detection: boolean }>> {
+  const data = await apiClient
+    .get(`v1/security/agents/${agentId}/subcheck-config`)
+    .json<{ overrides: Record<string, { online_detection: boolean }> }>()
+  return data.overrides
+}
+
+export async function setSubcheckOnline(
+  agentId: string,
+  subCheckId: string,
+  online_detection: boolean
+): Promise<void> {
+  await apiClient
+    .put(`v1/security/agents/${agentId}/subcheck-config`, {
+      json: { subCheckId, online_detection },
+    })
+    .json()
+}

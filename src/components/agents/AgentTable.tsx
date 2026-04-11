@@ -85,34 +85,50 @@ export function AgentTable() {
                 <th className="px-4 py-3">Agent ID</th>
                 <th className="px-4 py-3">Latest Version</th>
                 <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((agent) => (
-                <tr key={agent.agentId} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3">
-                    <span className="text-sm font-medium text-slate-900">{agent.name}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <CopyId id={agent.agentId} />
-                  </td>
-                  <td className="px-4 py-3">
-                    {agent.latestVersion
-                      ? <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600">{agent.latestVersion}</span>
-                      : <span className="text-xs text-slate-400">—</span>
-                    }
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-500">
-                    {formatDate(agent.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                <tr key={agent.agentId} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                  <td className="p-0">
                     <Link
                       to="/agents/$agentId"
                       params={{ agentId: agent.agentId }}
-                      className="text-xs text-violet-600 hover:underline"
+                      className="flex items-center px-4 py-3 text-sm font-medium text-slate-900"
                     >
-                      Security profile
+                      {agent.name}
+                    </Link>
+                  </td>
+                  <td className="p-0">
+                    <Link
+                      to="/agents/$agentId"
+                      params={{ agentId: agent.agentId }}
+                      className="flex items-center px-4 py-3"
+                    >
+                      <span onClick={e => e.stopPropagation()}>
+                        <CopyId id={agent.agentId} />
+                      </span>
+                    </Link>
+                  </td>
+                  <td className="p-0">
+                    <Link
+                      to="/agents/$agentId"
+                      params={{ agentId: agent.agentId }}
+                      className="flex items-center px-4 py-3"
+                    >
+                      {agent.latestVersion
+                        ? <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600">{agent.latestVersion}</span>
+                        : <span className="text-xs text-slate-400">—</span>
+                      }
+                    </Link>
+                  </td>
+                  <td className="p-0">
+                    <Link
+                      to="/agents/$agentId"
+                      params={{ agentId: agent.agentId }}
+                      className="flex items-center px-4 py-3 text-sm text-slate-500"
+                    >
+                      {formatDate(agent.createdAt)}
                     </Link>
                   </td>
                 </tr>
