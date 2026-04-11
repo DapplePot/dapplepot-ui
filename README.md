@@ -24,8 +24,10 @@ The frontend that makes the platform usable. Two distinct experiences share one 
 | 3 | `/sessions/:id` | Full session trace view — event timeline, payload inspector, graph state |
 | 4 | `/analytics` | Token usage, error rates, latency charts, cost attribution |
 | 5 | `/detection` | Alert inbox, rule builder with dry-run, channel config |
-| 6 | `/security` | Security posture, risk scores, OWASP findings, remediation |
+| 6 | `/security` | Security posture, dual LLM/ASI risk scores, OWASP findings, remediation |
 | 7 | `/agents` | Agent registry — list all agents with copyable IDs; admin can create new agents |
+| 7a | `/agents/:agentId` | Agent security profile — composite/LLM/ASI scores, trust score, signal history |
+| 7b | `/agents/:agentId/config` | Agent config — toggle sub-check online detection, set per-agent alert thresholds |
 | 8 | `/settings` | Profile, SDK keys (masked; admin can reveal), user management (admin only) |
 
 ### Superadmin surfaces (Dapplepot operators only)
@@ -157,6 +159,11 @@ dapplepot_ui/
     │   ├── traceFilters.ts
     │   └── ui.ts
     │
+    ├── data/
+    │   └── signalRegistry.ts           ← static mirror of the signal_registry seed — 20 OW signals
+    │                                      (LLM + ASI frameworks), ~121 sub-checks with detection phase,
+    │                                      severity, confidence tier, onlineCapable flag
+    │
     ├── pages/
     │   ├── Login.tsx
     │   ├── ForgotPassword.tsx
@@ -169,6 +176,8 @@ dapplepot_ui/
     │   ├── Detection.tsx
     │   ├── Security.tsx
     │   ├── Agents.tsx                  ← /agents — agent table + create (admin only)
+    │   ├── AgentSecurityProfile.tsx    ← /agents/:agentId — per-agent LLM/ASI scores + trust score
+    │   ├── AgentConfig.tsx             ← /agents/:agentId/config — subcheck toggles + alert thresholds
     │   ├── Settings.tsx                ← /settings — profile + SDK keys + users (admin only)
     │   ├── Tenants.tsx                 ← /tenants — tenant list (superadmin only)
     │   └── OnboardClient.tsx           ← /onboard-client — onboarding wizard (superadmin only)
@@ -303,20 +312,25 @@ pnpm sync-types     # Copy updated types from ../dapplepot-api/src/types/ → sr
 
 The Security page (`src/pages/Security.tsx`) consumes risk scores and OWASP findings
 produced by `dapplepot_security` (Zone 6) and served by `dapplepot_api` security endpoints.
+Scorer v2+ uses **dual LLM/ASI scoring** — every session gets a separate LLM composite and
+ASI composite score (0–100 each). Scorer v3 adds attack-chain amplification, confidence tiers,
+and Bayesian trust scores per agent.
 
 ### Page structure — three tabs
 
 ```
 /security
 ├── Overview tab
-│     ├── Metric cards: sessions scored · high/critical count · avg risk score · top signal
+│     ├── Metric cards: sessions scored · high/critical count · avg LLM score · top signal
 │     ├── RiskDistribution    — donut/bar chart of band counts (clean/low/medium/high/critical)
-│     ├── OwaspFrequency      — bar chart of LLM01–LLM10 hit frequency
-│     └── HighRiskTable       — top 5 highest-risk sessions; click row → opens Session detail tab
+│     ├── OwaspFrequency      — bar chart of OW-LLM01–10 hit frequency
+│     ├── AsFrequency         — bar chart of OW-ASI01–10 hit frequency
+│     ├── HighRiskTable       — top 5 highest-risk sessions (dual LLM+ASI scores); row → Session detail tab
+│     └── TopAgentsTable      — top agents by composite risk with trust score/trend
 │
 ├── Session detail tab
-│     ├── SessionRiskPanel    — risk score (0–100), band badge, signal list, scorer version, scored_at
-│     └── FindingsList        — per-finding rows: signalId · owaspId · severity · detectionPhase · detail
+│     ├── SessionRiskPanel    — LLM score + band, ASI score + band, trust score, attack chains, scorer version
+│     └── FindingsList        — per-finding rows: subCheckId · owaspSignalId · framework · severity · phase · detail
 │
 └── Remediation tab
       └── RemediationGuide    — one card per top firing signal: title · description · fix steps · SDK snippet
@@ -329,57 +343,86 @@ produced by `dapplepot_security` (Zone 6) and served by `dapplepot_api` security
 | `useSecurityOverview(windowHours?)` | `GET /v1/security/overview` | 120 000 ms | every 120s |
 | `useSessionSecurity(sessionId)` | `GET /v1/security/sessions/:id/score` + `.../findings` | 300 000 ms | on mount |
 | `useRemediation(windowHours?)` | `GET /v1/security/remediation` | 300 000 ms | on mount |
+| `useTopAgents()` | `GET /v1/security/agents` | 120 000 ms | every 120s |
+| `useAgentProfile(agentId)` | `GET /v1/security/agents/:id/profile` | 300 000 ms | on mount |
+| `useSignalRegistry()` | `GET /v1/security/signals` | 3 600 000 ms | rarely — registry is static |
+| `useSubcheckConfig(agentId)` | `GET /v1/security/agents/:id/subcheck-config` | 60 000 ms | on mount |
+| `useAlertConfig(agentId)` | `GET /v1/security/agents/:id/alert-config` | 60 000 ms | on mount |
 
 `staleTime` values deliberately match the API-side Redis cache TTLs — polling sooner would hit stale data anyway.
 
 ### API client (`src/api/security.ts`)
 
 ```typescript
-getSecurityOverview({ windowHours? })     → SecurityOverview
-getSessionScore(sessionId)                → SessionRiskScore | null   // null = not yet scored
-getSessionFindings(sessionId)             → SecurityFinding[]
-getRemediation({ windowHours? })          → RemediationCard[]
+getSecurityOverview({ windowHours? })           → SecurityOverview
+getSessionScore(sessionId)                       → SessionRiskScore | null   // null = not yet scored
+getSessionFindings(sessionId)                    → SecurityFinding[]
+getRemediation({ windowHours? })                 → RemediationCard[]
+getTopAgents()                                   → AgentRiskEntry[]
+getAgentProfile(agentId)                         → AgentProfile
+getSignalRegistry()                              → SignalRegistryEntry[]
+getSubcheckConfig(agentId)                       → Record<string, { online_detection: boolean }>
+getAlertConfig(agentId)                          → AgentAlertConfig
+updateCompositeThreshold(agentId, threshold)     → AgentAlertConfig
+updateLlmCompositeThreshold(agentId, threshold)  → AgentAlertConfig
+updateAsiCompositeThreshold(agentId, threshold)  → AgentAlertConfig
+updateSignalThreshold(agentId, signalId, t)      → AgentAlertConfig
+setSubcheckOnline(agentId, subCheckId, online)   → void
 ```
 
-### Findings data model
+### Security data model (v2/v3)
 
 | Type | Key fields | Source |
 |------|-----------|--------|
-| `SecurityFinding` | `signalId` (INJ-001, OUT-001, PII-004, L-06…), `owaspId` (LLM01–LLM10), `severity`, `matchedText` (always redacted), `detectionPhase` (online \| post_session), `scoreContrib` | `security_findings` table |
-| `SessionRiskScore` | `riskScore` (0–100), `riskBand` (clean/low/medium/high/critical), `signalIds[]`, `scorerVersion`, `scoredAt` | `session_risk_scores` table |
-| `SecurityOverview` | `bandDistribution`, `owaspFrequency`, `highRiskSessions` (top 5) | aggregated from both tables |
+| `SecurityFinding` | `framework` (LLM\|ASI), `owaspSignalId` (OW-LLM01…), `subCheckId` (PI-01a…), `severity`, `matchedText` (redacted), `detectionPhase`, `confidenceTier` (v3), `confidence` (v3) | `security_findings` table |
+| `SessionRiskScore` | `llmScore`/`llmBand`, `asiScore`/`asiBand`, `llmSignalStatus`, `asiSignalStatus`, `attackChainsDetected` (v3), `amplification` (v3), `trustScore` (v3), `scorerVersion`, `scoredAt` | `session_risk_scores` table |
+| `SecurityOverview` | `bandDistribution`, `owaspFrequency`, `asiFrequency`, `highRiskSessions` (top 5, dual scores), `topAgents[]` | aggregated from both tables |
+| `AgentProfile` | `avgLlmScore`, `avgAsiScore`, `maxLlmScore`, `maxAsiScore`, `compositeRisk`, `trustScore`, `trustTrend`, `signalBreakdown[]`, `recentSessions[]` | per-agent aggregation |
 | `RemediationCard` | `title`, `description`, `fixSteps[]`, `sdkSnippet` (optional), `frequency` | findings aggregate + static guide |
 
-### OWASP LLM Top 10 coverage
+### Risk band thresholds
 
-| OWASP ID | Threat | Signal(s) | How detected |
-|----------|--------|-----------|-------------|
-| LLM01 | Prompt injection | INJ-001 – INJ-005 | Online — regex + tenant blocklist on `llm_start` messages |
-| LLM02 | Insecure output handling | OUT-001 | Online — LCS ratio of LLM output vs tool input |
-| LLM04 | Model DoS | L-10 | Post-session — token count > 4σ above agent baseline |
-| LLM06 | Sensitive info disclosure | PII-001 – PII-006 | Online — PII scanner on `llm_end` + `tool_end` payloads |
-| LLM07 | Insecure plugin design | L-06 | Post-session — tool invoked outside declared manifest |
-| LLM08 | Excessive agency | L-05, L-06, L-07 | Post-session — excessive tool calls, out-of-scope tools, write on read-only intent |
-| LLM09 | Overreliance | L-08 | Post-session — high-stakes action completed without HITL interrupt |
-| LLM10 | Model theft | L-09 | Post-session — cross-session probe cohort pattern |
+| Band | Score range | Colour |
+|------|-------------|--------|
+| `clean` | 0–14 | `#10b981` (green) |
+| `low` | 15–34 | `#60a5fa` (blue) |
+| `medium` | 35–59 | `#f59e0b` (amber) |
+| `high` | 60–84 | `#f97316` (orange) |
+| `critical` | 85–100 | `#ef4444` (red) |
 
-### Risk band colour mapping (in `Security.tsx`)
+### Agent trust score thresholds
 
-| Band | Colour |
-|------|--------|
-| `clean` | `#10b981` (green) |
-| `low` | `#60a5fa` (blue) |
-| `medium` | `#f59e0b` (amber) |
-| `high` | `#f97316` (orange) |
-| `critical` | `#ef4444` (red) |
+| Band | Score | Colour |
+|------|-------|--------|
+| Trusted | ≥ 75 | green |
+| Caution | 50–74 | amber |
+| At risk | < 50 | red |
+
+Bayesian trust score starts at ~80. Each session shifts it — risky sessions (composite > 40) lower it,
+clean sessions raise it, with decay-weighting so recent behaviour matters more. Three consecutive
+degrading sessions trigger a trust-degradation alert.
+
+### Signal registry (`src/data/signalRegistry.ts`)
+
+Static mirror of the Python seed script (`dapplepot_security/scripts/seed_signal_registry.py`).
+Contains all 20 OW signals across two frameworks (10 LLM + 10 ASI) with ~121 sub-checks.
+Used by `AgentConfig` to render the signal tree without a network call. Key exports:
+
+```typescript
+SIGNAL_REGISTRY   // SignalConfig[] — all 20 signals
+LLM_SIGNALS       // SignalConfig[] — OW-LLM01–10
+ASI_SIGNALS       // SignalConfig[] — OW-ASI01–10
+countActive(signal)    // number of non-excluded sub-checks
+countExcluded(signal)  // number of excluded sub-checks
+```
 
 ### Components (`src/components/security/`)
 
 | Component | Props | What it renders |
 |-----------|-------|----------------|
 | `RiskDistribution` | `bands[]`, `total` | Bar/donut of session counts per risk band |
-| `OwaspFrequency` | `entries[]` | Horizontal bar chart — OWASP IDs by hit count |
-| `HighRiskTable` | `sessions[]`, `onSelect` | Table of top-5 sessions; row click sets selected session ID |
-| `SessionRiskPanel` | `riskScore`, `riskBand`, `signalCount`, `signalIds[]`, `scoredAt`, `scorerVersion` | Score badge + signal tag list |
-| `FindingsList` | `findings[]` | Findings table — one row per `SecurityFinding` |
+| `OwaspFrequency` | `entries[]` | Horizontal bar chart — OW-LLM signal IDs by hit count |
+| `HighRiskTable` | `sessions[]`, `onSelect` | Top-5 sessions with dual LLM+ASI score columns; row click selects session |
+| `SessionRiskPanel` | `llmScore`, `llmBand`, `asiScore`, `asiBand`, `trustScore`, `attackChains[]`, `scoredAt`, `scorerVersion` | Dual score badges + attack chain tags |
+| `FindingsList` | `findings[]` | Findings table — one row per `SecurityFinding` with framework + sub-check columns |
 | `RemediationGuide` | `cards[]` | Expandable cards — one per top firing signal |

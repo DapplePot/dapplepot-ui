@@ -145,6 +145,14 @@ dapplepot_ui/
     │   ├── traceFilters.ts                 ← active category filter on event timeline
     │   └── ui.ts                           ← sidebarCollapsed, activeTab, selectedSessionId
     │
+    │   # Static data — mirrors backend seed scripts; used for local rendering without extra API calls
+    ├── data/
+    │   └── signalRegistry.ts               ← all 20 OW signals (LLM + ASI), ~121 sub-checks
+    │                                          Exports: SIGNAL_REGISTRY, LLM_SIGNALS, ASI_SIGNALS,
+    │                                          countActive, countExcluded
+    │                                          Types: SignalConfig, SubCheck, DetectionPhase,
+    │                                          Severity, ConfidenceTier, Framework
+    │
     │   # Pages — one file per route
     ├── pages/
     │   ├── Login.tsx                       ← /login — delegates to LoginForm; no AppShell chrome
@@ -158,6 +166,10 @@ dapplepot_ui/
     │   ├── Detection.tsx                   ← /detection — alert inbox + rules + channels
     │   ├── Security.tsx                    ← /security — security posture overview
     │   ├── Agents.tsx                      ← /agents — agent registry (AgentTable); create gated to admin
+    │   ├── AgentSecurityProfile.tsx        ← /agents/$agentId — per-agent LLM/ASI scores, trust score,
+    │   │                                      signal breakdown (LLM + ASI tables), recent sessions
+    │   ├── AgentConfig.tsx                 ← /agents/$agentId/config — subcheck online toggles,
+    │   │                                      composite/LLM/ASI alert thresholds, per-signal overrides
     │   ├── Settings.tsx                    ← /settings — profile + SDK keys + user mgmt (admin only)
     │   ├── Tenants.tsx                     ← /tenants — all tenants with admin user + user count (superadmin only)
     │   └── OnboardClient.tsx               ← /onboard-client — OnboardingWizard; role-gated to superadmin
@@ -371,7 +383,98 @@ via `dapplepot_api`. All security endpoints under `/v1/security/`.
 
 ---
 
-### Surface 7: Settings (`pages/Settings.tsx`)
+### Surface 7a: Agent Security Profile (`pages/AgentSecurityProfile.tsx`)
+
+Route: `/agents/$agentId`
+
+Per-agent security deep-dive. Accessible from the agents table (row click). Has a
+**Profile ↔ Config** toggle in the header that links to `/agents/$agentId/config`.
+
+**Data:** `useAgentProfile(agentId)` — `GET /v1/security/agents/:agentId/profile` — `staleTime: 300_000`
+
+**Layout:**
+```
+Header          — agent name, copyable agent ID, Profile/Config nav toggle
+Summary banner  — sessions scored · last scored date · trust trend · risk/trust band legend
+Score cards     — Composite risk · Avg LLM score · Avg ASI score · Trust score (if present)
+Peak scores     — Peak LLM score · Peak ASI score
+Signal tables   — LLM signal history (OW-LLM01–10) | ASI threat history (OW-ASI01–10)
+                  Each row: signal ID · sessions affected · events fired · last seen
+Recent sessions — table: session ID (→ /sessions/:id) · LLM score+band · ASI score+band · scored at
+```
+
+**Risk band thresholds (from scorer, applied to all three scores):**
+| Band | Score range |
+|------|-------------|
+| `clean` | 0–14 |
+| `low` | 15–34 |
+| `medium` | 35–59 |
+| `high` | 60–84 |
+| `critical` | 85–100 |
+
+**Trust score thresholds:**
+| State | Range | Colour |
+|-------|-------|--------|
+| Trusted | ≥ 75 | green |
+| Caution | 50–74 | amber |
+| At risk | < 50 | red |
+
+---
+
+### Surface 7b: Agent Config (`pages/AgentConfig.tsx`)
+
+Route: `/agents/$agentId/config`
+
+Per-agent security configuration. Has the same **Profile ↔ Config** toggle.
+
+**Data sources:**
+```typescript
+useAgentProfile(agentId)        // name + agent ID for header
+useSubcheckConfig(agentId)      // GET /v1/security/agents/:id/subcheck-config — staleTime: 60_000
+useAlertConfig(agentId)         // GET /v1/security/agents/:id/alert-config    — staleTime: 60_000
+```
+
+**Static data:** `SIGNAL_REGISTRY` from `src/data/signalRegistry.ts` — renders without extra API call.
+
+**Mutations (all use optimistic updates):**
+```typescript
+useToggleSubcheckOnline(agentId)          // toggle online_detection for one sub-check
+useUpdateLlmCompositeThreshold(agentId)  // set / reset (null) agent LLM threshold
+useUpdateAsiCompositeThreshold(agentId)  // set / reset (null) agent ASI threshold
+useUpdateSignalThreshold(agentId)        // set / reset (null) per-signal threshold
+```
+
+**Layout:**
+```
+Header          — agent name, copyable agent ID, Profile/Config nav toggle
+
+Alert thresholds panel
+  ├── Platform default badge (read-only)
+  ├── LLM composite threshold  — input + Save / Reset buttons
+  ├── ASI composite threshold  — input + Save / Reset buttons
+  └── Per-signal overrides     — collapsible rows per signal with custom threshold input
+
+Signal tree     — two sections: LLM Framework / ASI Framework
+  └── Each OW signal (OW-LLM01 … OW-ASI10)
+        Header: signal name · active/excluded sub-check counts · expand/collapse
+        Sub-check rows: label · phase badge · severity badge · confidence tier
+                        online-capable: toggle online_detection (optimistic)
+                        excluded:       greyed-out row with exclusion note
+```
+
+**`AgentAlertConfig` shape:**
+```typescript
+{
+  composite_threshold:      number        // platform default (read-only in this field)
+  llm_composite_threshold:  number | null // null = use platform default
+  asi_composite_threshold:  number | null // null = use platform default
+  signal_thresholds:        Record<string, number>  // signalId → override; absent = platform default
+}
+```
+
+---
+
+### Surface 8: Settings (`pages/Settings.tsx`)
 
 Route: `/settings`
 
@@ -384,7 +487,7 @@ Role check uses `useMe()` (server-fresh), not the Zustand store (set at login, p
 
 ---
 
-### Surface 8: Agents (`pages/Agents.tsx`)
+### Surface 9: Agents (`pages/Agents.tsx`)
 
 Route: `/agents`
 
@@ -393,6 +496,8 @@ Agent registry — searchable table of all tenant agents. Columns: Name, Agent I
 "New agent" button only shown when `me?.role === 'admin'` — opens `CreateAgentModal`.
 
 Agent IDs are copyable: each row has a Copy icon that copies the full ID to clipboard with a momentary checkmark.
+
+Clicking an agent row navigates to `/agents/$agentId` (Agent Security Profile).
 
 ---
 
@@ -594,6 +699,20 @@ export function useCreateAgent()     // POST /v1/agents → invalidates ['agents
 // src/hooks/useSdkKeys.ts
 export function useSdkKeys()         // GET /v1/sdk-keys — queryKey: ['sdk-keys']
 export function useRevealSdkKey()    // GET /v1/sdk-keys/:id/reveal (mutation pattern)
+
+// src/hooks/useSecurity.ts
+export function useSecurityOverview(windowHours?)           // staleTime: 120_000 + refetchInterval: 120_000
+export function useSessionSecurity(sessionId)               // score + findings, staleTime: 300_000
+export function useRemediation(windowHours?)                // staleTime: 300_000
+export function useTopAgents()                              // staleTime: 120_000 + refetchInterval: 120_000
+export function useAgentProfile(agentId)                    // staleTime: 300_000
+export function useSignalRegistry()                         // staleTime: 3_600_000 — static registry
+export function useSubcheckConfig(agentId)                  // staleTime: 60_000
+export function useAlertConfig(agentId)                     // staleTime: 60_000
+export function useUpdateLlmCompositeThreshold(agentId)     // optimistic update → invalidates alert-config
+export function useUpdateAsiCompositeThreshold(agentId)     // optimistic update → invalidates alert-config
+export function useUpdateSignalThreshold(agentId)           // { signal_id, threshold } — null resets to platform default
+export function useToggleSubcheckOnline(agentId)            // { subCheckId, online_detection } — optimistic update
 ```
 
 ---
@@ -639,10 +758,18 @@ export function useRevealSdkKey()    // GET /v1/sdk-keys/:id/reveal (mutation pa
 ['rules', tenantId]
 ['channels', tenantId]
 
-// Security
-['security', 'overview', tenantId, window]
-['security', 'session', sessionId]
-['security', 'remediation', tenantId]
+// Security — tenant-level
+['security', 'overview', windowHours]
+['security', 'session', sessionId, 'score']
+['security', 'session', sessionId, 'findings']
+['security', 'remediation', windowHours]
+['security', 'agents']                              // top agents list
+
+// Security — agent-level
+['security', 'agent', agentId]                      // agent profile
+['security', 'signals']                             // signal registry (static)
+['security', 'agent', agentId, 'subcheck-config']   // online-detection overrides
+['security', 'agent', agentId, 'alert-config']      // threshold overrides
 ```
 
 ---
@@ -685,10 +812,12 @@ const sessionRoute   = createRoute({ path: '/sessions/$id',  beforeLoad: require
 const analyticsRoute = createRoute({ path: '/analytics',     beforeLoad: requireAuth, component: Analytics })
 const detectionRoute = createRoute({ path: '/detection',     beforeLoad: requireAuth, component: Detection })
 const securityRoute  = createRoute({ path: '/security',      beforeLoad: requireAuth, component: Security })
-const settingsRoute       = createRoute({ path: '/settings',        beforeLoad: requireAuth, component: Settings })
-const agentsRoute         = createRoute({ path: '/agents',          beforeLoad: requireAuth, component: Agents })
-const tenantsRoute        = createRoute({ path: '/tenants',         beforeLoad: requireAuth, component: Tenants })
-const onboardClientRoute  = createRoute({ path: '/onboard-client',  beforeLoad: requireAuth, component: OnboardClient })
+const settingsRoute              = createRoute({ path: '/settings',             beforeLoad: requireAuth, component: Settings })
+const agentsRoute                = createRoute({ path: '/agents',               beforeLoad: requireAuth, component: Agents })
+const agentSecurityProfileRoute  = createRoute({ path: '/agents/$agentId',      beforeLoad: requireAuth, component: AgentSecurityProfile })
+const agentConfigRoute           = createRoute({ path: '/agents/$agentId/config', beforeLoad: requireAuth, component: AgentConfig })
+const tenantsRoute               = createRoute({ path: '/tenants',              beforeLoad: requireAuth, component: Tenants })
+const onboardClientRoute         = createRoute({ path: '/onboard-client',       beforeLoad: requireAuth, component: OnboardClient })
 ```
 
 Role gating for superadmin-only routes (`/tenants`, `/onboard-client`) and tenant-only routes is done at the **component level** — the route requires a valid JWT, but the page component renders an access-denied view if the role doesn't match. This avoids redirect loops and keeps route declarations clean.
@@ -956,6 +1085,16 @@ src/components/security/RemediationGuide.tsx
 src/pages/Security.tsx
 ```
 
+### Phase 14 — Agent security sub-surfaces (Profile + Config)
+```
+src/data/signalRegistry.ts              ← static registry data; no network dependency
+src/pages/AgentSecurityProfile.tsx      ← /agents/$agentId
+src/pages/AgentConfig.tsx               ← /agents/$agentId/config
+```
+Both pages share `useAgentProfile` for the header. Profile adds `useAgentProfile` for all
+score data. Config adds `useSubcheckConfig`, `useAlertConfig`, and the four threshold/toggle
+mutation hooks. Register both routes in `src/router.tsx`.
+
 ---
 
 ## 15. Locked design decisions — do not change
@@ -985,6 +1124,10 @@ src/pages/Security.tsx
 | 21 | `useUsers` unwraps `Paginated<UserSummary>` with `.then(r => r.data)` | Backend returns paginated envelope; UserTable expects a plain array — unwrap in the hook, not the component |
 | 22 | Tenant ID shown in Topbar from Zustand store, not `useMe()` | Already in memory from login — no extra network call on every page |
 | 23 | SDK key reveal uses per-row mutation with local state cache | Full key fetched once per row per session; Show/Hide toggles after first reveal don't re-fetch |
+| 24 | `AgentConfig` reads signal tree from static `signalRegistry.ts`, not from API | Signal definitions change only on releases — a 1-hour cached API call would still be slower than zero calls; static data is always available offline |
+| 25 | Sub-check online toggles use optimistic updates | Toggle feel is instant; rollback restores previous value on network failure |
+| 26 | `llm_composite_threshold: null` and `asi_composite_threshold: null` mean "use platform default" | Per-agent overrides are optional; null explicitly signals "inherit" rather than "unset to 0" |
+| 27 | Signal breakdown tables split into LLM and ASI sections | The two frameworks are distinct threat models; mixing them hides which framework drove a score |
 
 ---
 
@@ -1023,7 +1166,16 @@ risk distribution bars render for all 5 bands, OWASP frequency chart shows
 signal IDs, highest-risk table links to session detail, remediation tab ranks
 cards by frequency.
 
-**Full build done:** All seven pages + four auth routes navigate correctly,
+**Phase 14 done:** Clicking an agent row from `/agents` navigates to `/agents/$agentId`.
+Score cards show composite, LLM, and ASI risk scores with correct band colours. Trust score
+card appears only when `data.trustScore` is present. Signal breakdown tables are split into
+LLM and ASI sections. Recent sessions table links to `/sessions/:id`. Profile ↔ Config toggle
+navigates correctly. On `/agents/$agentId/config`: signal tree renders all 20 OW signals grouped
+by framework; sub-checks with `onlineCapable: true` show an online toggle that updates
+optimistically; alert threshold inputs save with a debounced PUT and show "Reset to platform default"
+when an override exists. TypeScript reports no errors for the new pages, hooks, and types.
+
+**Full build done:** All nine tenant pages + four auth routes navigate correctly,
 `requireAuth` redirects unauthenticated users to `/login`, no TypeScript
 errors, no console errors, all loading states show skeletons, all error states
 show error cards.
