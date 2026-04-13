@@ -6,6 +6,7 @@ import {
   useUpdateLlmCompositeThreshold, useUpdateAsiCompositeThreshold,
   useUpdateSignalThreshold,
 } from '../hooks/useSecurity'
+import type { OnlineAction } from '../types/security'
 import { ChevronDown, ChevronRight, Shield, ShieldOff, Settings, Zap, HelpCircle, Copy, Check } from 'lucide-react'
 import {
   SIGNAL_REGISTRY,
@@ -614,14 +615,32 @@ function ToggleSwitch({
 
 // ─── Sub-component: single sub-check row ─────────────────────────────────────
 
+const ACTION_LABELS: Record<OnlineAction, string> = {
+  monitor:           'monitor',
+  alert:             'alert',
+  block_call:        'block call',
+  terminate_session: 'terminate',
+}
+
+const ACTION_STYLE: Record<OnlineAction, string> = {
+  monitor:           'border-slate-200 bg-slate-50 text-slate-500',
+  alert:             'border-amber-200 bg-amber-50 text-amber-700',
+  block_call:        'border-orange-200 bg-orange-50 text-orange-700',
+  terminate_session: 'border-red-200 bg-red-50 text-red-700',
+}
+
 function SubCheckRow({
   check,
   isOnline,
+  action,
   onToggleOnline,
+  onActionChange,
 }: {
   check: SubCheck
   isOnline: boolean
+  action: OnlineAction
   onToggleOnline: (subCheckId: string, online: boolean) => void
+  onActionChange: (subCheckId: string, action: OnlineAction) => void
 }) {
   const [showMatches, setShowMatches] = useState(false)
   const hasMatches = check.matches && check.matches.length > 0
@@ -691,15 +710,26 @@ function SubCheckRow({
             </button>
           ) : null}
         </td>
-        <td className="py-2 pl-2 text-right whitespace-nowrap">
+        <td className="py-2 pl-2 text-right">
           {canToggle ? (
-            <div className="flex items-center justify-end gap-1.5">
-              <Zap className={`h-3 w-3 ${isOnline ? 'text-violet-500' : 'text-slate-300'}`} />
+            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+              <Zap className={`h-3 w-3 shrink-0 ${isOnline ? 'text-violet-500' : 'text-slate-300'}`} />
               <ToggleSwitch
                 checked={isOnline}
                 onChange={v => onToggleOnline(check.subCheckId, v)}
                 label={`Toggle ${check.subCheckId} online detection`}
               />
+              <select
+                value={action}
+                onChange={e => onActionChange(check.subCheckId, e.target.value as OnlineAction)}
+                disabled={!isOnline}
+                className={`rounded border px-1.5 py-0.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-violet-400 disabled:opacity-40 disabled:cursor-not-allowed ${ACTION_STYLE[isOnline ? action : 'monitor']}`}
+                title={isOnline ? 'Action when this sub-check fires' : 'Enable online detection to configure action'}
+              >
+                {(Object.keys(ACTION_LABELS) as OnlineAction[]).map(a => (
+                  <option key={a} value={a}>{ACTION_LABELS[a]}</option>
+                ))}
+              </select>
             </div>
           ) : check.excluded ? (
             <span className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] text-slate-400">
@@ -740,12 +770,16 @@ function SignalCard({
   signal,
   defaultOpen = false,
   onlineOverrides,
+  actionOverrides,
   onToggleOnline,
+  onActionChange,
 }: {
   signal: SignalConfig
   defaultOpen?: boolean
   onlineOverrides: Record<string, boolean>
+  actionOverrides: Record<string, OnlineAction>
   onToggleOnline: (subCheckId: string, online: boolean) => void
+  onActionChange: (subCheckId: string, action: OnlineAction) => void
 }) {
   const [open, setOpen] = useState(defaultOpen)
   const active   = countActive(signal)
@@ -810,7 +844,9 @@ function SignalCard({
                     key={check.subCheckId}
                     check={check}
                     isOnline={onlineOverrides[check.subCheckId] ?? false}
+                    action={actionOverrides[check.subCheckId] ?? 'monitor'}
                     onToggleOnline={onToggleOnline}
+                    onActionChange={onActionChange}
                   />
                 ))}
               </tbody>
@@ -828,12 +864,16 @@ function FrameworkSection({
   label,
   signals,
   onlineOverrides,
+  actionOverrides,
   onToggleOnline,
+  onActionChange,
 }: {
   label: string
   signals: SignalConfig[]
   onlineOverrides: Record<string, boolean>
+  actionOverrides: Record<string, OnlineAction>
   onToggleOnline: (subCheckId: string, online: boolean) => void
+  onActionChange: (subCheckId: string, action: OnlineAction) => void
 }) {
   const totalActive   = signals.flatMap(s => s.subChecks).filter(c => !c.excluded).length
   const totalExcluded = signals.flatMap(s => s.subChecks).filter(c => c.excluded).length
@@ -857,7 +897,9 @@ function FrameworkSection({
             key={signal.owaspSignalId}
             signal={signal}
             onlineOverrides={onlineOverrides}
+            actionOverrides={actionOverrides}
             onToggleOnline={onToggleOnline}
+            onActionChange={onActionChange}
           />
         ))}
       </div>
@@ -914,8 +956,17 @@ export function AgentConfig() {
     Object.entries(subcheckConfig).map(([id, ov]) => [id, ov.online_detection])
   )
 
+  const actionOverrides: Record<string, OnlineAction> = Object.fromEntries(
+    Object.entries(subcheckConfig).map(([id, ov]) => [id, ov.action ?? 'monitor'])
+  )
+
   function handleToggleOnline(subCheckId: string, online: boolean) {
-    toggleMutation.mutate({ subCheckId, online_detection: online })
+    const currentAction = actionOverrides[subCheckId] ?? 'monitor'
+    toggleMutation.mutate({ subCheckId, online_detection: online, action: currentAction })
+  }
+
+  function handleActionChange(subCheckId: string, action: OnlineAction) {
+    toggleMutation.mutate({ subCheckId, online_detection: true, action })
   }
 
   const onlineCount = Object.values(onlineOverrides).filter(Boolean).length
@@ -1008,7 +1059,9 @@ export function AgentConfig() {
             label="LLM Security Signals (OWASP LLM Top 10)"
             signals={LLM_SIGNALS}
             onlineOverrides={onlineOverrides}
+            actionOverrides={actionOverrides}
             onToggleOnline={handleToggleOnline}
+            onActionChange={handleActionChange}
           />
         </>
       ) : activeTab === 'asi' ? (
@@ -1018,7 +1071,9 @@ export function AgentConfig() {
             label="Agentic Security Signals (OWASP Agentic Top 10)"
             signals={ASI_SIGNALS}
             onlineOverrides={onlineOverrides}
+            actionOverrides={actionOverrides}
             onToggleOnline={handleToggleOnline}
+            onActionChange={handleActionChange}
           />
         </>
       ) : (

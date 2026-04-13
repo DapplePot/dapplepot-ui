@@ -11,7 +11,7 @@ const STATUS_CONFIG: Record<
   finalised:   { label: 'Finalised',   variant: 'default' },
   interrupted: { label: 'Interrupted', variant: 'warning' },
   killed:      { label: 'Killed',      variant: 'destructive' },
-  error:       { label: 'Error',       variant: 'destructive' },
+  terminated:  { label: 'Terminated',  variant: 'destructive' },
 }
 
 interface StatusBadgeProps {

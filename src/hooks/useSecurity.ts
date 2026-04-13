@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as securityApi from '../api/security'
+import type { OnlineAction } from '../types/security'
 
 // Tenant-level security overview — refreshes every 2 minutes
 export function useSecurityOverview(windowHours = 168) {
@@ -193,31 +194,42 @@ export function useUpdateSignalThreshold(agentId: string) {
   })
 }
 
-// Mutation to toggle a single sub-check online/offline
+// Mutation to toggle or reconfigure a single sub-check (online flag + action)
 export function useToggleSubcheckOnline(agentId: string) {
   const queryClient = useQueryClient()
+  const key = ['security', 'agent', agentId, 'subcheck-config']
   return useMutation({
-    mutationFn: ({ subCheckId, online_detection }: { subCheckId: string; online_detection: boolean }) =>
-      securityApi.setSubcheckOnline(agentId, subCheckId, online_detection),
-    onMutate: async ({ subCheckId, online_detection }) => {
-      // Optimistic update
-      const key = ['security', 'agent', agentId, 'subcheck-config']
+    mutationFn: ({
+      subCheckId, online_detection, action = 'monitor',
+    }: { subCheckId: string; online_detection: boolean; action?: OnlineAction }) =>
+      securityApi.setSubcheckOnline(agentId, subCheckId, online_detection, action),
+    onMutate: async ({ subCheckId, online_detection, action = 'monitor' }) => {
       await queryClient.cancelQueries({ queryKey: key })
-      const prev = queryClient.getQueryData<Record<string, { online_detection: boolean }>>(key)
-      queryClient.setQueryData(key, (old: Record<string, { online_detection: boolean }> = {}) => ({
-        ...old,
-        [subCheckId]: { online_detection },
-      }))
+      const prev = queryClient.getQueryData<Record<string, { online_detection: boolean; action: OnlineAction }>>(key)
+      queryClient.setQueryData(
+        key,
+        (old: Record<string, { online_detection: boolean; action: OnlineAction }> = {}) => ({
+          ...old,
+          [subCheckId]: { online_detection, action },
+        }),
+      )
       return { prev }
     },
     onError: (_err, _vars, ctx) => {
-      const key = ['security', 'agent', agentId, 'subcheck-config']
       queryClient.setQueryData(key, ctx?.prev)
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['security', 'agent', agentId, 'subcheck-config'],
-      })
+      queryClient.invalidateQueries({ queryKey: key })
     },
+  })
+}
+
+// Per-session online actions (block_call / terminate_session audit rows)
+export function useSessionActions(sessionId: string) {
+  return useQuery({
+    queryKey: ['security', 'session', sessionId, 'actions'],
+    queryFn:  () => securityApi.getSessionActions(sessionId),
+    staleTime: 300_000,
+    enabled:  !!sessionId,
   })
 }

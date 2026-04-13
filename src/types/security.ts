@@ -160,3 +160,17 @@ export interface RemediationCard {
   sdkSnippet:    string | null
   frequency:     number
 }
+
+export type OnlineAction = 'monitor' | 'alert' | 'block_call' | 'terminate_session'
+
+export interface SessionAction {
+  id:            number
+  sessionId:     string
+  tenantId:      string
+  agentId:       string | null
+  subCheckId:    string
+  owaspSignalId: string
+  severity:      string
+  actionTaken:   'block_call' | 'terminate_session'
+  triggeredAt:   string
+}

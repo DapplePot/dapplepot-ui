@@ -2,7 +2,7 @@ import { apiClient } from './client'
 import type {
   SecurityOverview, SessionRiskScore,
   SecurityFinding, RemediationCard, AgentRiskEntry, AgentProfile,
-  SignalRegistryEntry,
+  SignalRegistryEntry, OnlineAction, SessionAction,
 } from '../types/security'
 
 export async function getSecurityOverview(
@@ -61,23 +61,31 @@ export async function getSignalRegistry(): Promise<SignalRegistryEntry[]> {
 
 export async function getSubcheckConfig(
   agentId: string
-): Promise<Record<string, { online_detection: boolean }>> {
+): Promise<Record<string, { online_detection: boolean; action: OnlineAction }>> {
   const data = await apiClient
     .get(`v1/security/agents/${agentId}/subcheck-config`)
-    .json<{ overrides: Record<string, { online_detection: boolean }> }>()
+    .json<{ overrides: Record<string, { online_detection: boolean; action: OnlineAction }> }>()
   return data.overrides
 }
 
 export async function setSubcheckOnline(
   agentId: string,
   subCheckId: string,
-  online_detection: boolean
+  online_detection: boolean,
+  action: OnlineAction = 'monitor',
 ): Promise<void> {
   await apiClient
     .put(`v1/security/agents/${agentId}/subcheck-config`, {
-      json: { subCheckId, online_detection },
+      json: { subCheckId, online_detection, action },
     })
     .json()
+}
+
+export async function getSessionActions(sessionId: string): Promise<SessionAction[]> {
+  const data = await apiClient
+    .get(`v1/security/sessions/${sessionId}/actions`)
+    .json<{ actions: SessionAction[] }>()
+  return data.actions
 }
 
 export interface AgentAlertConfig {

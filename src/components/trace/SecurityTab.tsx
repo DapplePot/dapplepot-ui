@@ -1,4 +1,4 @@
-import { useSessionSecurity } from '../../hooks/useSecurity'
+import { useSessionSecurity, useSessionActions } from '../../hooks/useSecurity'
 import { SessionRiskPanel } from '../security/SessionRiskPanel'
 import { FindingsList } from '../security/FindingsList'
 import { Skeleton } from '../ui/skeleton'
@@ -9,6 +9,7 @@ interface SecurityTabProps {
 
 export function SecurityTab({ sessionId }: SecurityTabProps) {
   const { score, findings } = useSessionSecurity(sessionId)
+  const actions = useSessionActions(sessionId)
 
   if (score.isLoading) {
     return (
@@ -53,6 +54,33 @@ export function SecurityTab({ sessionId }: SecurityTabProps) {
         rawAsiComposite={score.data.rawAsiComposite}
         confidenceBand={score.data.confidenceBand}
       />
+      {(actions.data?.length ?? 0) > 0 && (
+        <div>
+          <h3 className="mb-2 text-xs font-medium text-slate-500">Online Actions</h3>
+          <div className="space-y-1">
+            {actions.data!.map(a => (
+              <div
+                key={a.id}
+                className="flex items-center gap-2 rounded border border-slate-100 bg-slate-50 px-3 py-2 text-xs"
+              >
+                <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium ${
+                  a.actionTaken === 'terminate_session'
+                    ? 'border-red-200 bg-red-50 text-red-700'
+                    : 'border-orange-200 bg-orange-50 text-orange-700'
+                }`}>
+                  {a.actionTaken === 'terminate_session' ? 'terminated' : 'blocked'}
+                </span>
+                <span className="font-mono text-slate-500">{a.subCheckId}</span>
+                <span className="text-slate-300">·</span>
+                <span className="capitalize text-slate-500">{a.severity}</span>
+                <span className="ml-auto text-slate-400">
+                  {new Date(a.triggeredAt).toLocaleTimeString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div>
         <h3 className="mb-2 text-xs font-medium text-slate-500">Findings</h3>
         <FindingsList findings={findings.data ?? []} />

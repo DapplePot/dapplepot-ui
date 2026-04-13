@@ -10,7 +10,7 @@ const STATUS_OPTIONS = [
   { value: 'finalised', label: 'Finalised' },
   { value: 'interrupted', label: 'Interrupted' },
   { value: 'killed', label: 'Killed' },
-  { value: 'error', label: 'Error' },
+  { value: 'terminated', label: 'Terminated' },
 ]
 
 const ENV_OPTIONS = [
