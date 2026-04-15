@@ -177,6 +177,104 @@ function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
   )
 }
 
+const ACTION_BADGE: Record<string, string> = {
+  terminate_session: 'border-red-200 bg-red-50 text-red-700',
+  sanitize:          'border-teal-200 bg-teal-50 text-teal-700',
+  alert:             'border-amber-200 bg-amber-50 text-amber-700',
+}
+const ACTION_LABEL: Record<string, string> = {
+  terminate_session: 'terminated',
+  sanitize:          'sanitized',
+  alert:             'alert',
+}
+
+function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> }) {
+  const detections = payload['detections'] as Array<{
+    sub_check_id:    string
+    owasp_signal_id: string
+    check_label:     string
+    check_score:     number
+    effective_score: number
+    confidence_tier: string
+    severity:        string
+    category:        string
+    action_taken:    string
+    matched_text:    string | null
+  }> | undefined
+
+  const actionCounts = payload['action_counts'] as Record<string, number> | undefined
+
+  if (!detections || detections.length === 0) return null
+
+  const SEVERITY_COLOR: Record<string, string> = {
+    critical: 'text-red-600',
+    high:     'text-orange-500',
+    medium:   'text-amber-500',
+    low:      'text-blue-500',
+  }
+
+  return (
+    <div className="border-t border-slate-100 px-4 py-3 space-y-3">
+      {/* Action counts summary */}
+      {actionCounts && Object.keys(actionCounts).length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(actionCounts).map(([action, count]) => (
+            <span
+              key={action}
+              className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium ${ACTION_BADGE[action] ?? ACTION_BADGE['monitor']}`}
+            >
+              <span>{ACTION_LABEL[action] ?? action}</span>
+              <span className="opacity-60">×{count}</span>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Per-detection list */}
+      <div>
+        <p className="mb-1.5 text-xs font-medium text-slate-500">
+          Online findings ({detections.length})
+        </p>
+        <div className="space-y-1.5">
+          {detections.map((d) => (
+            <div
+              key={`${d.owasp_signal_id}:${d.sub_check_id}`}
+              className="rounded border border-slate-100 bg-slate-50 px-2.5 py-2"
+            >
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium ${ACTION_BADGE[d.action_taken] ?? ACTION_BADGE['monitor']}`}>
+                  {ACTION_LABEL[d.action_taken] ?? d.action_taken}
+                </span>
+                <span className="font-mono text-xs text-violet-600 shrink-0">
+                  {d.owasp_signal_id}:{d.sub_check_id}
+                </span>
+                <span className="text-xs text-slate-700 flex-1">{d.check_label}</span>
+                <span className={`text-xs font-medium shrink-0 ${SEVERITY_COLOR[d.severity] ?? 'text-slate-500'}`}>
+                  {d.severity}
+                </span>
+                <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 shrink-0">
+                  {d.confidence_tier}
+                </span>
+                <span className="font-mono text-xs text-slate-400 shrink-0">
+                  {d.check_score}
+                  {d.effective_score !== d.check_score && (
+                    <span className="text-slate-300"> →{d.effective_score}</span>
+                  )}
+                </span>
+              </div>
+              {d.matched_text && (
+                <p className="mt-1 truncate font-mono text-[10px] text-slate-400">
+                  {d.matched_text}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
   const updateStatus = useUpdateAlertStatus()
   const { data: detail } = useAlertDetail(alert.alertId)
@@ -184,6 +282,7 @@ export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
   const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
 
   const isSecurityAlert = alert.ruleType === 'security_risk'
+  const isOnlineAlert   = alert.ruleType === 'online_security_summary'
 
   const fields: { label: string; value: React.ReactNode }[] = [
     { label: 'Agent',      value: alert.agentId ? (agentMap[alert.agentId] ?? alert.agentId) : '—' },
@@ -222,6 +321,10 @@ export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
 
       {isSecurityAlert && detail && (
         <SecurityDetail payload={detail.payload} />
+      )}
+
+      {isOnlineAlert && detail && (
+        <OnlineDetectionsDetail payload={detail.payload} />
       )}
 
       <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3">

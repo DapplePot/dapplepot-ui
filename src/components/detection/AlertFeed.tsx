@@ -47,7 +47,7 @@ function AlertCardTitle({ alert }: { alert: AlertSummary }) {
     if (fired.length > 0) {
       return (
         <p className="truncate text-sm font-medium text-slate-800">
-          {fired.join(', ')} | {alert.title}
+          {alert.title} | {fired.join(', ')}
         </p>
       )
     }

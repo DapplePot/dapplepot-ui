@@ -161,16 +161,22 @@ export interface RemediationCard {
   frequency:     number
 }
 
-export type OnlineAction = 'monitor' | 'alert' | 'block_call' | 'terminate_session'
+export type OnlineAction = 'alert' | 'sanitize' | 'terminate_session'
 
 export interface SessionAction {
-  id:            number
+  id:            string            // finding_id UUID
+  eventId:       string            // event_id that triggered this check
   sessionId:     string
   tenantId:      string
   agentId:       string | null
   subCheckId:    string
   owaspSignalId: string
+  checkLabel:    string
   severity:      string
-  actionTaken:   'block_call' | 'terminate_session'
+  category:      string
+  framework:     string
+  matchedText:   string | null
+  detail:        string | null
+  actionTaken:   OnlineAction      // all 5 actions including monitor
   triggeredAt:   string
 }

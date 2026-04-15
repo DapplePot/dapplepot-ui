@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { TraceEvent } from '@dapplepot/types/session'
 import { useTraceFilters } from '../../stores/traceFilters'
@@ -7,15 +7,16 @@ import { Button } from '../ui/button'
 import { Skeleton } from '../ui/skeleton'
 import { cn } from '../../utils/cn'
 
-type EventCategory = 'all' | 'graph' | 'node' | 'llm' | 'tool' | 'state'
+type EventCategory = 'all' | 'graph' | 'node' | 'llm' | 'tool' | 'state' | 'security'
 
 const CATEGORY_PILLS: { key: EventCategory; label: string }[] = [
-  { key: 'all',   label: 'All' },
-  { key: 'graph', label: 'Graph' },
-  { key: 'node',  label: 'Nodes' },
-  { key: 'llm',   label: 'LLM' },
-  { key: 'tool',  label: 'Tools' },
-  { key: 'state', label: 'State' },
+  { key: 'all',      label: 'All' },
+  { key: 'graph',    label: 'Graph' },
+  { key: 'node',     label: 'Nodes' },
+  { key: 'llm',      label: 'LLM' },
+  { key: 'tool',     label: 'Tools' },
+  { key: 'state',    label: 'State' },
+  { key: 'security', label: 'Security' },
 ]
 
 interface EventTimelineProps {
@@ -40,10 +41,14 @@ export function EventTimeline({
     setActiveCategory('all')
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // security_finding events are already in the events array (stored in ClickHouse
+  // by the API when the SDK dispatches them). No need to merge onlineFindings here.
+  const allEvents = useMemo(() => events, [events])
+
   const filtered =
     activeCategory === 'all'
-      ? events
-      : events.filter((e) =>
+      ? allEvents
+      : allEvents.filter((e) =>
           e.eventCategory === activeCategory ||
           e.eventCategory.startsWith(`${activeCategory}_`) ||
           e.eventType.startsWith(`${activeCategory}_`)

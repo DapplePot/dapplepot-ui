@@ -23,6 +23,7 @@ export function TraceLayout({
   onLoadMore,
 }: TraceLayoutProps) {
   const baseTime = session.executionSummary.firstEventAt ?? session.startedAt
+  const securityCount = events.filter(e => e.eventType === 'security_finding').length
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -43,6 +44,9 @@ export function TraceLayout({
               Event timeline
               <span className="ml-2 text-xs font-normal text-slate-400">
                 {events.length} events
+                {securityCount > 0 && (
+                  <span className="ml-1 text-red-400">· {securityCount} security</span>
+                )}
               </span>
             </h2>
           </div>

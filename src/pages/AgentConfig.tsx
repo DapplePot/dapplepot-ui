@@ -616,16 +616,14 @@ function ToggleSwitch({
 // ─── Sub-component: single sub-check row ─────────────────────────────────────
 
 const ACTION_LABELS: Record<OnlineAction, string> = {
-  monitor:           'monitor',
   alert:             'alert',
-  block_call:        'block call',
+  sanitize:          'sanitize',
   terminate_session: 'terminate',
 }
 
 const ACTION_STYLE: Record<OnlineAction, string> = {
-  monitor:           'border-slate-200 bg-slate-50 text-slate-500',
   alert:             'border-amber-200 bg-amber-50 text-amber-700',
-  block_call:        'border-orange-200 bg-orange-50 text-orange-700',
+  sanitize:          'border-teal-200 bg-teal-50 text-teal-700',
   terminate_session: 'border-red-200 bg-red-50 text-red-700',
 }
 

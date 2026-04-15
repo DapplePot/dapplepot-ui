@@ -6,6 +6,7 @@ export const EVENT_COLORS: Record<string, string> = {
   tool: '#D85A30',       // coral   — tool calls
   state: '#378ADD',      // blue    — state/control
   control: '#378ADD',    // blue    — control events (alias)
+  security: '#E05A5A',   // red     — online security findings
   default: '#6B7280',    // gray    — unknown/unclassified
 }
 
