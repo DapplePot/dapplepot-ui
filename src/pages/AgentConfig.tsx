@@ -559,7 +559,7 @@ function AlertThresholdsTab({ agentId }: { agentId: string }) {
                           custom
                         </span>
                       ) : (
-                        <span className="inline-block rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-400">
+                        <span className="inline-block whitespace-nowrap rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-400">
                           platform default
                         </span>
                       )}
@@ -621,10 +621,16 @@ const ACTION_LABELS: Record<OnlineAction, string> = {
   terminate_session: 'terminate',
 }
 
-const ACTION_STYLE: Record<OnlineAction, string> = {
-  alert:             'border-amber-200 bg-amber-50 text-amber-700',
-  sanitize:          'border-teal-200 bg-teal-50 text-teal-700',
-  terminate_session: 'border-red-200 bg-red-50 text-red-700',
+const ACTION_DOT: Record<OnlineAction, string> = {
+  alert:             'bg-amber-400',
+  sanitize:          'bg-teal-400',
+  terminate_session: 'bg-red-500',
+}
+
+const ACTION_RING: Record<OnlineAction, string> = {
+  alert:             'focus:ring-amber-400 border-amber-200',
+  sanitize:          'focus:ring-teal-400 border-teal-200',
+  terminate_session: 'focus:ring-red-400 border-red-200',
 }
 
 function SubCheckRow({
@@ -710,24 +716,34 @@ function SubCheckRow({
         </td>
         <td className="py-2 pl-2 text-right">
           {canToggle ? (
-            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+            <div className="flex items-center justify-end gap-2">
               <Zap className={`h-3 w-3 shrink-0 ${isOnline ? 'text-violet-500' : 'text-slate-300'}`} />
               <ToggleSwitch
                 checked={isOnline}
                 onChange={v => onToggleOnline(check.subCheckId, v)}
                 label={`Toggle ${check.subCheckId} online detection`}
               />
-              <select
-                value={action}
-                onChange={e => onActionChange(check.subCheckId, e.target.value as OnlineAction)}
-                disabled={!isOnline}
-                className={`rounded border px-1.5 py-0.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-violet-400 disabled:opacity-40 disabled:cursor-not-allowed ${isOnline ? ACTION_STYLE[action] : 'border-slate-200 bg-slate-50 text-slate-500'}`}
-                title={isOnline ? 'Action when this sub-check fires' : 'Enable online detection to configure action'}
-              >
-                {(Object.keys(ACTION_LABELS) as OnlineAction[]).map(a => (
-                  <option key={a} value={a}>{ACTION_LABELS[a]}</option>
-                ))}
-              </select>
+              <div className={`relative flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 transition-colors ${
+                isOnline
+                  ? `bg-white shadow-sm ${ACTION_RING[action]}`
+                  : 'border-slate-200 bg-slate-50 opacity-40 pointer-events-none'
+              }`}>
+                {isOnline && (
+                  <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${ACTION_DOT[action]}`} />
+                )}
+                <select
+                  value={action}
+                  onChange={e => onActionChange(check.subCheckId, e.target.value as OnlineAction)}
+                  disabled={!isOnline}
+                  className="bg-transparent text-[10px] font-medium text-slate-700 focus:outline-none disabled:cursor-not-allowed appearance-none cursor-pointer pr-4"
+                  title={isOnline ? 'Action when this sub-check fires' : 'Enable online detection to configure action'}
+                >
+                  {(Object.keys(ACTION_LABELS) as OnlineAction[]).map(a => (
+                    <option key={a} value={a}>{ACTION_LABELS[a]}</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-1.5 h-3 w-3 shrink-0 text-slate-400" />
+              </div>
             </div>
           ) : check.excluded ? (
             <span className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] text-slate-400">
