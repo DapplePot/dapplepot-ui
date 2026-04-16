@@ -42,7 +42,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'flex flex-col border-r border-slate-200 bg-white transition-all duration-200',
+        'relative flex flex-col border-r border-slate-200 bg-white transition-all duration-200',
         collapsed ? 'w-14' : 'w-56'
       )}
     >
@@ -103,15 +103,16 @@ export function Sidebar() {
           {!collapsed && <span>Sign out</span>}
         </button>
 
-        {/* Collapse toggle */}
-        <button
-          onClick={toggle}
-          className="flex w-full items-center justify-center rounded-md p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600"
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </button>
       </div>
+
+      {/* Edge-pinned collapse toggle */}
+      <button
+        onClick={toggle}
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm text-slate-400 hover:border-violet-300 hover:text-violet-600 hover:shadow-md transition-all duration-150"
+      >
+        {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+      </button>
     </aside>
   )
 }
