@@ -51,7 +51,7 @@ function Stage({ label, count, pct, color, sublabel, isLast }: StageProps) {
 
 export function SessionFunnelChart({ data }: SessionFunnelChartProps) {
   const total = data.totalSessions || 1
-  const terminal = data.completedSessions + data.errorSessions + data.killedSessions
+  const terminal = data.completedSessions + data.errorSessions
 
   const stages: StageProps[] = [
     {
@@ -78,7 +78,6 @@ export function SessionFunnelChart({ data }: SessionFunnelChartProps) {
 
   const dropoffs = [
     { label: 'Errored', count: data.errorSessions,  color: '#ef4444' },
-    { label: 'Killed',  count: data.killedSessions, color: '#f59e0b' },
     { label: 'In progress', count: data.liveSessions, color: '#94a3b8' },
   ].filter((d) => d.count > 0)
 

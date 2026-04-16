@@ -1,8 +1,5 @@
 import type { SessionDetail } from '@dapplepot/types/session'
 import { StatusBadge } from '../sessions/StatusBadge'
-import { Button } from '../ui/button'
-import { useKillSwitch } from '../../hooks/useControl'
-import { Link } from '@tanstack/react-router'
 import { useAgents } from '../../hooks/useAgents'
 
 interface TraceHeaderProps {
@@ -11,7 +8,6 @@ interface TraceHeaderProps {
 }
 
 export function TraceHeader({ session, alertCount }: TraceHeaderProps) {
-  const killSwitch = useKillSwitch()
   const { data: agentsData } = useAgents()
   const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
 
@@ -30,23 +26,6 @@ export function TraceHeader({ session, alertCount }: TraceHeaderProps) {
 
       <div className="flex shrink-0 items-center gap-2">
         <StatusBadge status={session.status} />
-
-        {alertCount > 0 && (
-          <Link to="/detection">
-            <Button variant="outline" size="sm">
-              Alerts ({alertCount}) ↗
-            </Button>
-          </Link>
-        )}
-
-        <Button
-          variant="destructive"
-          size="sm"
-          disabled={session.status !== 'open' || killSwitch.isPending}
-          onClick={() => killSwitch.mutate(session.sessionId)}
-        >
-          Kill session
-        </Button>
       </div>
     </div>
   )

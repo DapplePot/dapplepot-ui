@@ -721,7 +721,7 @@ function SubCheckRow({
                 value={action}
                 onChange={e => onActionChange(check.subCheckId, e.target.value as OnlineAction)}
                 disabled={!isOnline}
-                className={`rounded border px-1.5 py-0.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-violet-400 disabled:opacity-40 disabled:cursor-not-allowed ${ACTION_STYLE[isOnline ? action : 'monitor']}`}
+                className={`rounded border px-1.5 py-0.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-violet-400 disabled:opacity-40 disabled:cursor-not-allowed ${isOnline ? ACTION_STYLE[action] : 'border-slate-200 bg-slate-50 text-slate-500'}`}
                 title={isOnline ? 'Action when this sub-check fires' : 'Enable online detection to configure action'}
               >
                 {(Object.keys(ACTION_LABELS) as OnlineAction[]).map(a => (
@@ -842,7 +842,7 @@ function SignalCard({
                     key={check.subCheckId}
                     check={check}
                     isOnline={onlineOverrides[check.subCheckId] ?? false}
-                    action={actionOverrides[check.subCheckId] ?? 'monitor'}
+                    action={actionOverrides[check.subCheckId] ?? 'alert'}
                     onToggleOnline={onToggleOnline}
                     onActionChange={onActionChange}
                   />
@@ -955,11 +955,11 @@ export function AgentConfig() {
   )
 
   const actionOverrides: Record<string, OnlineAction> = Object.fromEntries(
-    Object.entries(subcheckConfig).map(([id, ov]) => [id, ov.action ?? 'monitor'])
+    Object.entries(subcheckConfig).map(([id, ov]) => [id, ov.action ?? 'alert'])
   )
 
   function handleToggleOnline(subCheckId: string, online: boolean) {
-    const currentAction = actionOverrides[subCheckId] ?? 'monitor'
+    const currentAction = actionOverrides[subCheckId] ?? 'alert'
     toggleMutation.mutate({ subCheckId, online_detection: online, action: currentAction })
   }
 

@@ -177,6 +177,6 @@ export interface SessionAction {
   framework:     string
   matchedText:   string | null
   detail:        string | null
-  actionTaken:   OnlineAction      // all 5 actions including monitor
+  actionTaken:   OnlineAction
   triggeredAt:   string
 }

@@ -5,9 +5,8 @@ import type { UserRole, UserStatus, UserSummary } from '../../types/auth'
 
 function StatusBadge({ status }: { status: UserStatus }) {
   const styles: Record<UserStatus, string> = {
-    active:    'bg-emerald-100 text-emerald-700',
-    invited:   'bg-amber-100 text-amber-700',
-    suspended: 'bg-red-100 text-red-600',
+    active:   'bg-emerald-100 text-emerald-700',
+    disabled: 'bg-red-100 text-red-600',
   }
   return (
     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize ${styles[status]}`}>
@@ -58,7 +57,7 @@ export function UserTable() {
             </thead>
             <tbody className="px-4">
               {filtered.map((u) => (
-                <tr key={u.id} className="border-b border-slate-100 last:border-0">
+                <tr key={u.userId} className="border-b border-slate-100 last:border-0">
                   <td className="px-4 py-3">
                     <div className="text-sm font-medium text-slate-900">{u.name}</div>
                     <div className="text-xs text-slate-500">{u.email}</div>
@@ -90,8 +89,8 @@ export function UserTable() {
 }
 
 function UserRowActions({ user }: { user: UserSummary }) {
-  const changeRole   = useChangeRole(user.id)
-  const changeStatus = useChangeStatus(user.id)
+  const changeRole   = useChangeRole(user.userId)
+  const changeStatus = useChangeStatus(user.userId)
 
   return (
     <div className="flex items-center justify-end gap-2">
@@ -109,12 +108,12 @@ function UserRowActions({ user }: { user: UserSummary }) {
       {user.status === 'active' ? (
         <button
           disabled={changeStatus.isPending}
-          onClick={() => changeStatus.mutate({ status: 'suspended' })}
+          onClick={() => changeStatus.mutate({ status: 'disabled' })}
           className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
         >
-          Suspend
+          Disable
         </button>
-      ) : user.status === 'suspended' ? (
+      ) : user.status === 'disabled' ? (
         <button
           disabled={changeStatus.isPending}
           onClick={() => changeStatus.mutate({ status: 'active' })}

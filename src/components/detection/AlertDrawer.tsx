@@ -221,7 +221,7 @@ function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> 
           {Object.entries(actionCounts).map(([action, count]) => (
             <span
               key={action}
-              className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium ${ACTION_BADGE[action] ?? ACTION_BADGE['monitor']}`}
+              className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium ${ACTION_BADGE[action] ?? ACTION_BADGE['alert']}`}
             >
               <span>{ACTION_LABEL[action] ?? action}</span>
               <span className="opacity-60">×{count}</span>
@@ -242,7 +242,7 @@ function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> 
               className="rounded border border-slate-100 bg-slate-50 px-2.5 py-2"
             >
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium ${ACTION_BADGE[d.action_taken] ?? ACTION_BADGE['monitor']}`}>
+                <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium ${ACTION_BADGE[d.action_taken] ?? ACTION_BADGE['alert']}`}>
                   {ACTION_LABEL[d.action_taken] ?? d.action_taken}
                 </span>
                 <span className="font-mono text-xs text-violet-600 shrink-0">

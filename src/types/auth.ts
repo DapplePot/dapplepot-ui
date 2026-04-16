@@ -1,8 +1,8 @@
 export type UserRole   = 'superadmin' | 'admin' | 'editor' | 'viewer'
-export type UserStatus = 'active' | 'invited' | 'suspended'
+export type UserStatus = 'active' | 'disabled'
 
 export interface UserSummary {
-  id:        string
+  userId:    string
   tenantId:  string | null   // null for superadmin
   email:     string
   name:      string

@@ -77,8 +77,8 @@ export function AlertVolumeChart({ data }: AlertVolumeChartProps) {
         <div className="pt-2 border-t border-slate-100">
           <p className="text-xs font-medium text-slate-500 mb-2">Top firing rules</p>
           <div className="space-y-1">
-            {data.topRules.slice(0, 5).map((r) => (
-              <div key={r.ruleId} className="flex items-center justify-between">
+            {data.topRules.slice(0, 5).map((r, i) => (
+              <div key={r.ruleId ?? r.ruleName ?? i} className="flex items-center justify-between">
                 <span className="text-xs text-slate-600 truncate">{r.ruleName}</span>
                 <span className="text-xs font-medium text-slate-900 tabular-nums ml-2">{r.count}</span>
               </div>

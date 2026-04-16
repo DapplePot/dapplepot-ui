@@ -13,13 +13,13 @@ const SEVERITY_ICON: Record<string, string> = {
   low:      '🔵',
 }
 
-const ACTION_BADGE: Record<OnlineAction, string> = {
+const ACTION_BADGE: Record<string, string> = {
   terminate_session: 'border-red-200 bg-red-50 text-red-700',
   sanitize:          'border-teal-200 bg-teal-50 text-teal-700',
   alert:             'border-amber-200 bg-amber-50 text-amber-700',
 }
 
-const ACTION_LABEL: Record<OnlineAction, string> = {
+const ACTION_LABEL: Record<string, string> = {
   terminate_session: 'terminated',
   sanitize:          'sanitized',
   alert:             'alert',
@@ -45,7 +45,7 @@ export function OnlineFindingsList({ findings }: OnlineFindingsListProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Action badge */}
-                <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium ${ACTION_BADGE[f.actionTaken] ?? ACTION_BADGE.monitor}`}>
+                <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium ${ACTION_BADGE[f.actionTaken] ?? ACTION_BADGE.alert}`}>
                   {ACTION_LABEL[f.actionTaken] ?? f.actionTaken}
                 </span>
                 <p className="text-sm font-medium text-slate-800">{f.checkLabel}</p>

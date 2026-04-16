@@ -10,8 +10,6 @@ const STATUS_DOT: Record<string, string> = {
   open:        'bg-emerald-500',
   stub:        'bg-slate-400',
   finalised:   'bg-slate-500',
-  interrupted: 'bg-amber-500',
-  killed:      'bg-red-500',
   error:       'bg-red-600',
 }
 

@@ -200,10 +200,10 @@ export function useToggleSubcheckOnline(agentId: string) {
   const key = ['security', 'agent', agentId, 'subcheck-config']
   return useMutation({
     mutationFn: ({
-      subCheckId, online_detection, action = 'monitor',
+      subCheckId, online_detection, action = 'alert',
     }: { subCheckId: string; online_detection: boolean; action?: OnlineAction }) =>
       securityApi.setSubcheckOnline(agentId, subCheckId, online_detection, action),
-    onMutate: async ({ subCheckId, online_detection, action = 'monitor' }) => {
+    onMutate: async ({ subCheckId, online_detection, action = 'alert' }) => {
       await queryClient.cancelQueries({ queryKey: key })
       const prev = queryClient.getQueryData<Record<string, { online_detection: boolean; action: OnlineAction }>>(key)
       queryClient.setQueryData(

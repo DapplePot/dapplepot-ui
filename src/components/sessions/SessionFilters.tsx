@@ -8,8 +8,6 @@ const STATUS_OPTIONS = [
   { value: 'stub', label: 'Stub' },
   { value: 'open', label: 'Open' },
   { value: 'finalised', label: 'Finalised' },
-  { value: 'interrupted', label: 'Interrupted' },
-  { value: 'killed', label: 'Killed' },
   { value: 'terminated', label: 'Terminated' },
 ]
 

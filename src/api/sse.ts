@@ -51,7 +51,7 @@ export function useLiveSessions() {
   })
 }
 
-/** SSE hook: listens for kill/interrupt commands on a specific session */
+/** SSE hook: listens for platform commands on a specific session */
 export function useControlChannel(sessionId: string) {
   useEffect(() => {
     const controller = new AbortController()

@@ -34,7 +34,7 @@ export function EventRow({ event, baseTime }: EventRowProps) {
 
   if (isSecurityFinding) {
     const p = event.payload as Record<string, string>
-    const action = p['action_taken'] ?? 'monitor'
+    const action = p['action_taken'] ?? 'alert'
     return (
       <div>
         <div
@@ -57,7 +57,7 @@ export function EventRow({ event, baseTime }: EventRowProps) {
             {p['check_label'] ?? p['sub_check_id'] ?? '—'}
           </span>
 
-          <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${SECURITY_ACTION_BADGE[action] ?? SECURITY_ACTION_BADGE.monitor}`}>
+          <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${SECURITY_ACTION_BADGE[action] ?? SECURITY_ACTION_BADGE.alert}`}>
             {SECURITY_ACTION_LABEL[action] ?? action}
           </span>
         </div>

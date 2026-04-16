@@ -9,8 +9,6 @@ const STATUS_CONFIG: Record<
   stub:        { label: 'Stub',        variant: 'secondary' },
   open:        { label: 'Open',        variant: 'success' },
   finalised:   { label: 'Finalised',   variant: 'default' },
-  interrupted: { label: 'Interrupted', variant: 'warning' },
-  killed:      { label: 'Killed',      variant: 'destructive' },
   terminated:  { label: 'Terminated',  variant: 'destructive' },
 }
 

@@ -72,7 +72,7 @@ export async function setSubcheckOnline(
   agentId: string,
   subCheckId: string,
   online_detection: boolean,
-  action: OnlineAction = 'monitor',
+  action: OnlineAction = 'alert',
 ): Promise<void> {
   await apiClient
     .put(`v1/security/agents/${agentId}/subcheck-config`, {
