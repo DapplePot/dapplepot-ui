@@ -18,7 +18,7 @@ const SEVERITY_DOT: Record<string, string> = {
 }
 
 type AlertSeverity = 'info' | 'warning' | 'medium' | 'critical' | ''
-type AlertSource   = 'security' | 'policy' | ''
+type AlertSource   = 'security' | ''
 
 const SEVERITY_PILLS: { value: AlertSeverity; label: string }[] = [
   { value: '',         label: 'All' },
@@ -29,9 +29,8 @@ const SEVERITY_PILLS: { value: AlertSeverity; label: string }[] = [
 ]
 
 const SOURCE_PILLS: { value: AlertSource; label: string }[] = [
-  { value: '',          label: 'All sources' },
-  { value: 'security',  label: 'Security' },
-  { value: 'policy',    label: 'Policy' },
+  { value: '',         label: 'All sources' },
+  { value: 'security', label: 'Security' },
 ]
 
 function AlertCardTitle({ alert }: { alert: AlertSummary }) {

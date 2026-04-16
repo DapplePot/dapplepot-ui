@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { AlertStatus } from '@dapplepot/types/alert'
 
 type AlertSeverity = 'info' | 'warning' | 'medium' | 'critical' | ''
-type AlertSource   = 'security' | 'policy' | ''
+type AlertSource   = 'security' | ''
 
 interface AlertFiltersState {
   severity: AlertSeverity

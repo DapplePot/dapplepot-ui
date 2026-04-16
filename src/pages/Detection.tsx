@@ -1,20 +1,15 @@
 import { useState } from 'react'
 import { useAlerts } from '../hooks/useAlerts'
-import { useRules } from '../hooks/useRules'
 import { useChannels } from '../hooks/useChannels'
 import { useAlertFilters } from '../stores/alertFilters'
 import { AlertFeed, AlertFeedSkeleton } from '../components/detection/AlertFeed'
-import { RuleList, RuleListSkeleton } from '../components/detection/RuleList'
-import { RuleForm } from '../components/detection/RuleForm'
 import { ChannelList, ChannelListSkeleton } from '../components/detection/ChannelList'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
-import { Button } from '../components/ui/button'
 
-type Tab = 'alerts' | 'rules' | 'channels'
+type Tab = 'alerts' | 'channels'
 
 export function Detection() {
   const [tab, setTab] = useState<Tab>('alerts')
-  const [showRuleForm, setShowRuleForm] = useState(false)
 
   const { severity, status, source } = useAlertFilters()
 
@@ -26,18 +21,12 @@ export function Detection() {
     sort: 'triggered_at:desc',
   })
 
-  const rules = useRules()
   const channels = useChannels()
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">Detection</h1>
-        {tab === 'rules' && (
-          <Button size="sm" onClick={() => setShowRuleForm((v) => !v)}>
-            {showRuleForm ? 'Cancel' : '+ New rule'}
-          </Button>
-        )}
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
@@ -50,7 +39,6 @@ export function Detection() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="rules">Rules</TabsTrigger>
           <TabsTrigger value="channels">Channels</TabsTrigger>
         </TabsList>
 
@@ -59,19 +47,6 @@ export function Detection() {
             <AlertFeedSkeleton />
           ) : (
             <AlertFeed alerts={alerts.data?.data ?? []} />
-          )}
-        </TabsContent>
-
-        <TabsContent value="rules">
-          {showRuleForm && (
-            <div className="mb-4">
-              <RuleForm onClose={() => setShowRuleForm(false)} />
-            </div>
-          )}
-          {rules.isLoading ? (
-            <RuleListSkeleton />
-          ) : (
-            <RuleList rules={rules.data ?? []} />
           )}
         </TabsContent>
 
