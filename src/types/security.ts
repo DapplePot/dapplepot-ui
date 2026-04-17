@@ -161,7 +161,7 @@ export interface RemediationCard {
   frequency:     number
 }
 
-export type OnlineAction = 'alert' | 'sanitize' | 'terminate_session'
+export type OnlineAction = 'alert' | 'sanitize' | 'block_call' | 'terminate_session'
 
 export interface SessionAction {
   id:            string            // finding_id UUID

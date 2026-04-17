@@ -5,6 +5,7 @@ import {
   useAlertConfig,
   useUpdateLlmCompositeThreshold, useUpdateAsiCompositeThreshold,
   useUpdateSignalThreshold,
+  useUpdateToolManifest, useUpdateMaxToolCalls, useToolCallBaseline,
 } from '../hooks/useSecurity'
 import type { OnlineAction } from '../types/security'
 import { ChevronDown, ChevronRight, Shield, ShieldOff, Settings, Zap, HelpCircle, Copy, Check } from 'lucide-react'
@@ -280,9 +281,9 @@ function CompositeSlider({
 
 function AlertThresholdsTab({ agentId }: { agentId: string }) {
   const { data: alertConfig, isLoading, isError } = useAlertConfig(agentId)
-  const updateLlm    = useUpdateLlmCompositeThreshold(agentId)
-  const updateAsi    = useUpdateAsiCompositeThreshold(agentId)
-  const updateSignal = useUpdateSignalThreshold(agentId)
+  const updateLlm         = useUpdateLlmCompositeThreshold(agentId)
+  const updateAsi         = useUpdateAsiCompositeThreshold(agentId)
+  const updateSignal      = useUpdateSignalThreshold(agentId)
 
   // Local draft state — populated only while the user is dragging/typing
   const [llmDraft, setLlmDraft] = useState<number | null>(null)
@@ -613,42 +614,238 @@ function ToggleSwitch({
   )
 }
 
+// ─── Inline expand rows for EA-01a (manifest) and EA-02b (max calls) ─────────
+
+function ManifestExpandRow({ agentId }: { agentId: string }) {
+  const { data: alertConfig } = useAlertConfig(agentId)
+  const updateManifest = useUpdateToolManifest(agentId)
+  const [input, setInput] = useState('')
+
+  if (!alertConfig) return null
+
+  const manifest: string[] = Array.isArray(alertConfig.tool_manifest) ? alertConfig.tool_manifest : []
+
+  function add() {
+    const t = input.trim().replace(/,$/, '')
+    if (!t || manifest.includes(t)) return
+    updateManifest.mutate([...manifest, t])
+    setInput('')
+  }
+
+  return (
+    <tr className="bg-violet-50/30 border-b border-slate-100">
+      <td colSpan={8} className="px-6 py-3">
+        <div className="flex items-center gap-1.5 mb-1">
+          <p className="text-[10px] font-semibold text-violet-700 uppercase tracking-wide">Tool manifest</p>
+          <Tooltip text="Declare which tool names this agent is allowed to call. When set, the langgraph-sdk will block any unlisted tool call in real time (EA-01a: block_call). Post-session scoring also checks ASCV-01a and TME-06a against this list. Leave empty to disable manifest enforcement." />
+          {manifest.length > 0 && (
+            <span className="ml-1 rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-600">
+              {manifest.length} tool{manifest.length !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <p className="text-[10px] text-slate-500 mb-2">
+          Type a tool name and press{' '}
+          <kbd className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono">Enter</kbd>
+          {' '}or{' '}
+          <kbd className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono">,</kbd>
+          {' '}to add. Click a tag to remove it.
+        </p>
+        <div className="flex flex-wrap gap-1.5 mb-2 min-h-[22px]">
+          {manifest.map(tool => (
+            <button
+              key={tool}
+              type="button"
+              onClick={() => updateManifest.mutate(manifest.filter(t => t !== tool))}
+              className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-[11px] text-violet-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
+              title="Click to remove"
+            >
+              {tool}<span className="opacity-50 text-[10px]">×</span>
+            </button>
+          ))}
+          {manifest.length === 0 && (
+            <span className="text-[11px] text-slate-400 italic">No tools declared — manifest enforcement disabled</span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add() }
+            }}
+            placeholder="e.g. read_file, search_web …"
+            className="w-56 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400"
+          />
+          <button
+            type="button"
+            onClick={add}
+            className="rounded border border-violet-200 bg-white px-2.5 py-1 text-[11px] font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+          >
+            Add
+          </button>
+          {manifest.length > 0 && (
+            <button
+              type="button"
+              onClick={() => updateManifest.mutate([])}
+              className="rounded border border-slate-200 px-2.5 py-1 text-[11px] text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+function MaxCallsExpandRow({ agentId }: { agentId: string }) {
+  const { data: alertConfig }  = useAlertConfig(agentId)
+  const { data: baseline, isLoading: baselineLoading } = useToolCallBaseline(agentId)
+  const updateMaxCalls = useUpdateMaxToolCalls(agentId)
+  const [draft, setDraft] = useState('')
+
+  if (!alertConfig) return null
+
+  function commit() {
+    const num = parseInt(draft, 10)
+    if (!isNaN(num) && num >= 1) {
+      updateMaxCalls.mutate(num)
+      setDraft('')
+    }
+  }
+
+  const hasBaseline = baseline && baseline.sessionCount >= 2 && baseline.mean != null
+
+  return (
+    <tr className="bg-amber-50/30 border-b border-slate-100">
+      <td colSpan={8} className="px-6 py-3">
+        <div className="flex items-center gap-1.5 mb-1">
+          <p className="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Max tool calls / session</p>
+          <Tooltip text="Set a hard cap on total tool calls per session (EA-02b). Fires immediately when exceeded — no baseline warmup needed. Once enough session history exists (≥2 sessions), statistical anomaly detection also kicks in automatically as a second layer." />
+        </div>
+        <p className="text-[10px] text-slate-500 mb-3">
+          Fires EA-02b immediately if exceeded. Statistical baseline also applies once ≥2 sessions exist.
+          Leave empty to rely on statistical detection only.
+        </p>
+
+        {/* ── Statistical baseline card ── */}
+        <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+          <p className="text-[10px] font-medium text-amber-700 mb-1.5">7-day statistical baseline</p>
+          {baselineLoading ? (
+            <div className="h-3 w-48 animate-pulse rounded bg-amber-200" />
+          ) : !hasBaseline ? (
+            <p className="text-[11px] text-slate-400 italic">
+              {baseline && baseline.sessionCount < 2
+                ? `Not enough data yet — ${baseline.sessionCount} session${baseline.sessionCount === 1 ? '' : 's'} recorded (need ≥2)`
+                : 'No sessions recorded in the last 7 days'}
+            </p>
+          ) : (
+            <div className="flex flex-wrap items-center gap-4">
+              <div>
+                <span className="text-[10px] text-amber-600">Mean</span>
+                <p className="text-sm font-bold text-slate-800">{baseline!.mean} calls</p>
+              </div>
+              <div>
+                <span className="text-[10px] text-amber-600">Std dev</span>
+                <p className="text-sm font-bold text-slate-800">±{baseline!.stddev}</p>
+              </div>
+              <div>
+                <span className="text-[10px] text-amber-600">P90</span>
+                <p className="text-sm font-bold text-slate-800">{baseline!.p90} calls</p>
+              </div>
+              <div>
+                <span className="text-[10px] text-amber-600">Based on</span>
+                <p className="text-sm font-bold text-slate-800">{baseline!.sessionCount} sessions</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Manual cap input ── */}
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={1}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={e => { if (e.key === 'Enter') commit() }}
+            placeholder="Set manual cap"
+            className="w-32 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+          />
+          {alertConfig.max_tool_calls_per_session != null ? (
+            <span className="text-[11px] text-slate-600">
+              Manual cap ·{' '}
+              <span className="font-semibold text-slate-800">{alertConfig.max_tool_calls_per_session} calls</span>
+              <button
+                type="button"
+                onClick={() => updateMaxCalls.mutate(null)}
+                className="ml-2 text-slate-400 hover:text-red-500 transition-colors"
+                title="Remove cap"
+              >reset</button>
+            </span>
+          ) : (
+            <span className="text-[11px] text-slate-500">
+              Statistical detection
+              {hasBaseline
+                ? ` · ~${baseline!.mean} avg · P90 ${baseline!.p90} calls`
+                : baseline && baseline.sessionCount > 0
+                  ? ` · ${baseline.sessionCount} session${baseline.sessionCount === 1 ? '' : 's'}, warming up`
+                  : ' · no data yet'}
+            </span>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 // ─── Sub-component: single sub-check row ─────────────────────────────────────
 
 const ACTION_LABELS: Record<OnlineAction, string> = {
   alert:             'alert',
   sanitize:          'sanitize',
+  block_call:        'block call',
   terminate_session: 'terminate',
 }
 
 const ACTION_DOT: Record<OnlineAction, string> = {
   alert:             'bg-amber-400',
   sanitize:          'bg-teal-400',
+  block_call:        'bg-orange-500',
   terminate_session: 'bg-red-500',
 }
 
 const ACTION_RING: Record<OnlineAction, string> = {
   alert:             'focus:ring-amber-400 border-amber-200',
   sanitize:          'focus:ring-teal-400 border-teal-200',
+  block_call:        'focus:ring-orange-400 border-orange-200',
   terminate_session: 'focus:ring-red-400 border-red-200',
 }
 
 function SubCheckRow({
   check,
+  agentId,
   isOnline,
   action,
   onToggleOnline,
   onActionChange,
 }: {
   check: SubCheck
+  agentId?: string
   isOnline: boolean
   action: OnlineAction
   onToggleOnline: (subCheckId: string, online: boolean) => void
   onActionChange: (subCheckId: string, action: OnlineAction) => void
 }) {
   const [showMatches, setShowMatches] = useState(false)
+  const [showConfigExpand, setShowConfigExpand] = useState(false)
   const hasMatches = check.matches && check.matches.length > 0
   const canToggle = check.onlineCapable === true && !check.excluded
+  const isManifestCheck  = check.subCheckId === 'EA-01a'
+  const isMaxCallsCheck  = check.subCheckId === 'EA-02b'
 
   const effectivePhase: DetectionPhase =
     check.excluded        ? 'excluded' :
@@ -701,7 +898,22 @@ function SubCheckRow({
           )}
         </td>
         <td className="py-2 text-right">
-          {hasMatches && !check.excluded ? (
+          {(isManifestCheck || isMaxCallsCheck) && agentId && !check.excluded ? (
+            <button
+              onClick={() => setShowConfigExpand(v => !v)}
+              className={`inline-flex items-center gap-0.5 text-[10px] font-medium transition-colors ${
+                isManifestCheck
+                  ? 'text-violet-600 hover:text-violet-800'
+                  : 'text-amber-600 hover:text-amber-800'
+              }`}
+            >
+              {isManifestCheck ? 'tool manifest' : 'max tool calls'}
+              {showConfigExpand
+                ? <ChevronDown className="h-3 w-3" />
+                : <ChevronRight className="h-3 w-3" />
+              }
+            </button>
+          ) : hasMatches && !check.excluded ? (
             <button
               onClick={() => setShowMatches(v => !v)}
               className="inline-flex items-center gap-0.5 text-[10px] text-violet-600 hover:text-violet-800"
@@ -738,9 +950,11 @@ function SubCheckRow({
                   className="bg-transparent text-[10px] font-medium text-slate-700 focus:outline-none disabled:cursor-not-allowed appearance-none cursor-pointer pr-4"
                   title={isOnline ? 'Action when this sub-check fires' : 'Enable online detection to configure action'}
                 >
-                  {(Object.keys(ACTION_LABELS) as OnlineAction[]).map(a => (
-                    <option key={a} value={a}>{ACTION_LABELS[a]}</option>
-                  ))}
+                  {(Object.keys(ACTION_LABELS) as OnlineAction[])
+                    .filter(a => !check.validActions || check.validActions.includes(a))
+                    .map(a => (
+                      <option key={a} value={a}>{ACTION_LABELS[a]}</option>
+                    ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-1.5 h-3 w-3 shrink-0 text-slate-400" />
               </div>
@@ -774,14 +988,23 @@ function SubCheckRow({
           </td>
         </tr>
       )}
+
+      {showConfigExpand && isManifestCheck && agentId && (
+        <ManifestExpandRow agentId={agentId} />
+      )}
+      {showConfigExpand && isMaxCallsCheck && agentId && (
+        <MaxCallsExpandRow agentId={agentId} />
+      )}
     </>
   )
 }
+
 
 // ─── Sub-component: signal accordion card ────────────────────────────────────
 
 function SignalCard({
   signal,
+  agentId,
   defaultOpen = false,
   onlineOverrides,
   actionOverrides,
@@ -789,6 +1012,7 @@ function SignalCard({
   onActionChange,
 }: {
   signal: SignalConfig
+  agentId?: string
   defaultOpen?: boolean
   onlineOverrides: Record<string, boolean>
   actionOverrides: Record<string, OnlineAction>
@@ -857,6 +1081,7 @@ function SignalCard({
                   <SubCheckRow
                     key={check.subCheckId}
                     check={check}
+                    agentId={agentId}
                     isOnline={onlineOverrides[check.subCheckId] ?? false}
                     action={actionOverrides[check.subCheckId] ?? 'alert'}
                     onToggleOnline={onToggleOnline}
@@ -877,6 +1102,7 @@ function SignalCard({
 function FrameworkSection({
   label,
   signals,
+  agentId,
   onlineOverrides,
   actionOverrides,
   onToggleOnline,
@@ -884,6 +1110,7 @@ function FrameworkSection({
 }: {
   label: string
   signals: SignalConfig[]
+  agentId?: string
   onlineOverrides: Record<string, boolean>
   actionOverrides: Record<string, OnlineAction>
   onToggleOnline: (subCheckId: string, online: boolean) => void
@@ -910,6 +1137,7 @@ function FrameworkSection({
           <SignalCard
             key={signal.owaspSignalId}
             signal={signal}
+            agentId={agentId}
             onlineOverrides={onlineOverrides}
             actionOverrides={actionOverrides}
             onToggleOnline={onToggleOnline}
@@ -1072,6 +1300,7 @@ export function AgentConfig() {
           <FrameworkSection
             label="LLM Security Signals (OWASP LLM Top 10)"
             signals={LLM_SIGNALS}
+            agentId={agentId}
             onlineOverrides={onlineOverrides}
             actionOverrides={actionOverrides}
             onToggleOnline={handleToggleOnline}
@@ -1084,6 +1313,7 @@ export function AgentConfig() {
           <FrameworkSection
             label="Agentic Security Signals (OWASP Agentic Top 10)"
             signals={ASI_SIGNALS}
+            agentId={agentId}
             onlineOverrides={onlineOverrides}
             actionOverrides={actionOverrides}
             onToggleOnline={handleToggleOnline}

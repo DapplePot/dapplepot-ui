@@ -9,6 +9,8 @@ export type Severity = 'critical' | 'high' | 'medium' | 'low'
 export type ConfidenceTier = 'deterministic' | 'high' | 'medium' | 'low' | 'skeletal'
 export type Framework = 'LLM' | 'ASI'
 
+export type OnlineAction = 'alert' | 'sanitize' | 'block_call' | 'terminate_session'
+
 export interface SubCheck {
   subCheckId: string
   label: string
@@ -26,6 +28,13 @@ export interface SubCheck {
    * Mirrors OnlineDetector.ONLINE_CAPABLE_SUB_CHECKS in langgraph-sdk.
    */
   onlineCapable?: boolean
+  /**
+   * Which online actions are valid for this sub-check.
+   * - block_call is invalid for *_end event checks (call already completed).
+   * - sanitize is invalid for structural/count checks (nothing to redact).
+   * Omit to allow all four actions.
+   */
+  validActions?: OnlineAction[]
 }
 
 export interface SignalConfig {
@@ -50,6 +59,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'PI-01a', label: 'Role-override phrase match', phase: 'online', score: 85,
         severity: 'high', confidenceTier: 'high', excluded: false, onlineCapable: true,
+        validActions: ['alert', 'sanitize', 'block_call', 'terminate_session'],
         matches: [
           'ignore/disregard/forget … instructions',
           'you must/shall/will … do/execute/perform',
@@ -60,6 +70,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'PI-01b', label: 'Delimiter smuggling', phase: 'online', score: 90,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false, onlineCapable: true,
+        validActions: ['alert', 'sanitize', 'block_call', 'terminate_session'],
         matches: [
           '```system / ``` role-boundary sequences',
           '### System: / [SYS] / ---SYSTEM--- delimiters',
@@ -69,6 +80,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'PI-01c', label: 'Encoded / obfuscated payload', phase: 'online', score: 75,
         severity: 'high', confidenceTier: 'high', excluded: false, onlineCapable: true,
+        validActions: ['alert', 'sanitize', 'block_call', 'terminate_session'],
         matches: [
           'base64-wrapped instruction payloads',
           'URL-encoded injection sequences (%27, %3C…)',
@@ -77,6 +89,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'PI-02a', label: 'Web-fetched content with injection pattern', phase: 'online', score: 70,
         severity: 'high', confidenceTier: 'high', excluded: false, onlineCapable: true,
+        validActions: ['alert', 'sanitize', 'terminate_session'],  // fires on tool_end — call already completed
         matches: [
           'ignore/override/bypass patterns in retrieved web content',
           'instruction-like phrases inside fetched documents',
@@ -121,6 +134,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'PI-05a', label: 'Code injection pattern in prompt', phase: 'both', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false, onlineCapable: true,
+        validActions: ['alert', 'sanitize', 'block_call', 'terminate_session'],
         matches: [
           'import os / import subprocess in prompt',
           '__import__() calls',
@@ -143,6 +157,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'PI-08a', label: 'Adversarial suffix (high-entropy tail)', phase: 'both', score: 75,
         severity: 'high', confidenceTier: 'medium', excluded: false, onlineCapable: true,
+        validActions: ['alert', 'sanitize', 'block_call', 'terminate_session'],
         matches: [
           'Shannon entropy > 3.5 at prompt tail',
           'adversarial suffix token sequences',
@@ -170,6 +185,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'SID-01a', label: 'API key / token pattern in output', phase: 'online', score: 95,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false, onlineCapable: true,
+        validActions: ['alert', 'sanitize', 'terminate_session'],  // fires on llm_end/tool_end — call already completed
         matches: [
           'sk-[32+ chars]  (OpenAI API key)',
           'ghp_[36 chars]  (GitHub personal token)',
@@ -188,6 +204,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'SID-01c', label: 'JWT / session token in agent message', phase: 'online', score: 90,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false, onlineCapable: true,
+        validActions: ['alert', 'sanitize', 'terminate_session'],  // fires on llm_end/tool_end — call already completed
         matches: [
           'eyJ[…].eyJ[…].[…]  (JWT three-part token pattern)',
         ],
@@ -195,6 +212,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'SID-02a', label: 'Name + email + phone co-occurrence', phase: 'online', score: 75,
         severity: 'high', confidenceTier: 'deterministic', excluded: false, onlineCapable: true,
+        validActions: ['alert', 'sanitize', 'terminate_session'],  // fires on llm_end/tool_end — call already completed
         matches: [
           '[user]@[domain].[tld]  (email address)',
           '+1 (XXX) XXX-XXXX  (phone number)',
@@ -292,6 +310,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'IOH-01a', label: 'Shell command pattern in output', phase: 'online', score: 90,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false, onlineCapable: true,
+        validActions: ['alert', 'sanitize', 'terminate_session'],  // fires on llm_end/tool_end — call already completed
         matches: [
           'rm -rf …', 'curl … | (ba)sh', "python -c '…'",
           'eval(…)', 'exec(…)', 'os.system(…)', 'subprocess.*',
@@ -347,11 +366,11 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     number: 6,
     description: 'Agent exceeds its authorised tool scope, requests elevated permissions, performs irreversible actions, or self-modifies its system prompt.',
     subChecks: [
-      { subCheckId: 'EA-01a', label: 'Tool not in approved manifest invoked', phase: 'post_session', score: 80, severity: 'high', confidenceTier: 'high', excluded: false },
+      { subCheckId: 'EA-01a', label: 'Tool not in approved manifest invoked', phase: 'both', score: 80, severity: 'high', confidenceTier: 'deterministic', excluded: false, onlineCapable: true, validActions: ['alert', 'block_call', 'terminate_session'] },
       { subCheckId: 'EA-01b', label: 'Agent requests elevated permissions', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-01c', label: 'Data written outside designated namespace', phase: 'post_session', score: 75, severity: 'high', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-02a', label: 'Irreversible action without confirm gate', phase: 'post_session', score: 85, severity: 'high', confidenceTier: 'high', excluded: false },
-      { subCheckId: 'EA-02b', label: 'Sub-agents spawned > fan-out limit', phase: 'post_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false },
+      { subCheckId: 'EA-02b', label: 'Sub-agents spawned > fan-out limit', phase: 'both', score: 70, severity: 'high', confidenceTier: 'deterministic', excluded: false, onlineCapable: true, validActions: ['alert', 'block_call', 'terminate_session'] },
       { subCheckId: 'EA-02c', label: 'Agent self-modifies system prompt', phase: 'post_session', score: 98, severity: 'critical', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-03a', label: 'Reads outside working directory', phase: 'post_session', score: 65, severity: 'medium', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-03b', label: 'Network call to host not in allowlist', phase: 'post_session', score: 75, severity: 'high', confidenceTier: 'high', excluded: false },

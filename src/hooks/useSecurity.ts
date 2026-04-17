@@ -2,6 +2,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as securityApi from '../api/security'
 import type { OnlineAction } from '../types/security'
 
+// Empty config shape used as optimistic default when no prior data exists
+const _emptyAlertConfig = (): securityApi.AgentAlertConfig => ({
+  composite_threshold: 60,
+  llm_composite_threshold: null,
+  asi_composite_threshold: null,
+  signal_thresholds: {},
+  tool_manifest: [],
+  max_tool_calls_per_session: null,
+})
+
 // Tenant-level security overview — refreshes every 2 minutes
 export function useSecurityOverview(windowHours = 168) {
   return useQuery({
@@ -221,6 +231,65 @@ export function useToggleSubcheckOnline(agentId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: key })
     },
+  })
+}
+
+// Mutation: update tool manifest (list of allowed tool names for this agent)
+export function useUpdateToolManifest(agentId: string) {
+  const queryClient = useQueryClient()
+  const key = ['security', 'agent', agentId, 'alert-config']
+  return useMutation({
+    mutationFn: (tool_manifest: string[]) =>
+      securityApi.updateToolManifest(agentId, tool_manifest),
+    onMutate: async (tool_manifest) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const prev = queryClient.getQueryData<securityApi.AgentAlertConfig>(key)
+      queryClient.setQueryData(key, (old: securityApi.AgentAlertConfig | undefined) =>
+        old ? { ...old, tool_manifest } : { ..._emptyAlertConfig(), tool_manifest }
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      queryClient.setQueryData(key, ctx?.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key })
+    },
+  })
+}
+
+// Mutation: update max tool calls per session (null = remove override)
+export function useUpdateMaxToolCalls(agentId: string) {
+  const queryClient = useQueryClient()
+  const key = ['security', 'agent', agentId, 'alert-config']
+  return useMutation({
+    mutationFn: (max_tool_calls_per_session: number | null) =>
+      securityApi.updateMaxToolCalls(agentId, max_tool_calls_per_session),
+    onMutate: async (max_tool_calls_per_session) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const prev = queryClient.getQueryData<securityApi.AgentAlertConfig>(key)
+      queryClient.setQueryData(key, (old: securityApi.AgentAlertConfig | undefined) =>
+        old ? { ...old, max_tool_calls_per_session }
+            : { ..._emptyAlertConfig(), max_tool_calls_per_session }
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      queryClient.setQueryData(key, ctx?.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key })
+    },
+  })
+}
+
+// 7-day tool-call baseline stats for EA-02b display
+export function useToolCallBaseline(agentId: string) {
+  return useQuery({
+    queryKey: ['security', 'agent', agentId, 'tool-call-baseline'],
+    queryFn:  () => securityApi.getToolCallBaseline(agentId),
+    staleTime: 300_000,   // 5 min — changes only as new sessions are scored
+    enabled:  !!agentId,
   })
 }
 

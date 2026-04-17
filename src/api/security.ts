@@ -89,10 +89,12 @@ export async function getSessionActions(sessionId: string): Promise<SessionActio
 }
 
 export interface AgentAlertConfig {
-  composite_threshold:     number
-  llm_composite_threshold: number | null  // null = platform default (60)
-  asi_composite_threshold: number | null  // null = platform default (60)
-  signal_thresholds:       Record<string, number>
+  composite_threshold:         number
+  llm_composite_threshold:     number | null  // null = platform default (60)
+  asi_composite_threshold:     number | null  // null = platform default (60)
+  signal_thresholds:           Record<string, number>
+  tool_manifest:               string[]        // [] = not configured
+  max_tool_calls_per_session:  number | null   // null = not configured
 }
 
 export const PLATFORM_COMPOSITE_DEFAULT = 60
@@ -142,6 +144,39 @@ export async function updateSignalThreshold(
   await apiClient
     .put(`v1/security/agents/${agentId}/alert-config`, {
       json: { signal_id, threshold },
+    })
+    .json()
+}
+
+export async function updateToolManifest(
+  agentId: string,
+  tool_manifest: string[]
+): Promise<void> {
+  await apiClient
+    .put(`v1/security/agents/${agentId}/alert-config`, {
+      json: { tool_manifest },
+    })
+    .json()
+}
+
+export interface ToolCallBaseline {
+  sessionCount: number
+  mean:         number | null
+  stddev:       number | null
+  p90:          number | null  // 90th-percentile over last 7 days
+}
+
+export async function getToolCallBaseline(agentId: string): Promise<ToolCallBaseline> {
+  return apiClient.get(`v1/security/agents/${agentId}/tool-call-baseline`).json()
+}
+
+export async function updateMaxToolCalls(
+  agentId: string,
+  max_tool_calls_per_session: number | null  // null = remove override
+): Promise<void> {
+  await apiClient
+    .put(`v1/security/agents/${agentId}/alert-config`, {
+      json: { max_tool_calls_per_session },
     })
     .json()
 }
