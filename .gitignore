@@ -7,3 +7,6 @@ dist-ssr
 !.env.example
 .DS_Store
 tsconfig.tsbuildinfo
+
+# Claude Code
+.claude/
