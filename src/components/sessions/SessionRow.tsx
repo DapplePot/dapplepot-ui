@@ -85,6 +85,18 @@ export function SessionRow({ session, isExpanded, onToggle, agentName }: Session
                   {session.deploymentId ?? '—'}
                 </p>
               </div>
+              {session.status === 'terminated' && (
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Exit reason</p>
+                  <p className="mt-0.5 text-xs text-red-600 font-medium">
+                    {session.exitReason === 'security_terminated'
+                      ? 'Security policy'
+                      : session.exitReason === 'error'
+                      ? 'Node error'
+                      : session.exitReason ?? '—'}
+                  </p>
+                </div>
+              )}
             </div>
             <div className="mt-3">
               <Link to="/sessions/$id" params={{ id: session.sessionId }}>

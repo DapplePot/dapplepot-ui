@@ -6,6 +6,15 @@ interface SessionInfoTabProps {
   session: SessionDetail
 }
 
+const EXIT_REASON_LABELS: Record<string, string> = {
+  error:                'Node error',
+  security_terminated:  'Security policy',
+}
+
+function exitReasonLabel(reason: string): string {
+  return EXIT_REASON_LABELS[reason] ?? reason
+}
+
 export function SessionInfoTab({ session }: SessionInfoTabProps) {
   const { data: agentsData } = useAgents()
   const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
@@ -21,7 +30,6 @@ export function SessionInfoTab({ session }: SessionInfoTabProps) {
     { label: 'Started',       value: session.startedAt ? formatAgo(session.startedAt) : '—' },
     { label: 'Ended',         value: session.endedAt ? formatAgo(session.endedAt) : '—' },
     { label: 'Duration',      value: session.durationMs != null ? formatDuration(session.durationMs) : '—' },
-    { label: 'Exit reason',   value: session.exitReason },
     { label: 'LLM calls',     value: session.tokenUsage.llmCallCount },
     { label: 'Nodes visited', value: session.executionSummary.nodesVisited.join(', ') || '—' },
     { label: 'Error count',   value: session.executionSummary.errorCount },
@@ -37,6 +45,20 @@ export function SessionInfoTab({ session }: SessionInfoTabProps) {
           </span>
         </div>
       ))}
+
+      {session.exitReason && (
+        <div className="flex gap-3 py-2">
+          <span className="w-32 shrink-0 text-xs font-medium text-slate-500">Exit reason</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-semibold text-red-600">
+              {exitReasonLabel(session.exitReason)}
+            </span>
+            <span className="font-mono text-xs text-slate-400">
+              {session.exitReason}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -20,7 +20,7 @@ export function TraceHeader({ session, alertCount }: TraceHeaderProps) {
         <p className="mt-0.5 text-xs text-slate-500">
           {session.agentId ? (agentMap[session.agentId] ?? session.agentId) : '—'}
           {session.agentVersion && ` · v${session.agentVersion}`}
-          {` · ${session.environment}`}
+          {session.environment && ` · ${session.environment}`}
         </p>
       </div>
 

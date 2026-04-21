@@ -16,17 +16,18 @@ export interface SessionSummary {
   endedAt: string | null
   durationMs: number | null
   lastActiveAt: string | null
+  exitReason: string | null
   alertCount: number
 }
 
 export interface SessionDetail {
   sessionId: string
   status: SessionStatus
-  agentId: string
-  agentVersion: string
-  environment: string
-  deploymentId: string
-  userContextId: string
+  agentId: string | null
+  agentVersion: string | null
+  environment: string | null
+  deploymentId: string | null
+  userContextId: string | null
   startedAt: string | null
   endedAt: string | null
   durationMs: number | null
