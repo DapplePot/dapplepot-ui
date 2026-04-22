@@ -17,10 +17,12 @@ src/
 
   types/                Copied from dapplepot-api/src/types/ (run: pnpm sync-types)
     auth.ts             UserRole, UserSummary, LoginResponse, RefreshResponse
-    session.ts          SessionSummary, SessionDetail, TracePage, TraceEvent
+    session.ts          SessionSummary, SessionDetail, TracePage, TraceEvent,
+                        StateHistoryEvent, StateHistory
     analytics.ts        AnalyticsOverview, LlmUsageData, ErrorRateData, LatencyData, CostEntry
     alert.ts            AlertSummary, AlertDetail, AlertStats
     security.ts         SessionRiskScore, SecurityFinding, AgentProfile, RemediationCard, SignalRegistryEntry
+                        SessionAction: triggerEventType field added (event type that triggered the check)
     channel.ts          ChannelSummary
     rule.ts             PolicyRule, RuleType, RuleCondition
     common.ts           Paginated<T>, ApiError, ListParams
@@ -84,6 +86,8 @@ src/
     Overview.tsx        / — SuperAdminHome (superadmin) | MetricCards+SessionFeed+AlertPanel+AgentHealth (tenant)
     Sessions.tsx        /sessions — SessionTable + filters + URL pagination
     SessionDetail.tsx   /sessions/:id — EventTimeline (left) + RightPanel with 4 tabs (right)
+                        Synthesizes ghost timeline events for block_call/terminate_session triggers
+                        that were never flushed to ClickHouse. Uses triggerEventType from sessionActions.
     Analytics.tsx       /analytics — date picker, 4 charts + cost table
     Detection.tsx       /detection — AlertFeed | RuleList | ChannelList (3 tabs)
     Security.tsx        /security — risk overview; Sessions tab + Agents tab
@@ -108,12 +112,13 @@ src/
     sessions/           SessionTable, SessionRow, SessionFilters, SessionPagination, StatusBadge
     trace/              TraceLayout, TraceHeader, MetricStrip, EventTimeline (virtualised),
                         EventRow, EventPayload, RightPanel, GraphStateTab, SessionInfoTab,
-                        AlertsTab, SecurityTab
+                        AlertsTab, SecurityTab (baseTime prop → relative ms offsets for online findings)
     analytics/          DateRangePicker, TokenChart, ErrorRateChart, LatencyChart, CostTable,
                         AlertVolumeChart, OWASPFrequencyChart, SecurityBandChart, SessionFunnelChart
     detection/          AlertFeed, AlertDrawer, RuleList, RuleForm, DryRunPreview, ChannelList
     security/           RiskDistribution, OwaspFrequency, HighRiskTable, SessionRiskPanel,
-                        FindingsList, RemediationGuide, OnlineFindingsList
+                        FindingsList (post_session + cross_session separated), RemediationGuide,
+                        OnlineFindingsList (baseTime prop shows +Xms relative timing + triggerEventType)
     ui/                 button, badge, input, select, table, tabs, toggle, skeleton (CVA primitives)
 
   utils/
@@ -248,6 +253,29 @@ await fetchEventSource(`${API_BASE}/v1/sessions/live`, {
     }
   },
 })
+```
+
+---
+
+## Session Types (`src/types/session.ts`)
+
+```typescript
+// State history — graph_state snapshots from checkpoint_write events
+interface StateHistoryEvent {
+  eventId: string
+  eventType: string
+  emittedAt: string
+  sequenceIndex: number
+  payload: Record<string, unknown>
+}
+
+interface StateHistory {
+  sessionId: string
+  events: StateHistoryEvent[]
+}
+
+// SessionDetail.exitReason
+// 'security_terminated' — session killed by SecurityViolationError from SDK online check
 ```
 
 ---

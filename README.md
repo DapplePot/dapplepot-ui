@@ -30,7 +30,7 @@ The Vite dev server proxies `/v1/*` → `http://localhost:3000` automatically.
 | `/login` | Login | Email + password auth |
 | `/` | Overview | Metric cards + live session feed (SSE) + alerts + agent health |
 | `/sessions` | Sessions | Paginated session table with filters |
-| `/sessions/:id` | SessionDetail | Event timeline + detail panel (4 tabs) |
+| `/sessions/:id` | SessionDetail | Event timeline + detail panel (4 tabs); synthesizes blocked/terminated trigger events on timeline |
 | `/analytics` | Analytics | Token usage, error rates, latency, cost over time |
 | `/detection` | Detection | Alert feed + rules + notification channels |
 | `/security` | Security | Risk distribution, OWASP signal frequency, high-risk sessions |
@@ -54,6 +54,12 @@ Short-lived JWT access tokens (15m) + rotatable refresh tokens (7d). The `ky` cl
 
 ### SSE
 `@microsoft/fetch-event-source` (native `EventSource` lacks `Authorization` header support). Live session feed at `/v1/sessions/live`.
+
+## Key Types
+
+`SessionSummary` includes `exitReason` — value `'security_terminated'` indicates the session was killed by an online SDK security check. `StateHistory` / `StateHistoryEvent` hold graph_state snapshots from `checkpoint_write` events.
+
+`SessionAction` (in `src/types/security.ts`) includes `triggerEventType` — the event type (e.g. `llm_start`) that triggered the online check. Used to synthesize placeholder timeline events for blocked/terminated calls that were never flushed to ClickHouse.
 
 ## Scripts
 
