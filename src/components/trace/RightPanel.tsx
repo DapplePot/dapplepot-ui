@@ -26,7 +26,7 @@ export function RightPanel({ session, alerts }: RightPanelProps) {
 
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         <TabsContent value="security">
-          <SecurityTab sessionId={session.sessionId} />
+          <SecurityTab sessionId={session.sessionId} baseTime={session.startedAt} />
         </TabsContent>
         <TabsContent value="alerts">
           <AlertsTab alerts={alerts} />

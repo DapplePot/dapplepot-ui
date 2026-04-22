@@ -164,19 +164,20 @@ export interface RemediationCard {
 export type OnlineAction = 'alert' | 'sanitize' | 'block_call' | 'terminate_session'
 
 export interface SessionAction {
-  id:            string            // finding_id UUID
-  eventId:       string            // event_id that triggered this check
-  sessionId:     string
-  tenantId:      string
-  agentId:       string | null
-  subCheckId:    string
-  owaspSignalId: string
-  checkLabel:    string
-  severity:      string
-  category:      string
-  framework:     string
-  matchedText:   string | null
-  detail:        string | null
-  actionTaken:   OnlineAction
-  triggeredAt:   string
+  id:               string            // finding_id UUID
+  eventId:          string            // event_id that triggered this check
+  triggerEventType: string | null     // event type that triggered this check (e.g. 'llm_start')
+  sessionId:        string
+  tenantId:         string
+  agentId:          string | null
+  subCheckId:       string
+  owaspSignalId:    string
+  checkLabel:       string
+  severity:         string
+  category:         string
+  framework:        string
+  matchedText:      string | null
+  detail:           string | null
+  actionTaken:      OnlineAction
+  triggeredAt:      string
 }

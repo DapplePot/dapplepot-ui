@@ -190,19 +190,23 @@ const ACTION_LABEL: Record<string, string> = {
 
 function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> }) {
   const detections = payload['detections'] as Array<{
-    sub_check_id:    string
-    owasp_signal_id: string
-    check_label:     string
-    check_score:     number
-    effective_score: number
-    confidence_tier: string
-    severity:        string
-    category:        string
-    action_taken:    string
-    matched_text:    string | null
+    sub_check_id:        string
+    owasp_signal_id:     string
+    check_label:         string
+    check_score:         number
+    effective_score:     number
+    confidence_tier:     string
+    severity:            string
+    category:            string
+    action_taken:        string
+    matched_text:        string | null
+    trigger_event_id:    string | null
+    trigger_event_type:  string | null
+    triggered_at:        string | null
   }> | undefined
 
-  const actionCounts = payload['action_counts'] as Record<string, number> | undefined
+  const actionCounts      = payload['action_counts']      as Record<string, number> | undefined
+  const sessionStartedAt  = payload['session_started_at'] as string | null | undefined
 
   if (!detections || detections.length === 0) return null
 
@@ -238,7 +242,7 @@ function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> 
         <div className="space-y-1.5">
           {detections.map((d) => (
             <div
-              key={`${d.owasp_signal_id}:${d.sub_check_id}`}
+              key={`${d.owasp_signal_id}:${d.sub_check_id}:${d.trigger_event_id ?? ''}`}
               className="rounded border border-slate-100 bg-slate-50 px-2.5 py-2"
             >
               <div className="flex items-center gap-2 flex-wrap">
@@ -262,6 +266,16 @@ function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> 
                   )}
                 </span>
               </div>
+              {(d.trigger_event_type || d.triggered_at) && (() => {
+                const relMs = sessionStartedAt && d.triggered_at
+                  ? new Date(d.triggered_at).getTime() - new Date(sessionStartedAt).getTime()
+                  : null
+                return (
+                  <p className="mt-0.5 font-mono text-[10px] text-slate-300">
+                    · {relMs !== null ? `+${relMs}ms` : ''}{d.trigger_event_type ? ` ${d.trigger_event_type}` : ''}
+                  </p>
+                )
+              })()}
               {d.matched_text && (
                 <p className="mt-1 truncate font-mono text-[10px] text-slate-400">
                   {d.matched_text}

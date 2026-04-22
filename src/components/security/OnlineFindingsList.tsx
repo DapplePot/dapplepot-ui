@@ -4,6 +4,7 @@ import type { SessionAction, OnlineAction } from '../../types/security'
 
 interface OnlineFindingsListProps {
   findings: SessionAction[]
+  baseTime: string | null
 }
 
 const SEVERITY_ICON: Record<string, string> = {
@@ -25,7 +26,7 @@ const ACTION_LABEL: Record<string, string> = {
   alert:             'alert',
 }
 
-export function OnlineFindingsList({ findings }: OnlineFindingsListProps) {
+export function OnlineFindingsList({ findings, baseTime }: OnlineFindingsListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (findings.length === 0) {
@@ -57,6 +58,20 @@ export function OnlineFindingsList({ findings }: OnlineFindingsListProps) {
               </div>
               <p className="text-xs text-slate-400 font-mono">
                 {f.owaspSignalId}:{f.subCheckId} · {f.category}
+                {(() => {
+                  const relMs = baseTime && f.triggeredAt
+                    ? new Date(f.triggeredAt).getTime() - new Date(baseTime).getTime()
+                    : null
+                  const evType = f.triggerEventType ?? null
+                  if (relMs !== null || evType) {
+                    return (
+                      <span className="ml-2 text-slate-300">
+                        · {relMs !== null ? `+${relMs}ms` : ''}{evType ? ` ${evType}` : ''}
+                      </span>
+                    )
+                  }
+                  return null
+                })()}
               </p>
             </div>
 

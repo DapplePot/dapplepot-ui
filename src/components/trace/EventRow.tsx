@@ -11,11 +11,13 @@ interface EventRowProps {
 
 const SECURITY_ACTION_BADGE: Record<string, string> = {
   terminate_session: 'border-red-200 bg-red-50 text-red-700',
+  block_call:        'border-orange-200 bg-orange-50 text-orange-700',
   sanitize:          'border-teal-200 bg-teal-50 text-teal-700',
   alert:             'border-amber-200 bg-amber-50 text-amber-700',
 }
 const SECURITY_ACTION_LABEL: Record<string, string> = {
   terminate_session: 'terminated',
+  block_call:        'blocked',
   sanitize:          'sanitized',
   alert:             'alert',
 }

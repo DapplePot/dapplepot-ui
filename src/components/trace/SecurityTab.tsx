@@ -6,9 +6,10 @@ import { Skeleton } from '../ui/skeleton'
 
 interface SecurityTabProps {
   sessionId: string
+  baseTime:  string | null
 }
 
-export function SecurityTab({ sessionId }: SecurityTabProps) {
+export function SecurityTab({ sessionId, baseTime }: SecurityTabProps) {
   const { score, findings } = useSessionSecurity(sessionId)
   const actions = useSessionActions(sessionId)
 
@@ -28,33 +29,34 @@ export function SecurityTab({ sessionId }: SecurityTabProps) {
     )
   }
 
-  if (!score.data) {
-    return (
-      <p className="pt-12 text-center text-sm text-slate-400">
-        No security score yet — scoring runs post-session
-      </p>
-    )
-  }
+  const postSessionFindings  = findings.data?.filter(f => f.detectionPhase === 'post_session')  ?? []
+  const crossSessionFindings = findings.data?.filter(f => f.detectionPhase === 'cross_session') ?? []
 
   return (
     <div className="space-y-4 pt-3">
-      <SessionRiskPanel
-        llmScore={score.data.llmScore}
-        llmBand={score.data.llmBand}
-        asiScore={score.data.asiScore}
-        asiBand={score.data.asiBand}
-        llmSignalStatus={score.data.llmSignalStatus}
-        asiSignalStatus={score.data.asiSignalStatus}
-        scoredAt={score.data.scoredAt}
-        scorerVersion={score.data.scorerVersion}
-        trustScore={score.data.trustScore}
-        trustTrend={score.data.trustTrend}
-        attackChainsDetected={score.data.attackChainsDetected}
-        amplification={score.data.amplification}
-        rawLlmComposite={score.data.rawLlmComposite}
-        rawAsiComposite={score.data.rawAsiComposite}
-        confidenceBand={score.data.confidenceBand}
-      />
+      {score.data ? (
+        <SessionRiskPanel
+          llmScore={score.data.llmScore}
+          llmBand={score.data.llmBand}
+          asiScore={score.data.asiScore}
+          asiBand={score.data.asiBand}
+          llmSignalStatus={score.data.llmSignalStatus}
+          asiSignalStatus={score.data.asiSignalStatus}
+          scoredAt={score.data.scoredAt}
+          scorerVersion={score.data.scorerVersion}
+          trustScore={score.data.trustScore}
+          trustTrend={score.data.trustTrend}
+          attackChainsDetected={score.data.attackChainsDetected}
+          amplification={score.data.amplification}
+          rawLlmComposite={score.data.rawLlmComposite}
+          rawAsiComposite={score.data.rawAsiComposite}
+          confidenceBand={score.data.confidenceBand}
+        />
+      ) : (
+        <p className="text-center text-sm text-slate-400">
+          No security score yet — scoring runs post-session
+        </p>
+      )}
       <div>
         <h3 className="mb-2 text-xs font-medium text-slate-500">
           Online Findings
@@ -62,17 +64,30 @@ export function SecurityTab({ sessionId }: SecurityTabProps) {
             <span className="ml-1.5 text-slate-400">({actions.data!.length})</span>
           )}
         </h3>
-        <OnlineFindingsList findings={actions.data ?? []} />
+        <OnlineFindingsList findings={actions.data ?? []} baseTime={baseTime} />
       </div>
-      <div>
-        <h3 className="mb-2 text-xs font-medium text-slate-500">
-          Post-session Findings
-          {(findings.data?.length ?? 0) > 0 && (
-            <span className="ml-1.5 text-slate-400">({findings.data!.length})</span>
-          )}
-        </h3>
-        <FindingsList findings={findings.data ?? []} />
-      </div>
+      {(postSessionFindings.length > 0 || crossSessionFindings.length > 0) && (
+        <>
+          <div>
+            <h3 className="mb-2 text-xs font-medium text-slate-500">
+              Post-session Findings
+              {postSessionFindings.length > 0 && (
+                <span className="ml-1.5 text-slate-400">({postSessionFindings.length})</span>
+              )}
+            </h3>
+            <FindingsList findings={postSessionFindings} />
+          </div>
+          <div>
+            <h3 className="mb-2 text-xs font-medium text-slate-500">
+              Cross-session Findings
+              {crossSessionFindings.length > 0 && (
+                <span className="ml-1.5 text-slate-400">({crossSessionFindings.length})</span>
+              )}
+            </h3>
+            <FindingsList findings={crossSessionFindings} />
+          </div>
+        </>
+      )}
     </div>
   )
 }
