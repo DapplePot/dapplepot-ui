@@ -7,7 +7,7 @@ interface TraceHeaderProps {
   alertCount: number
 }
 
-export function TraceHeader({ session, alertCount }: TraceHeaderProps) {
+export function TraceHeader({ session}: TraceHeaderProps) {
   const { data: agentsData } = useAgents()
   const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
 

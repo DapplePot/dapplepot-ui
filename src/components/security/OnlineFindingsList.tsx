@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import type { SessionAction, OnlineAction } from '../../types/security'
+import type { SessionAction} from '../../types/security'
 
 interface OnlineFindingsListProps {
   findings: SessionAction[]

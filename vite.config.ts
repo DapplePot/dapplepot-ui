@@ -14,6 +14,18 @@ export default defineConfig({
       '@dapplepot/types': path.resolve(__dirname, 'src/types'),
     },
   },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['@tanstack/react-router'],
+          charts: ['recharts'],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {

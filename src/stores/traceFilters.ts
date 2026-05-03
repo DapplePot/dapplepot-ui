@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-type EventCategory = 'all' | 'graph' | 'node' | 'llm' | 'tool' | 'state'
+type EventCategory = 'all' | 'graph' | 'node' | 'llm' | 'tool' | 'state' | 'security'
 
 interface TraceFiltersState {
   activeCategory: EventCategory

@@ -50,9 +50,9 @@ export function OWASPFrequencyChart({ llmFrequency, asiFrequency }: OWASPFrequen
           width={76}
         />
         <Tooltip
-          formatter={(value: number, _: string, entry: { payload: FrequencyEntry & { framework: string } }) => [
+          formatter={(value: number, _: string, entry) => [
             `${value} sessions`,
-            entry.payload.framework,
+            (entry.payload as FrequencyEntry & { framework: string })?.framework ?? '',
           ]}
           contentStyle={{ fontSize: 12 }}
         />

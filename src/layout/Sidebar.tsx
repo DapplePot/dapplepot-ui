@@ -29,7 +29,7 @@ const NAV_ITEMS = [
   { path: '/settings',        label: 'Settings',       icon: Settings,        exclude: ['superadmin'] },
   { path: '/tenants',         label: 'Tenants',         icon: Building2,       exclude: ['admin', 'editor', 'viewer'] },
   { path: '/onboard-client',  label: 'Onboard Client',  icon: UserPlus,        exclude: ['admin', 'editor', 'viewer'] },
-] as const
+] 
 
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)

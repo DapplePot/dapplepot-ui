@@ -1,6 +1,5 @@
 import { useRouterState } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
-import { useAuthStore } from '../stores/auth'
 
 const ROUTE_LABELS: Record<string, string> = {
   '/':               'Overview',
