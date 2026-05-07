@@ -152,7 +152,10 @@ export function SessionDetail() {
   }
 
   const events = [...nonSecurityTraceEvents, ...securityEvents].sort(
-    (a, b) => a.sequenceIndex - b.sequenceIndex
+    (a, b) => {
+      const tDiff = new Date(a.emittedAt).getTime() - new Date(b.emittedAt).getTime()
+      return tDiff !== 0 ? tDiff : a.sequenceIndex - b.sequenceIndex
+    }
   )
 
   return (
