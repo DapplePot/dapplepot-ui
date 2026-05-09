@@ -29,13 +29,13 @@ export function SecurityBandChart({
     <div className="space-y-4">
       {/* High+critical callout */}
       <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-semibold text-slate-900">{highCriticalPct}%</span>
-        <span className="text-sm text-slate-500">sessions high or critical</span>
-        <span className="ml-auto text-xs text-slate-400">{sessionsScored.toLocaleString()} scored</span>
+        <span className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{highCriticalPct}%</span>
+        <span className="text-sm text-slate-500 dark:text-slate-400">sessions high or critical</span>
+        <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">{sessionsScored.toLocaleString()} scored</span>
       </div>
 
       {/* Stacked bar */}
-      <div className="flex h-3 rounded-full overflow-hidden gap-px">
+      <div className="flex h-3 overflow-hidden rounded-full gap-px">
         {BAND_ORDER.map((band) => {
           const count = bandDistribution[band] ?? 0
           const pct = (count / total) * 100
@@ -58,11 +58,11 @@ export function SecurityBandChart({
           return (
             <div key={band} className="flex items-center gap-1.5">
               <span
-                className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm"
                 style={{ backgroundColor: BAND_CONFIG[band].color }}
               />
-              <span className="text-xs text-slate-600">{BAND_CONFIG[band].label}</span>
-              <span className="text-xs text-slate-400 tabular-nums">{count} ({pct}%)</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">{BAND_CONFIG[band].label}</span>
+              <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">{count} ({pct}%)</span>
             </div>
           )
         })}

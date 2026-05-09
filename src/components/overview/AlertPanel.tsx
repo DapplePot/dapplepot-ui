@@ -21,32 +21,32 @@ export function AlertPanel({ alerts }: AlertPanelProps) {
 
   if (alerts.length === 0) {
     return (
-      <div className="flex h-20 items-center justify-center text-sm text-slate-400">
+      <div className="flex h-20 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
         No recent alerts
       </div>
     )
   }
 
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-slate-100 dark:divide-slate-800">
       {alerts.slice(0, 4).map((alert) => (
         <div key={alert.alertId} className="flex items-start gap-3 px-4 py-3">
           <span
             className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[alert.severity] ?? 'bg-slate-400'}`}
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-800">{alert.title}</p>
-            <p className="mt-0.5 truncate text-xs text-slate-400">
+            <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{alert.title}</p>
+            <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
               {alert.agentId ? (agentMap[alert.agentId] ?? alert.agentId) : '—'} · {alert.ruleName}
             </p>
           </div>
-          <span className="shrink-0 text-xs text-slate-400">
+          <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
             {formatAgo(alert.triggeredAt)}
           </span>
         </div>
       ))}
       <div className="px-4 py-2">
-        <Link to="/detection" className="text-xs text-violet-600 hover:underline">
+        <Link to="/detection" className="text-xs text-violet-600 hover:underline dark:text-violet-400">
           View all alerts →
         </Link>
       </div>
@@ -56,7 +56,7 @@ export function AlertPanel({ alerts }: AlertPanelProps) {
 
 export function AlertPanelSkeleton() {
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-slate-100 dark:divide-slate-800">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="flex items-start gap-3 px-4 py-3">
           <Skeleton className="mt-0.5 h-2 w-2 rounded-full" />

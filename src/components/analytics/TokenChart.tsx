@@ -4,6 +4,7 @@ import {
 import type { LlmUsagePoint } from '@dapplepot/types/analytics'
 import { formatTokens } from '../../utils/format'
 import { Skeleton } from '../ui/skeleton'
+import { useThemeStore } from '../../stores/theme'
 
 const MODEL_COLORS: Record<string, string> = {
   'claude-sonnet-4-6': '#7F77DD',
@@ -16,6 +17,15 @@ interface TokenChartProps {
 }
 
 export function TokenChart({ data }: TokenChartProps) {
+  const { theme } = useThemeStore()
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+  const gridStroke   = isDark ? '#334155' : '#f1f5f9'
+  const tickColor    = isDark ? '#94a3b8' : '#94a3b8'
+  const tooltipStyle = isDark
+    ? { fontSize: 12, backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }
+    : { fontSize: 12 }
+
   // Pivot data: group by hour, one key per model
   const byHour = data.reduce<Record<string, Record<string, number>>>((acc, pt) => {
     if (!acc[pt.hour]) acc[pt.hour] = { hour: pt.hour as unknown as number }
@@ -32,20 +42,20 @@ export function TokenChart({ data }: TokenChartProps) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
         <XAxis
           dataKey="hour"
-          tick={{ fontSize: 11, fill: '#94a3b8' }}
+          tick={{ fontSize: 11, fill: tickColor }}
           tickFormatter={(v: string) => v.slice(11, 16)}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: '#94a3b8' }}
+          tick={{ fontSize: 11, fill: tickColor }}
           tickFormatter={(v: number) => formatTokens(v)}
           width={52}
         />
         <Tooltip
           formatter={(value: number, name: string) => [formatTokens(value), name]}
-          contentStyle={{ fontSize: 12 }}
+          contentStyle={tooltipStyle}
         />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         {models.map((model, i) => (

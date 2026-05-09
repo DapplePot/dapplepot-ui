@@ -10,7 +10,7 @@ import { useAuthStore } from '../stores/auth'
 
 function ErrorCard({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-red-700">
+    <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400">
       {message}
     </div>
   )
@@ -26,9 +26,8 @@ export function Overview() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-slate-900">Overview</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Overview</h1>
 
-      {/* Metric cards */}
       {overview.isLoading || liveSessions.isLoading || !overview.data ? (
         <MetricCardsSkeleton />
       ) : overview.isError ? (
@@ -40,12 +39,10 @@ export function Overview() {
         />
       )}
 
-      {/* Two-column layout */}
       <div className="grid grid-cols-3 gap-6">
-        {/* Session feed — takes 2/3 */}
-        <div className="col-span-2 rounded-lg border border-slate-200 bg-white">
-          <div className="border-b border-slate-100 px-4 py-3">
-            <h2 className="text-sm font-medium text-slate-700">Live session feed</h2>
+        <div className="col-span-2 rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+          <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+            <h2 className="text-sm font-medium text-slate-700 dark:text-slate-300">Live session feed</h2>
           </div>
           {liveSessions.isLoading ? (
             <SessionFeedSkeleton />
@@ -54,11 +51,10 @@ export function Overview() {
           )}
         </div>
 
-        {/* Right column — alerts + agent health */}
         <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white">
-            <div className="border-b border-slate-100 px-4 py-3">
-              <h2 className="text-sm font-medium text-slate-700">Recent alerts</h2>
+          <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+              <h2 className="text-sm font-medium text-slate-700 dark:text-slate-300">Recent alerts</h2>
             </div>
             {alerts.isLoading ? (
               <AlertPanelSkeleton />
@@ -69,9 +65,9 @@ export function Overview() {
             )}
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white">
-            <div className="border-b border-slate-100 px-4 py-3">
-              <h2 className="text-sm font-medium text-slate-700">Recent agents</h2>
+          <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+              <h2 className="text-sm font-medium text-slate-700 dark:text-slate-300">Recent agents</h2>
             </div>
             <AgentHealth liveSessions={liveSessions.data ?? []} />
           </div>

@@ -31,11 +31,11 @@ export function MetricStrip({ session }: MetricStripProps) {
   ]
 
   return (
-    <div className="grid grid-cols-5 divide-x divide-slate-100 rounded-lg border border-slate-200 bg-white">
+    <div className="grid grid-cols-5 divide-x divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-700 dark:bg-slate-900">
       {metrics.map((m) => (
         <div key={m.label} className="px-4 py-3">
-          <p className="text-xs text-slate-500">{m.label}</p>
-          <p className="mt-0.5 text-lg font-semibold text-slate-900">{m.value}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{m.label}</p>
+          <p className="mt-0.5 text-lg font-semibold text-slate-900 dark:text-slate-100">{m.value}</p>
         </div>
       ))}
     </div>
@@ -44,7 +44,7 @@ export function MetricStrip({ session }: MetricStripProps) {
 
 export function MetricStripSkeleton() {
   return (
-    <div className="grid grid-cols-5 divide-x divide-slate-100 rounded-lg border border-slate-200 bg-white">
+    <div className="grid grid-cols-5 divide-x divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-700 dark:bg-slate-900">
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="px-4 py-3 space-y-1.5">
           <Skeleton className="h-3 w-16" />

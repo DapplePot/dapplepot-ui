@@ -43,7 +43,7 @@ export function Security() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-slate-900">Security</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Security</h1>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList>
@@ -63,46 +63,43 @@ export function Security() {
               <Skeleton className="h-48 rounded-lg" />
             </div>
           ) : overview.isError ? (
-            <p className="text-sm text-red-500">{overview.error.message}</p>
+            <p className="text-sm text-red-500 dark:text-red-400">{overview.error.message}</p>
           ) : overview.data ? (
             <div className="space-y-6">
-              {/* Metric cards */}
               <div className="grid grid-cols-3 gap-4">
                 {[
                   { label: 'Sessions scored', value: overview.data.sessionsScored },
                   { label: 'High / critical', value: overview.data.highCriticalCount },
                   { label: 'Top signal',      value: overview.data.topSignalId ?? '—' },
                 ].map((m) => (
-                  <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4">
-                    <p className="text-xs text-slate-500">{m.label}</p>
-                    <p className="mt-1 text-2xl font-semibold text-slate-900 truncate">{m.value}</p>
+                  <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{m.label}</p>
+                    <p className="mt-1 text-2xl font-semibold text-slate-900 truncate dark:text-slate-100">{m.value}</p>
                   </div>
                 ))}
               </div>
 
-              {/* Distribution + LLM + ASI signal frequency */}
               <div className="grid grid-cols-3 gap-6">
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                  <h2 className="mb-4 text-sm font-medium text-slate-700">Risk distribution</h2>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-slate-300">Risk distribution</h2>
                   <RiskDistribution bands={bands} total={totalScored} />
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                  <h2 className="mb-4 text-sm font-medium text-slate-700">LLM signal frequency</h2>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-slate-300">LLM signal frequency</h2>
                   <OwaspFrequency entries={overview.data.owaspFrequency} />
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                  <h2 className="mb-4 text-sm font-medium text-slate-700">ASI signal frequency</h2>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-slate-300">ASI signal frequency</h2>
                   {overview.data.asiFrequency.length === 0 ? (
-                    <p className="text-sm text-slate-400">No ASI signals detected</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500">No ASI signals detected</p>
                   ) : (
                     <OwaspFrequency entries={overview.data.asiFrequency} />
                   )}
                 </div>
               </div>
 
-              {/* High risk sessions */}
               <div>
-                <h2 className="mb-3 text-sm font-medium text-slate-700">Highest-risk sessions</h2>
+                <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">Highest-risk sessions</h2>
                 <HighRiskTable
                   sessions={overview.data.highRiskSessions}
                   onSelect={handleSelectSession}
@@ -124,10 +121,9 @@ export function Security() {
               <Skeleton className="h-48 rounded-lg" />
             </div>
           ) : topAgents.isError ? (
-            <p className="text-sm text-red-500">{topAgents.error.message}</p>
+            <p className="text-sm text-red-500 dark:text-red-400">{topAgents.error.message}</p>
           ) : (
             <div className="space-y-6">
-              {/* Metric cards */}
               {(() => {
                 const agents = topAgents.data ?? []
                 const highCritical = agents.filter((a) => a.compositeRisk >= 65).length
@@ -138,24 +134,23 @@ export function Security() {
                 return (
                   <div className="grid grid-cols-4 gap-4">
                     {[
-                      { label: 'Agents scored',   value: agents.length },
-                      { label: 'High / critical',  value: highCritical },
-                      { label: 'Avg composite risk', value: avgRisk.toFixed(1) },
-                      { label: 'Highest risk agent', value: topAgent ? (agentMap[topAgent.agentId] ?? topAgent.agentId) : '—' },
+                      { label: 'Agents scored',      value: agents.length },
+                      { label: 'High / critical',     value: highCritical },
+                      { label: 'Avg composite risk',  value: avgRisk.toFixed(1) },
+                      { label: 'Highest risk agent',  value: topAgent ? (agentMap[topAgent.agentId] ?? topAgent.agentId) : '—' },
                     ].map((m) => (
-                      <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4">
-                        <p className="text-xs text-slate-500">{m.label}</p>
-                        <p className="mt-1 text-2xl font-semibold text-slate-900 truncate">{m.value}</p>
+                      <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{m.label}</p>
+                        <p className="mt-1 text-2xl font-semibold text-slate-900 truncate dark:text-slate-100">{m.value}</p>
                       </div>
                     ))}
                   </div>
                 )
               })()}
 
-              {/* Agent risk distribution + ASI signal frequency */}
               <div className="grid grid-cols-2 gap-6">
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                  <h2 className="mb-4 text-sm font-medium text-slate-700">Agent risk distribution</h2>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-slate-300">Agent risk distribution</h2>
                   {(() => {
                     const agents = topAgents.data ?? []
                     const buckets: Record<string, number> = { clean: 0, low: 0, medium: 0, high: 0, critical: 0 }
@@ -174,55 +169,54 @@ export function Security() {
                     return <RiskDistribution bands={bands} total={agents.length} />
                   })()}
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                  <h2 className="mb-4 text-sm font-medium text-slate-700">Agent threat frequency (ASI)</h2>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-slate-300">Agent threat frequency (ASI)</h2>
                   {!overview.data || overview.data.asiFrequency.length === 0 ? (
-                    <p className="text-sm text-slate-400">No ASI signals detected</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500">No ASI signals detected</p>
                   ) : (
                     <OwaspFrequency entries={overview.data.asiFrequency} />
                   )}
                 </div>
               </div>
 
-              {/* Agents table */}
               <div>
-                <h2 className="mb-3 text-sm font-medium text-slate-700">All agents by risk</h2>
+                <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">All agents by risk</h2>
                 {!topAgents.data || topAgents.data.length === 0 ? (
-                  <p className="text-sm text-slate-400">No agent risk data yet</p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500">No agent risk data yet</p>
                 ) : (
-                  <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                  <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-slate-100">
-                          <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Agent</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">Sessions</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">Avg LLM</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">Max LLM</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">Avg ASI</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">Max ASI</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">Composite risk</th>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Agent</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Sessions</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Avg LLM</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Max LLM</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Avg ASI</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Max ASI</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Composite risk</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                         {topAgents.data.map((a) => (
                           <tr
                             key={a.agentId}
                             onClick={() => void navigate({ to: '/agents/$agentId', params: { agentId: a.agentId } })}
-                            className="cursor-pointer hover:bg-slate-50 transition-colors"
+                            className="cursor-pointer hover:bg-slate-50 transition-colors dark:hover:bg-slate-800"
                           >
-                            <td className="px-4 py-3 text-xs font-medium text-violet-600">
+                            <td className="px-4 py-3 text-xs font-medium text-violet-600 dark:text-violet-400">
                               {agentMap[a.agentId] ?? a.agentId}
                             </td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-600">{a.sessionCount}</td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-600">{a.avgLlmScore.toFixed(1)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-600">{a.maxLlmScore.toFixed(1)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-600">{a.avgAsiScore.toFixed(1)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-600">{a.maxAsiScore.toFixed(1)}</td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400">{a.sessionCount}</td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400">{a.avgLlmScore.toFixed(1)}</td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400">{a.maxLlmScore.toFixed(1)}</td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400">{a.avgAsiScore.toFixed(1)}</td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400">{a.maxAsiScore.toFixed(1)}</td>
                             <td className="px-4 py-3 text-right text-xs font-semibold">
                               <span className={
-                                a.compositeRisk >= 65 ? 'text-red-600'
-                                : a.compositeRisk >= 40 ? 'text-amber-600'
-                                : 'text-slate-700'
+                                a.compositeRisk >= 65 ? 'text-red-600 dark:text-red-400'
+                                : a.compositeRisk >= 40 ? 'text-amber-600 dark:text-amber-400'
+                                : 'text-slate-700 dark:text-slate-300'
                               }>
                                 {a.compositeRisk.toFixed(1)}
                               </span>

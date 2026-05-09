@@ -7,8 +7,8 @@ export function SuperAdminHome() {
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 mb-5">
         <span className="text-lg font-bold text-white">dp</span>
       </div>
-      <h1 className="text-2xl font-semibold text-slate-900">Welcome, Dapplepot Admin</h1>
-      <p className="mt-2 text-sm text-slate-500 max-w-sm">
+      <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Welcome, Dapplepot Admin</h1>
+      <p className="mt-2 text-sm text-slate-500 max-w-sm dark:text-slate-400">
         You have system-level access. Use the option below to onboard new client tenants.
       </p>
       <Link

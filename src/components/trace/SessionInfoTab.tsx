@@ -36,11 +36,11 @@ export function SessionInfoTab({ session }: SessionInfoTabProps) {
   ]
 
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-slate-100 dark:divide-slate-800">
       {rows.map(({ label, value }) => (
         <div key={label} className="flex gap-3 py-2">
-          <span className="w-32 shrink-0 text-xs font-medium text-slate-500">{label}</span>
-          <span className="min-w-0 break-all font-mono text-xs text-slate-800">
+          <span className="w-32 shrink-0 text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
+          <span className="min-w-0 break-all font-mono text-xs text-slate-800 dark:text-slate-200">
             {value ?? '—'}
           </span>
         </div>
@@ -48,12 +48,12 @@ export function SessionInfoTab({ session }: SessionInfoTabProps) {
 
       {session.exitReason && (
         <div className="flex gap-3 py-2">
-          <span className="w-32 shrink-0 text-xs font-medium text-slate-500">Exit reason</span>
+          <span className="w-32 shrink-0 text-xs font-medium text-slate-500 dark:text-slate-400">Exit reason</span>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs font-semibold text-red-600">
+            <span className="text-xs font-semibold text-red-600 dark:text-red-400">
               {exitReasonLabel(session.exitReason)}
             </span>
-            <span className="font-mono text-xs text-slate-400">
+            <span className="font-mono text-xs text-slate-400 dark:text-slate-500">
               {session.exitReason}
             </span>
           </div>

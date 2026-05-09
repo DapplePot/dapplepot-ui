@@ -5,8 +5,8 @@ import type { UserRole, UserStatus, UserSummary } from '../../types/auth'
 
 function StatusBadge({ status }: { status: UserStatus }) {
   const styles: Record<UserStatus, string> = {
-    active:   'bg-emerald-100 text-emerald-700',
-    disabled: 'bg-red-100 text-red-600',
+    active:   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    disabled: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
   }
   return (
     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize ${styles[status]}`}>
@@ -33,7 +33,7 @@ export function UserTable() {
         placeholder="Search users…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+        className="w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
       />
 
       {isLoading && (
@@ -45,10 +45,10 @@ export function UserTable() {
       )}
 
       {!isLoading && !isError && (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-slate-200 text-xs font-medium text-slate-500">
+              <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-slate-700 dark:text-slate-400">
                 <th className="px-4 py-3">User</th>
                 <th className="px-4 py-3">Role</th>
                 <th className="px-4 py-3">Status</th>
@@ -57,10 +57,10 @@ export function UserTable() {
             </thead>
             <tbody className="px-4">
               {filtered.map((u) => (
-                <tr key={u.userId} className="border-b border-slate-100 last:border-0">
+                <tr key={u.userId} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
                   <td className="px-4 py-3">
-                    <div className="text-sm font-medium text-slate-900">{u.name}</div>
-                    <div className="text-xs text-slate-500">{u.email}</div>
+                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{u.name}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{u.email}</div>
                   </td>
                   <td className="px-4 py-3">
                     <RoleBadge role={u.role} />
@@ -75,7 +75,7 @@ export function UserTable() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-400">
+                  <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
                     No users found.
                   </td>
                 </tr>
@@ -98,7 +98,7 @@ function UserRowActions({ user }: { user: UserSummary }) {
         value={user.role}
         disabled={changeRole.isPending}
         onChange={(e) => changeRole.mutate({ role: e.target.value as UserRole })}
-        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none focus:border-violet-400"
+        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none focus:border-violet-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
       >
         <option value="viewer">Viewer</option>
         <option value="editor">Editor</option>
@@ -109,7 +109,7 @@ function UserRowActions({ user }: { user: UserSummary }) {
         <button
           disabled={changeStatus.isPending}
           onClick={() => changeStatus.mutate({ status: 'disabled' })}
-          className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+          className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20"
         >
           Disable
         </button>
@@ -117,7 +117,7 @@ function UserRowActions({ user }: { user: UserSummary }) {
         <button
           disabled={changeStatus.isPending}
           onClick={() => changeStatus.mutate({ status: 'active' })}
-          className="rounded px-2 py-1 text-xs text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+          className="rounded px-2 py-1 text-xs text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
         >
           Reactivate
         </button>

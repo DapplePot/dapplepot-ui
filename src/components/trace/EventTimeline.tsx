@@ -36,13 +36,10 @@ export function EventTimeline({
 }: EventTimelineProps) {
   const { activeCategory, setActiveCategory } = useTraceFilters()
 
-  // Reset filter when navigating to a different session trace
   useEffect(() => {
     setActiveCategory('all')
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // security_finding events are already in the events array (stored in ClickHouse
-  // by the API when the SDK dispatches them). No need to merge onlineFindings here.
   const allEvents = useMemo(() => events, [events])
 
   const filtered =
@@ -67,8 +64,7 @@ export function EventTimeline({
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {/* Category pills */}
-      <div className="flex gap-1 border-b border-slate-100 px-4 py-2 shrink-0">
+      <div className="flex gap-1 border-b border-slate-100 px-4 py-2 shrink-0 dark:border-slate-800">
         {CATEGORY_PILLS.map(({ key, label }) => (
           <button
             key={key}
@@ -76,8 +72,8 @@ export function EventTimeline({
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition-colors',
               activeCategory === key
-                ? 'bg-violet-100 text-violet-700'
-                : 'text-slate-500 hover:bg-slate-100'
+                ? 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300'
+                : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
             )}
           >
             {label}
@@ -85,7 +81,6 @@ export function EventTimeline({
         ))}
       </div>
 
-      {/* Virtualised event list */}
       <div ref={parentRef} className="flex-1 overflow-y-auto">
         <div
           style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}
@@ -111,7 +106,6 @@ export function EventTimeline({
           })}
         </div>
 
-        {/* Load more */}
         {hasMore && (
           <div className="px-4 py-3">
             <Button
@@ -126,7 +120,7 @@ export function EventTimeline({
         )}
 
         {filtered.length === 0 && (
-          <div className="flex h-32 items-center justify-center text-sm text-slate-400">
+          <div className="flex h-32 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
             No events in this category
           </div>
         )}

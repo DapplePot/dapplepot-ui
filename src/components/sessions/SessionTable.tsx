@@ -34,10 +34,10 @@ export function SessionTable({ sessions, sort, sortDir, onSort, agentMap = {} }:
   const toggle = (id: string) => setExpandedId((prev) => (prev === id ? null : id))
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden dark:border-slate-700 dark:bg-slate-900">
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-transparent">
+          <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
             {COLUMNS.map(({ key, label }) => (
               <TableHead
                 key={label}
@@ -64,7 +64,7 @@ export function SessionTable({ sessions, sort, sortDir, onSort, agentMap = {} }:
           ))}
           {sessions.length === 0 && (
             <TableRow>
-              <td colSpan={8} className="py-12 text-center text-sm text-slate-400">
+              <td colSpan={8} className="py-12 text-center text-sm text-slate-400 dark:text-slate-500">
                 No sessions found
               </td>
             </TableRow>
@@ -77,12 +77,12 @@ export function SessionTable({ sessions, sort, sortDir, onSort, agentMap = {} }:
 
 export function SessionTableSkeleton() {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-100">
+    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden dark:border-slate-700 dark:bg-slate-900">
+      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
         <Skeleton className="h-4 w-32" />
       </div>
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex gap-4 px-4 py-3 border-b border-slate-50">
+        <div key={i} className="flex gap-4 px-4 py-3 border-b border-slate-50 dark:border-slate-800">
           <Skeleton className="h-3.5 w-20" />
           <Skeleton className="h-3.5 w-28" />
           <Skeleton className="h-3.5 w-16" />

@@ -24,7 +24,7 @@ export function TenantInfoStep({ initialData, onNext }: TenantInfoStepProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-700">
+        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
           Tenant Name <span className="text-red-500">*</span>
         </label>
         <input
@@ -33,15 +33,15 @@ export function TenantInfoStep({ initialData, onNext }: TenantInfoStepProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Acme Corp"
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
-        <p className="mt-1 text-xs text-slate-500">Must be unique across all tenants.</p>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Must be unique across all tenants.</p>
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-700">
+        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
           Token Budget
-          <span className="ml-1 text-slate-400 font-normal">(optional)</span>
+          <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">(optional)</span>
         </label>
         <div className="flex items-center gap-2">
           <input
@@ -50,19 +50,19 @@ export function TenantInfoStep({ initialData, onNext }: TenantInfoStepProps) {
             value={tokenBudget}
             onChange={(e) => setTokenBudget(e.target.value)}
             placeholder="Unlimited"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
           />
-          <span className="shrink-0 text-xs text-slate-500">tokens</span>
+          <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">tokens</span>
         </div>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Maximum LLM tokens this tenant may consume. Leave blank for no limit.
         </p>
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-700">
+        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
           Rate Limit
-          <span className="ml-1 text-slate-400 font-normal">(optional)</span>
+          <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">(optional)</span>
         </label>
         <div className="flex items-center gap-2">
           <input
@@ -71,11 +71,11 @@ export function TenantInfoStep({ initialData, onNext }: TenantInfoStepProps) {
             value={rateLimit}
             onChange={(e) => setRateLimit(e.target.value)}
             placeholder="Unlimited"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
           />
-          <span className="shrink-0 text-xs text-slate-500">req / min</span>
+          <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">req / min</span>
         </div>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Max API requests per minute for this tenant. Leave blank for no limit.
         </p>
       </div>

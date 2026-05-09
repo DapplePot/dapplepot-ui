@@ -19,12 +19,12 @@ export function InviteModal({ onClose }: InviteModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">Invite user</h2>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Invite user</h2>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <X className="h-4 w-4" />
           </button>
@@ -32,23 +32,23 @@ export function InviteModal({ onClose }: InviteModalProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">Email</label>
+            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="colleague@example.com"
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">Role</label>
+            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               <option value="viewer">Viewer</option>
               <option value="editor">Editor</option>
@@ -57,7 +57,7 @@ export function InviteModal({ onClose }: InviteModalProps) {
           </div>
 
           {invite.isError && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
               Failed to send invite. Please try again.
             </p>
           )}
@@ -66,7 +66,7 @@ export function InviteModal({ onClose }: InviteModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Cancel
             </button>

@@ -40,7 +40,7 @@ export function SessionFeed({ sessions }: SessionFeedProps) {
 
   if (sessions.length === 0) {
     return (
-      <div className="flex h-40 items-center justify-center text-sm text-slate-400">
+      <div className="flex h-40 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
         No live sessions
       </div>
     )
@@ -48,24 +48,22 @@ export function SessionFeed({ sessions }: SessionFeedProps) {
 
   return (
     <div>
-      {/* Column header */}
-      <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-2 bg-slate-50">
+      <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-2 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
         <span className="w-2 shrink-0" />
-        <span className="flex-1 text-xs font-medium text-slate-400 uppercase tracking-wide">Session / Agent</span>
-        <span className="w-20 shrink-0 text-xs font-medium text-slate-400 uppercase tracking-wide">Status</span>
-        <span className="w-16 shrink-0 text-right text-xs font-medium text-slate-400 uppercase tracking-wide">Started</span>
+        <span className="flex-1 text-xs font-medium text-slate-400 uppercase tracking-wide dark:text-slate-500">Session / Agent</span>
+        <span className="w-20 shrink-0 text-xs font-medium text-slate-400 uppercase tracking-wide dark:text-slate-500">Status</span>
+        <span className="w-16 shrink-0 text-right text-xs font-medium text-slate-400 uppercase tracking-wide dark:text-slate-500">Started</span>
       </div>
 
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-slate-100 dark:divide-slate-800">
         {sessions.slice(0, 20).map((session) => (
           <div
             key={session.sessionId}
             className={cn(
               'flex items-center gap-3 px-4 py-2.5 transition-colors',
-              flashIds.has(session.sessionId) && 'bg-blue-50'
+              flashIds.has(session.sessionId) && 'bg-blue-50 dark:bg-blue-950/30'
             )}
           >
-            {/* Status dot — pulses for open sessions */}
             <span
               className={cn(
                 'h-2 w-2 shrink-0 rounded-full',
@@ -78,18 +76,18 @@ export function SessionFeed({ sessions }: SessionFeedProps) {
               <Link
                 to="/sessions/$id"
                 params={{ id: session.sessionId }}
-                className="font-mono text-xs text-slate-700 hover:text-violet-600"
+                className="font-mono text-xs text-slate-700 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-400"
               >
                 {session.sessionId.slice(0, 8)}
               </Link>
               {session.agentId && (
-                <span className="ml-2 text-xs text-slate-400">{agentMap[session.agentId] ?? session.agentId}</span>
+                <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">{agentMap[session.agentId] ?? session.agentId}</span>
               )}
             </div>
 
-            <span className="w-20 shrink-0 text-xs capitalize text-slate-500">{session.status}</span>
+            <span className="w-20 shrink-0 text-xs capitalize text-slate-500 dark:text-slate-400">{session.status}</span>
 
-            <span className="w-16 shrink-0 text-right text-xs text-slate-400">
+            <span className="w-16 shrink-0 text-right text-xs text-slate-400 dark:text-slate-500">
               {session.startedAt ? formatAgo(session.startedAt) : '—'}
             </span>
           </div>
@@ -101,7 +99,7 @@ export function SessionFeed({ sessions }: SessionFeedProps) {
 
 export function SessionFeedSkeleton() {
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-slate-100 dark:divide-slate-800">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-4 py-2.5">
           <Skeleton className="h-2 w-2 rounded-full" />

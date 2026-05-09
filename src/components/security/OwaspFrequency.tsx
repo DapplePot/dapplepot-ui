@@ -15,10 +15,10 @@ export function OwaspFrequency({ entries }: OwaspFrequencyProps) {
       {entries.map(({ signalId, count }) => (
         <div key={signalId}>
           <div className="mb-1 flex justify-between text-xs">
-            <span className="text-slate-600 font-mono">{signalId}</span>
-            <span className="font-medium text-slate-800">{count}</span>
+            <span className="text-slate-600 dark:text-slate-400 font-mono">{signalId}</span>
+            <span className="font-medium text-slate-800 dark:text-slate-200">{count}</span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div
               className="h-full rounded-full bg-red-400"
               style={{ width: `${(count / max) * 100}%` }}

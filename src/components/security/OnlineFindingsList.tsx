@@ -15,9 +15,9 @@ const SEVERITY_ICON: Record<string, string> = {
 }
 
 const ACTION_BADGE: Record<string, string> = {
-  terminate_session: 'border-red-200 bg-red-50 text-red-700',
-  sanitize:          'border-teal-200 bg-teal-50 text-teal-700',
-  alert:             'border-amber-200 bg-amber-50 text-amber-700',
+  terminate_session: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400',
+  sanitize:          'border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-400',
+  alert:             'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400',
 }
 
 const ACTION_LABEL: Record<string, string> = {
@@ -34,11 +34,11 @@ export function OnlineFindingsList({ findings, baseTime }: OnlineFindingsListPro
   }
 
   return (
-    <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+    <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-700 dark:bg-slate-900">
       {findings.map((f) => (
         <div key={f.id}>
           <div
-            className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50"
+            className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50"
             onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
           >
             <span>{SEVERITY_ICON[f.severity] ?? '⚪'}</span>
@@ -49,14 +49,14 @@ export function OnlineFindingsList({ findings, baseTime }: OnlineFindingsListPro
                 <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium ${ACTION_BADGE[f.actionTaken] ?? ACTION_BADGE.alert}`}>
                   {ACTION_LABEL[f.actionTaken] ?? f.actionTaken}
                 </span>
-                <p className="text-sm font-medium text-slate-800">{f.checkLabel}</p>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{f.checkLabel}</p>
                 <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                  f.framework === 'ASI' ? 'bg-violet-100 text-violet-700' : 'bg-blue-100 text-blue-700'
+                  f.framework === 'ASI' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                 }`}>
                   {f.framework}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-mono">
+              <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
                 {f.owaspSignalId}:{f.subCheckId} · {f.category}
                 {(() => {
                   const relMs = baseTime && f.triggeredAt
@@ -65,7 +65,7 @@ export function OnlineFindingsList({ findings, baseTime }: OnlineFindingsListPro
                   const evType = f.triggerEventType ?? null
                   if (relMs !== null || evType) {
                     return (
-                      <span className="ml-2 text-slate-300">
+                      <span className="ml-2 text-slate-300 dark:text-slate-600">
                         · {relMs !== null ? `+${relMs}ms` : ''}{evType ? ` ${evType}` : ''}
                       </span>
                     )
@@ -75,7 +75,7 @@ export function OnlineFindingsList({ findings, baseTime }: OnlineFindingsListPro
               </p>
             </div>
 
-            <span className="shrink-0 text-xs text-slate-400">
+            <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
               {new Date(f.triggeredAt).toLocaleTimeString()}
             </span>
 
@@ -85,19 +85,19 @@ export function OnlineFindingsList({ findings, baseTime }: OnlineFindingsListPro
           </div>
 
           {expandedId === f.id && (
-            <div className="border-t border-slate-50 bg-slate-50 px-4 py-3 space-y-3">
+            <div className="border-t border-slate-50 bg-slate-50 px-4 py-3 space-y-3 dark:border-slate-800 dark:bg-slate-800/50">
               {f.detail && (
-                <p className="text-xs text-slate-600">{f.detail}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{f.detail}</p>
               )}
               {f.matchedText && (
                 <>
-                  <p className="text-xs font-medium text-slate-500">Matched text</p>
-                  <pre className="rounded bg-slate-900 p-3 font-mono text-xs text-slate-100 whitespace-pre-wrap break-all">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Matched text</p>
+                  <pre className="rounded bg-slate-900 p-3 font-mono text-xs text-slate-100 whitespace-pre-wrap break-all dark:bg-slate-950">
                     {f.matchedText}
                   </pre>
                 </>
               )}
-              <div className="flex items-center gap-3 text-xs text-slate-400">
+              <div className="flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
                 <span>online</span>
                 <span>·</span>
                 <span className="capitalize">{f.severity}</span>

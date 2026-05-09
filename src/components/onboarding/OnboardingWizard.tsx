@@ -56,37 +56,37 @@ export function OnboardingWizard() {
   if (result) {
     return (
       <div className="flex flex-col items-center gap-4 py-8 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-          <CheckCircle2 className="h-7 w-7 text-green-600" />
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+          <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" />
         </div>
         <div>
-          <h3 className="text-base font-semibold text-slate-900">Client onboarded successfully</h3>
-          <p className="mt-1 text-sm text-slate-500">The tenant and admin account have been created.</p>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Client onboarded successfully</h3>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">The tenant and admin account have been created.</p>
         </div>
 
-        <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 text-left text-sm space-y-2">
+        <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 text-left text-sm space-y-2 dark:border-slate-700 dark:bg-slate-800">
           <div className="flex justify-between">
-            <span className="text-slate-500">Tenant</span>
-            <span className="font-medium text-slate-900">{result.tenant.name}</span>
+            <span className="text-slate-500 dark:text-slate-400">Tenant</span>
+            <span className="font-medium text-slate-900 dark:text-slate-100">{result.tenant.name}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Tenant ID</span>
-            <span className="font-mono text-xs text-slate-600">{result.tenant.tenantId}</span>
+            <span className="text-slate-500 dark:text-slate-400">Tenant ID</span>
+            <span className="font-mono text-xs text-slate-600 dark:text-slate-300">{result.tenant.tenantId}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Admin email</span>
-            <span className="text-slate-900">{result.admin.email}</span>
+            <span className="text-slate-500 dark:text-slate-400">Admin email</span>
+            <span className="text-slate-900 dark:text-slate-100">{result.admin.email}</span>
           </div>
           {result.tenant.tokenBudget !== null && (
             <div className="flex justify-between">
-              <span className="text-slate-500">Token budget</span>
-              <span className="text-slate-900">{result.tenant.tokenBudget.toLocaleString()} tokens</span>
+              <span className="text-slate-500 dark:text-slate-400">Token budget</span>
+              <span className="text-slate-900 dark:text-slate-100">{result.tenant.tokenBudget.toLocaleString()} tokens</span>
             </div>
           )}
           {result.tenant.rateLimit !== null && (
             <div className="flex justify-between">
-              <span className="text-slate-500">Rate limit</span>
-              <span className="text-slate-900">{result.tenant.rateLimit} req/min</span>
+              <span className="text-slate-500 dark:text-slate-400">Rate limit</span>
+              <span className="text-slate-900 dark:text-slate-100">{result.tenant.rateLimit} req/min</span>
             </div>
           )}
         </div>
@@ -118,8 +118,8 @@ export function OnboardingWizard() {
                     isComplete
                       ? 'bg-violet-600 text-white'
                       : isActive
-                        ? 'border-2 border-violet-600 text-violet-600'
-                        : 'border-2 border-slate-300 text-slate-400',
+                        ? 'border-2 border-violet-600 text-violet-600 dark:border-violet-400 dark:text-violet-400'
+                        : 'border-2 border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-500',
                   )}
                 >
                   {isComplete ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
@@ -127,7 +127,7 @@ export function OnboardingWizard() {
                 <span
                   className={cn(
                     'text-xs font-medium',
-                    isActive   ? 'text-slate-900' : 'text-slate-400',
+                    isActive   ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500',
                   )}
                 >
                   {label}
@@ -137,7 +137,7 @@ export function OnboardingWizard() {
                 <div
                   className={cn(
                     'mx-3 h-px w-10 transition-colors',
-                    currentStep > step ? 'bg-violet-600' : 'bg-slate-200',
+                    currentStep > step ? 'bg-violet-600' : 'bg-slate-200 dark:bg-slate-700',
                   )}
                 />
               )}

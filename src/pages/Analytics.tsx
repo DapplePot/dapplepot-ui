@@ -23,9 +23,9 @@ type Window = '24h' | '7d' | '30d'
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white">
-      <div className="border-b border-slate-100 px-4 py-3">
-        <h2 className="text-sm font-medium text-slate-700">{title}</h2>
+    <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+      <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+        <h2 className="text-sm font-medium text-slate-700 dark:text-slate-300">{title}</h2>
       </div>
       <div className="p-4">{children}</div>
     </div>
@@ -33,7 +33,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 }
 
 function ErrorMsg({ message }: { message: string }) {
-  return <p className="py-4 text-center text-sm text-red-500">{message}</p>
+  return <p className="py-4 text-center text-sm text-red-500 dark:text-red-400">{message}</p>
 }
 
 export function Analytics() {
@@ -74,7 +74,7 @@ export function Analytics() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Analytics</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Analytics</h1>
         <DateRangePicker
           window={window}
           agentId={agentId}
@@ -84,19 +84,17 @@ export function Analytics() {
         />
       </div>
 
-      {/* Hero metrics */}
       {heroMetrics && (
         <div className="grid grid-cols-4 gap-4">
           {heroMetrics.map((m) => (
-            <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4">
-              <p className="text-xs text-slate-500">{m.label}</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{m.value}</p>
+            <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <p className="text-xs text-slate-500 dark:text-slate-400">{m.label}</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">{m.value}</p>
             </div>
           ))}
         </div>
       )}
 
-      {/* Session funnel */}
       <Card title="Session funnel">
         {overview.isLoading ? <SessionFunnelSkeleton /> :
          overview.isError   ? <ErrorMsg message={overview.error.message} /> :
@@ -104,7 +102,6 @@ export function Analytics() {
          null}
       </Card>
 
-      {/* Security: risk bands + OWASP frequency */}
       <div className="grid grid-cols-2 gap-6">
         <Card title="Risk band distribution">
           {security.isLoading ? <SecurityBandSkeleton /> :
@@ -129,7 +126,6 @@ export function Analytics() {
         </Card>
       </div>
 
-      {/* Alert volume */}
       <Card title="Alert volume by severity">
         {alertStats.isLoading ? <AlertVolumeSkeleton /> :
          alertStats.isError   ? <ErrorMsg message={alertStats.error.message} /> :
@@ -137,14 +133,12 @@ export function Analytics() {
          null}
       </Card>
 
-      {/* Token usage */}
       <Card title="Token usage by model">
         {llmUsage.isLoading ? <TokenChartSkeleton /> :
          llmUsage.isError   ? <ErrorMsg message={llmUsage.error.message} /> :
          <TokenChart data={llmUsage.data ?? []} />}
       </Card>
 
-      {/* Error rate + latency */}
       <div className="grid grid-cols-2 gap-6">
         <Card title="Error rate by agent">
           {errorRates.isLoading ? <ErrorRateChartSkeleton /> :
@@ -158,9 +152,8 @@ export function Analytics() {
         </Card>
       </div>
 
-      {/* Cost attribution */}
       <div>
-        <h2 className="mb-3 text-sm font-medium text-slate-700">Cost attribution</h2>
+        <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">Cost attribution</h2>
         {cost.isLoading ? <CostTableSkeleton /> :
          cost.isError   ? <ErrorMsg message={cost.error.message} /> :
          <CostTable data={cost.data ?? []} />}

@@ -2,10 +2,10 @@ import type { UserRole } from '../../types/auth'
 import { cn } from '../../utils/cn'
 
 const ROLE_STYLES: Record<UserRole, string> = {
-  superadmin: 'bg-rose-100 text-rose-700',
-  admin:      'bg-violet-100 text-violet-700',
-  editor:     'bg-blue-100 text-blue-700',
-  viewer:     'bg-slate-100 text-slate-600',
+  superadmin: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+  admin:      'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+  editor:     'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  viewer:     'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
 }
 
 interface RoleBadgeProps {

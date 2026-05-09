@@ -4,6 +4,7 @@ import {
 import type { ErrorRatePoint } from '@dapplepot/types/analytics'
 import { Skeleton } from '../ui/skeleton'
 import { useAgents } from '../../hooks/useAgents'
+import { useThemeStore } from '../../stores/theme'
 
 function barColor(rate: number): string {
   if (rate > 0.08) return '#ef4444'
@@ -18,6 +19,15 @@ interface ErrorRateChartProps {
 export function ErrorRateChart({ data }: ErrorRateChartProps) {
   const { data: agentsData } = useAgents()
   const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
+
+  const { theme } = useThemeStore()
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+  const gridStroke   = isDark ? '#334155' : '#f1f5f9'
+  const tickColor    = isDark ? '#94a3b8' : '#64748b'
+  const tooltipStyle = isDark
+    ? { fontSize: 12, backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }
+    : { fontSize: 12 }
 
   // Aggregate to latest rate per agent
   const byAgent = data.reduce<Record<string, { errors: number; total: number }>>((acc, pt) => {
@@ -40,22 +50,22 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
         layout="vertical"
         margin={{ top: 4, right: 16, left: 8, bottom: 0 }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal={false} />
         <XAxis
           type="number"
           domain={[0, 0.14]}
           tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
-          tick={{ fontSize: 11, fill: '#94a3b8' }}
+          tick={{ fontSize: 11, fill: tickColor }}
         />
         <YAxis
           type="category"
           dataKey="agentName"
-          tick={{ fontSize: 11, fill: '#64748b' }}
+          tick={{ fontSize: 11, fill: tickColor }}
           width={120}
         />
         <Tooltip
           formatter={(value: number) => [`${(value * 100).toFixed(1)}%`, 'Error rate']}
-          contentStyle={{ fontSize: 12 }}
+          contentStyle={tooltipStyle}
         />
         <Bar dataKey="rate" radius={[0, 3, 3, 0]}>
           {chartData.map((entry) => (

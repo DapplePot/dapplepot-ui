@@ -5,15 +5,15 @@ import { useAgents } from '../../hooks/useAgents'
 import { useTopAgents } from '../../hooks/useSecurity'
 
 function trustColor(score: number): string {
-  if (score >= 71) return 'text-emerald-600'
-  if (score >= 41) return 'text-amber-600'
-  return 'text-red-600'
+  if (score >= 71) return 'text-emerald-600 dark:text-emerald-400'
+  if (score >= 41) return 'text-amber-600 dark:text-amber-400'
+  return 'text-red-600 dark:text-red-400'
 }
 
 function trustBg(score: number): string {
-  if (score >= 71) return 'bg-emerald-50'
-  if (score >= 41) return 'bg-amber-50'
-  return 'bg-red-50'
+  if (score >= 71) return 'bg-emerald-50 dark:bg-emerald-900/20'
+  if (score >= 41) return 'bg-amber-50 dark:bg-amber-900/20'
+  return 'bg-red-50 dark:bg-red-900/20'
 }
 
 function TrendIcon({ trend }: { trend: TrustTrend | undefined }) {
@@ -41,21 +41,20 @@ export function AgentHealth({ liveSessions }: AgentHealthProps) {
 
   if (isLoading) return <AgentHealthSkeleton />
 
-  // Sort by most recently scored
   const agents = [...(topAgents ?? [])].sort(
     (a, b) => new Date(b.lastScoredAt).getTime() - new Date(a.lastScoredAt).getTime()
   )
 
   if (agents.length === 0) {
     return (
-      <div className="flex h-20 items-center justify-center text-sm text-slate-400">
+      <div className="flex h-20 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
         No agent data
       </div>
     )
   }
 
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-slate-100 dark:divide-slate-800">
       {agents.map((agent) => {
         const name = agentMap[agent.agentId] ?? agent.agentId
         const activeSessions = activeByAgent[agent.agentId] ?? 0
@@ -63,28 +62,25 @@ export function AgentHealth({ liveSessions }: AgentHealthProps) {
 
         return (
           <div key={agent.agentId} className="flex items-center gap-3 px-4 py-2.5">
-            {/* Active indicator */}
             <span
               className={`h-2 w-2 shrink-0 rounded-full ${
-                activeSessions > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'
+                activeSessions > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             />
 
-            <span className="min-w-0 flex-1 truncate text-xs text-slate-700">{name}</span>
+            <span className="min-w-0 flex-1 truncate text-xs text-slate-700 dark:text-slate-300">{name}</span>
 
-            {/* Active session count */}
             {activeSessions > 0 && (
-              <span className="shrink-0 text-xs font-medium text-slate-600">{activeSessions} active</span>
+              <span className="shrink-0 text-xs font-medium text-slate-600 dark:text-slate-400">{activeSessions} active</span>
             )}
 
-            {/* Trust score */}
             {score !== undefined ? (
               <span className={`flex items-center gap-0.5 shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold ${trustColor(score)} ${trustBg(score)}`}>
                 Trust {score}
                 <TrendIcon trend={agent.trustTrend} />
               </span>
             ) : (
-              <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-slate-400 bg-slate-50">
+              <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-slate-400 bg-slate-50 dark:bg-slate-800 dark:text-slate-500">
                 No trust score
               </span>
             )}
@@ -97,7 +93,7 @@ export function AgentHealth({ liveSessions }: AgentHealthProps) {
 
 export function AgentHealthSkeleton() {
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-slate-100 dark:divide-slate-800">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-4 py-2.5">
           <Skeleton className="h-2 w-2 rounded-full" />
