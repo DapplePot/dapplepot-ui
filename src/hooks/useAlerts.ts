@@ -47,6 +47,7 @@ export function useUpdateAlertStatus() {
     }) => alertsApi.updateAlertStatus(alertId, status),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['alerts'] })
+      void queryClient.invalidateQueries({ queryKey: ['session-alerts'] })
     },
   })
 }
