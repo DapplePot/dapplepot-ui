@@ -53,15 +53,15 @@ export function SecurityTab({ sessionId, baseTime }: SecurityTabProps) {
           confidenceBand={score.data.confidenceBand}
         />
       ) : (
-        <p className="text-center text-sm text-slate-400 dark:text-slate-500">
+        <p className="text-center text-sm text-slate-400 dark:text-zinc-500">
           No security score yet — scoring runs post-session
         </p>
       )}
       <div>
-        <h3 className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+        <h3 className="mb-2 text-xs font-medium text-slate-500 dark:text-zinc-400">
           Online Findings
           {(actions.data?.length ?? 0) > 0 && (
-            <span className="ml-1.5 text-slate-400 dark:text-slate-500">({actions.data!.length})</span>
+            <span className="ml-1.5 text-slate-400 dark:text-zinc-500">({actions.data!.length})</span>
           )}
         </h3>
         <OnlineFindingsList findings={actions.data ?? []} baseTime={baseTime} />
@@ -69,19 +69,19 @@ export function SecurityTab({ sessionId, baseTime }: SecurityTabProps) {
       {(postSessionFindings.length > 0 || crossSessionFindings.length > 0) && (
         <>
           <div>
-            <h3 className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <h3 className="mb-2 text-xs font-medium text-slate-500 dark:text-zinc-400">
               Post-session Findings
               {postSessionFindings.length > 0 && (
-                <span className="ml-1.5 text-slate-400 dark:text-slate-500">({postSessionFindings.length})</span>
+                <span className="ml-1.5 text-slate-400 dark:text-zinc-500">({postSessionFindings.length})</span>
               )}
             </h3>
             <FindingsList findings={postSessionFindings} />
           </div>
           <div>
-            <h3 className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <h3 className="mb-2 text-xs font-medium text-slate-500 dark:text-zinc-400">
               Cross-session Findings
               {crossSessionFindings.length > 0 && (
-                <span className="ml-1.5 text-slate-400 dark:text-slate-500">({crossSessionFindings.length})</span>
+                <span className="ml-1.5 text-slate-400 dark:text-zinc-500">({crossSessionFindings.length})</span>
               )}
             </h3>
             <FindingsList findings={crossSessionFindings} />

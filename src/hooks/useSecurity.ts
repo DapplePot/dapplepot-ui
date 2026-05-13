@@ -22,18 +22,20 @@ export function useSecurityOverview(windowHours = 168) {
   })
 }
 
-// Per-session risk score + findings — stable once written
+// Per-session risk score + findings — refetch every 30s so trust score
+// and signal data appear promptly after the post-session scorer finishes.
 export function useSessionSecurity(sessionId: string) {
   const score = useQuery({
     queryKey: ['security', 'session', sessionId, 'score'],
     queryFn:  () => securityApi.getSessionScore(sessionId),
-    staleTime: 300_000,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
     enabled:  !!sessionId,
   })
   const findings = useQuery({
     queryKey: ['security', 'session', sessionId, 'findings'],
     queryFn:  () => securityApi.getSessionFindings(sessionId),
-    staleTime: 300_000,
+    staleTime: 30_000,
     enabled:  !!sessionId,
   })
   return { score, findings }
@@ -58,12 +60,14 @@ export function useTopAgents() {
   })
 }
 
-// Full security profile for a single agent
+// Full security profile for a single agent — refetch every 30s so trust
+// score appears promptly after the first session is scored.
 export function useAgentProfile(agentId: string) {
   return useQuery({
     queryKey: ['security', 'agent', agentId],
     queryFn:  () => securityApi.getAgentProfile(agentId),
-    staleTime: 300_000,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
     enabled:  !!agentId,
   })
 }

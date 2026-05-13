@@ -31,15 +31,15 @@ export function TraceLayout({
       <MetricStrip session={session} />
 
       <div className="flex flex-1 gap-4 overflow-hidden">
-        <div className="flex w-3/5 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex w-3/5 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
           <RightPanel session={session} alerts={alerts} />
         </div>
 
-        <div className="flex w-2/5 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-          <div className="border-b border-slate-100 px-4 py-2.5 dark:border-slate-800">
-            <h2 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <div className="flex w-2/5 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="border-b border-slate-100 px-4 py-2.5 dark:border-zinc-800">
+            <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">
               Event timeline
-              <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
+              <span className="ml-2 text-xs font-normal text-slate-400 dark:text-zinc-500">
                 {events.length} events
                 {securityCount > 0 && (
                   <span className="ml-1 text-red-400 dark:text-red-500">· {securityCount} security</span>

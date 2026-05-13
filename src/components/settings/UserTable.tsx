@@ -33,7 +33,7 @@ export function UserTable() {
         placeholder="Search users…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+        className="w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
       />
 
       {isLoading && (
@@ -45,10 +45,10 @@ export function UserTable() {
       )}
 
       {!isLoading && !isError && (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-slate-700 dark:text-slate-400">
+              <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-zinc-700 dark:text-zinc-400">
                 <th className="px-4 py-3">User</th>
                 <th className="px-4 py-3">Role</th>
                 <th className="px-4 py-3">Status</th>
@@ -57,10 +57,10 @@ export function UserTable() {
             </thead>
             <tbody className="px-4">
               {filtered.map((u) => (
-                <tr key={u.userId} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <tr key={u.userId} className="border-b border-slate-100 last:border-0 dark:border-zinc-800">
                   <td className="px-4 py-3">
-                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{u.name}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">{u.email}</div>
+                    <div className="text-sm font-medium text-slate-900 dark:text-zinc-100">{u.name}</div>
+                    <div className="text-xs text-slate-500 dark:text-zinc-400">{u.email}</div>
                   </td>
                   <td className="px-4 py-3">
                     <RoleBadge role={u.role} />
@@ -75,7 +75,7 @@ export function UserTable() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
+                  <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-400 dark:text-zinc-500">
                     No users found.
                   </td>
                 </tr>
@@ -98,7 +98,7 @@ function UserRowActions({ user }: { user: UserSummary }) {
         value={user.role}
         disabled={changeRole.isPending}
         onChange={(e) => changeRole.mutate({ role: e.target.value as UserRole })}
-        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none focus:border-violet-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none focus:border-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
       >
         <option value="viewer">Viewer</option>
         <option value="editor">Editor</option>

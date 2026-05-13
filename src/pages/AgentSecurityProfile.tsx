@@ -3,7 +3,7 @@ import { useParams, Link } from '@tanstack/react-router'
 import { useAgentProfile } from '../hooks/useSecurity'
 import { Skeleton } from '../components/ui/skeleton'
 import { TrendingDown, TrendingUp, Minus, Settings, Copy, Check, HelpCircle } from 'lucide-react'
-import type { RiskBand, TrustTrend } from '../types/security'
+import type { RiskBand } from '../types/security'
 
 function AgentIdRow({ agentId }: { agentId: string }) {
   const [copied, setCopied] = useState(false)
@@ -47,7 +47,7 @@ function Tooltip({ text }: { text: string }) {
         <HelpCircle className="h-3.5 w-3.5" />
       </button>
       {visible && (
-        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
           {text}
         </span>
       )}
@@ -74,9 +74,9 @@ const BAND_BG: Record<RiskBand, string> = {
 
 function ScoreCard({ label, score, band, tooltip }: { label: string; score: number; band: RiskBand; tooltip: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+    <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
       <div className="flex items-center gap-1 mb-1">
-        <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+        <p className="text-xs text-slate-500 dark:text-zinc-400">{label}</p>
         <Tooltip text={tooltip} />
       </div>
       <p className={`text-3xl font-bold ${BAND_COLOR[band]}`}>{score}</p>
@@ -93,29 +93,69 @@ function trustScoreColor(score: number): string {
   return 'text-red-600 dark:text-red-400'
 }
 
-function TrustCard({ score, trend }: { score: number; trend?: TrustTrend }) {
-  const trendIcon =
-    trend === 'improving' ? <TrendingUp  className="h-4 w-4 text-green-500" /> :
-    trend === 'degrading' ? <TrendingDown className="h-4 w-4 text-red-500" />  :
-                            <Minus       className="h-4 w-4 text-slate-400" />
+function trustLineColor(score: number): string {
+  if (score >= 71) return '#10b981'
+  if (score >= 41) return '#f59e0b'
+  return '#ef4444'
+}
 
-  const trendColor =
-    trend === 'improving' ? 'text-green-600 dark:text-green-400' :
-    trend === 'degrading' ? 'text-red-600 dark:text-red-400'   : 'text-slate-500 dark:text-slate-400'
+function TrustSparkline({ history, score }: { history: number[]; score: number }) {
+  if (history.length < 2) return null
+  const W = 100
+  const H = 36
+  const yPad = 4
+  const yMin = Math.max(0,   Math.min(...history) - yPad)
+  const yMax = Math.min(100, Math.max(...history) + yPad)
+  const yRange = yMax - yMin || 1
+  const color = trustLineColor(score)
 
-  const rounded = Math.round(score)
+  const pts = history.map((v, i) => ({
+    x: (i / (history.length - 1)) * W,
+    y: H - ((v - yMin) / yRange) * H,
+  }))
+
+  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+  const areaPath = `${linePath} L${pts[pts.length - 1].x.toFixed(1)},${H} L${pts[0].x.toFixed(1)},${H} Z`
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full" style={{ height: H }}>
+      <defs>
+        <linearGradient id="trust-spark-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill="url(#trust-spark-grad)" />
+      <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function trustStatusBadge(score: number) {
+  if (score >= 75) return { label: 'Trusted',  cls: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800' }
+  if (score >= 50) return { label: 'Caution',  cls: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800' }
+  return           { label: 'At risk', cls: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800' }
+}
+
+function TrustCard({ score, history }: { score: number; history: number[] }) {
+  const rounded = Math.round(score)
+  const badge   = trustStatusBadge(rounded)
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
       <div className="flex items-center gap-1 mb-1">
-        <p className="text-xs text-slate-500 dark:text-slate-400">Agent trust score</p>
+        <p className="text-xs text-slate-500 dark:text-zinc-400">Agent trust score</p>
         <Tooltip text="Bayesian trust score (0–100). Starts at ~80. Each session updates the score: risky sessions (composite > 40) lower it, clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Below 50 for 3+ sessions in a row triggers a trust-degradation alert." />
       </div>
       <p className={`text-3xl font-bold ${trustScoreColor(rounded)}`}>{rounded}</p>
-      <div className="mt-2 flex items-center gap-1.5">
-        {trendIcon}
-        <span className={`text-xs font-medium capitalize ${trendColor}`}>{trend ?? 'stable'}</span>
-      </div>
+      <span className={`mt-2 inline-block self-start rounded border px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
+        {badge.label}
+      </span>
+      {history.length >= 2 && (
+        <div className="mt-3 -mx-1">
+          <TrustSparkline history={history} score={rounded} />
+        </div>
+      )}
     </div>
   )
 }
@@ -188,22 +228,22 @@ export function AgentSecurityProfile() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <Link to="/agents" className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+        <Link to="/agents" className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300">
           ← Agents
         </Link>
         <div className="mt-1 flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">
             {data.name ?? 'Agent Security Profile'}
           </h1>
           {/* Page navigation: Profile ↔ Config */}
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 shrink-0 dark:border-slate-700 dark:bg-slate-800">
-            <span className="rounded bg-white px-3 py-1.5 text-xs font-medium text-violet-700 shadow-sm dark:bg-slate-700 dark:text-violet-300">
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 shrink-0 dark:border-zinc-700 dark:bg-zinc-800">
+            <span className="rounded bg-white px-3 py-1.5 text-xs font-medium text-violet-700 shadow-sm dark:bg-zinc-700 dark:text-violet-300">
               Profile
             </span>
             <Link
               to="/agents/$agentId/config"
               params={{ agentId }}
-              className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+              className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
             >
               <Settings className="h-3 w-3" /> Config
             </Link>
@@ -235,7 +275,7 @@ export function AgentSecurityProfile() {
                 : <Minus       className="h-3.5 w-3.5 text-slate-400" />}
               <span className={`font-semibold capitalize ${
                 data.trustTrend === 'improving' ? 'text-emerald-700 dark:text-emerald-400' :
-                data.trustTrend === 'degrading' ? 'text-red-600 dark:text-red-400'     : 'text-slate-500 dark:text-slate-400'
+                data.trustTrend === 'degrading' ? 'text-red-600 dark:text-red-400'     : 'text-slate-500 dark:text-zinc-400'
               }`}>{data.trustTrend} trust</span>
             </span>
           )}
@@ -278,8 +318,8 @@ export function AgentSecurityProfile() {
         </div>
       </div>
 
-      {/* Score cards */}
-      <div className={`grid gap-4 ${data.trustScore !== undefined ? 'grid-cols-4' : 'grid-cols-3'}`}>
+      {/* Score cards — always 4 columns; trust shows pending state until first session scored */}
+      <div className="grid gap-4 grid-cols-4">
         <ScoreCard
           label="Composite risk (avg)"
           score={Math.round(data.compositeRisk)}
@@ -298,8 +338,25 @@ export function AgentSecurityProfile() {
           band={asiBand}
           tooltip="Average OWASP Agentic Security Top 10 composite score across all sessions. Same formula as LLM — covers agentic threats like goal hijacking, tool misuse, inter-agent compromise, and rogue behaviour."
         />
-        {data.trustScore !== undefined && (
-          <TrustCard score={data.trustScore} trend={data.trustTrend} />
+        {data.trustScore !== undefined ? (
+          <TrustCard
+            score={data.trustScore}
+            history={[...data.recentSessions]
+              .filter(s => s.trustScore != null)
+              .reverse()
+              .map(s => s.trustScore!)}
+          />
+        ) : (
+          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="flex items-center gap-1 mb-1">
+              <p className="text-xs text-slate-500 dark:text-zinc-400">Agent trust score</p>
+              <Tooltip text="Bayesian trust score (0–100). Starts at ~80. Each session updates the score: risky sessions (composite > 40) lower it, clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Below 50 for 3+ sessions in a row triggers a trust-degradation alert." />
+            </div>
+            <p className="text-3xl font-bold text-slate-300 dark:text-zinc-600">—</p>
+            <p className="mt-2 text-xs text-slate-400 dark:text-zinc-500">
+              Available after first scored session
+            </p>
+          </div>
         )}
       </div>
 
@@ -309,9 +366,9 @@ export function AgentSecurityProfile() {
           { label: 'Peak LLM score', value: data.maxLlmScore },
           { label: 'Peak ASI score', value: data.maxAsiScore },
         ].map(m => (
-          <div key={m.label} className="rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-xs text-slate-500 dark:text-slate-400">{m.label}</p>
-            <p className="mt-0.5 text-lg font-semibold text-slate-900 dark:text-slate-100">{m.value}</p>
+          <div key={m.label} className="rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+            <p className="text-xs text-slate-500 dark:text-zinc-400">{m.label}</p>
+            <p className="mt-0.5 text-lg font-semibold text-slate-900 dark:text-zinc-100">{m.value}</p>
           </div>
         ))}
       </div>
@@ -319,27 +376,27 @@ export function AgentSecurityProfile() {
       {/* Signal breakdown */}
       <div className="grid grid-cols-2 gap-6">
         {/* LLM signals */}
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-          <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">LLM signal history (OW-LLM01–10)</h2>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+          <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">LLM signal history (OW-LLM01–10)</h2>
           {llmSignals.length === 0 ? (
-            <p className="text-sm text-slate-400 dark:text-slate-500">No LLM signals fired</p>
+            <p className="text-sm text-slate-400 dark:text-zinc-500">No LLM signals fired</p>
           ) : (
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-slate-400 border-b border-slate-100 dark:border-slate-800 dark:text-slate-500">
+                <tr className="text-slate-400 border-b border-slate-100 dark:border-zinc-800 dark:text-zinc-500">
                   <th className="pb-2 text-left font-medium">Signal</th>
                   <th className="pb-2 text-right font-medium">Sessions</th>
                   <th className="pb-2 text-right font-medium">Events</th>
                   <th className="pb-2 text-right font-medium">Last seen</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
                 {llmSignals.map(s => (
-                  <tr key={s.owaspSignalId} className="text-slate-700 dark:text-slate-300">
+                  <tr key={s.owaspSignalId} className="text-slate-700 dark:text-zinc-300">
                     <td className="py-1.5 font-mono">{s.owaspSignalId}</td>
                     <td className="py-1.5 text-right">{s.sessionsAffected}</td>
                     <td className="py-1.5 text-right">{s.firedCount}</td>
-                    <td className="py-1.5 text-right text-slate-400 dark:text-slate-500">{fmt(s.lastSeenAt)}</td>
+                    <td className="py-1.5 text-right text-slate-400 dark:text-zinc-500">{fmt(s.lastSeenAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -348,27 +405,27 @@ export function AgentSecurityProfile() {
         </div>
 
         {/* ASI signals */}
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-          <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">Agent threat history (OW-ASI01–10)</h2>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+          <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">Agent threat history (OW-ASI01–10)</h2>
           {agentSignals.length === 0 ? (
-            <p className="text-sm text-slate-400 dark:text-slate-500">No ASI signals fired</p>
+            <p className="text-sm text-slate-400 dark:text-zinc-500">No ASI signals fired</p>
           ) : (
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-slate-400 border-b border-slate-100 dark:border-slate-800 dark:text-slate-500">
+                <tr className="text-slate-400 border-b border-slate-100 dark:border-zinc-800 dark:text-zinc-500">
                   <th className="pb-2 text-left font-medium">Signal</th>
                   <th className="pb-2 text-right font-medium">Sessions</th>
                   <th className="pb-2 text-right font-medium">Events</th>
                   <th className="pb-2 text-right font-medium">Last seen</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
                 {agentSignals.map(s => (
-                  <tr key={s.owaspSignalId} className="text-slate-700 dark:text-slate-300">
+                  <tr key={s.owaspSignalId} className="text-slate-700 dark:text-zinc-300">
                     <td className="py-1.5 font-mono">{s.owaspSignalId}</td>
                     <td className="py-1.5 text-right">{s.sessionsAffected}</td>
                     <td className="py-1.5 text-right">{s.firedCount}</td>
-                    <td className="py-1.5 text-right text-slate-400 dark:text-slate-500">{fmt(s.lastSeenAt)}</td>
+                    <td className="py-1.5 text-right text-slate-400 dark:text-zinc-500">{fmt(s.lastSeenAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -378,14 +435,14 @@ export function AgentSecurityProfile() {
       </div>
 
       {/* Recent sessions */}
-      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">Recent sessions</h2>
+      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+        <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">Recent sessions</h2>
         {data.recentSessions.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-slate-500">No sessions scored yet</p>
+          <p className="text-sm text-slate-400 dark:text-zinc-500">No sessions scored yet</p>
         ) : (
           <table className="w-full text-xs">
             <thead>
-              <tr className="text-slate-400 border-b border-slate-100 dark:border-slate-800 dark:text-slate-500">
+              <tr className="text-slate-400 border-b border-slate-100 dark:border-zinc-800 dark:text-zinc-500">
                 <th className="pb-2 text-left font-medium">Session ID</th>
                 <th className="pb-2 text-right font-medium">LLM score</th>
                 <th className="pb-2 text-right font-medium">LLM band</th>
@@ -394,9 +451,9 @@ export function AgentSecurityProfile() {
                 <th className="pb-2 text-right font-medium">Scored</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
               {data.recentSessions.map(s => (
-                <tr key={s.sessionId} className="text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/50">
+                <tr key={s.sessionId} className="text-slate-700 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50">
                   <td className="py-1.5">
                     <Link
                       to="/sessions/$id"
@@ -409,12 +466,12 @@ export function AgentSecurityProfile() {
                   <td className={`py-1.5 text-right font-semibold ${BAND_COLOR[s.llmBand]}`}>
                     {s.llmScore}
                   </td>
-                  <td className="py-1.5 text-right capitalize text-slate-500 dark:text-slate-400">{s.llmBand}</td>
+                  <td className="py-1.5 text-right capitalize text-slate-500 dark:text-zinc-400">{s.llmBand}</td>
                   <td className={`py-1.5 text-right font-semibold ${BAND_COLOR[s.asiBand]}`}>
                     {s.asiScore}
                   </td>
-                  <td className="py-1.5 text-right capitalize text-slate-500 dark:text-slate-400">{s.asiBand}</td>
-                  <td className="py-1.5 text-right text-slate-400 dark:text-slate-500">{fmt(s.scoredAt)}</td>
+                  <td className="py-1.5 text-right capitalize text-slate-500 dark:text-zinc-400">{s.asiBand}</td>
+                  <td className="py-1.5 text-right text-slate-400 dark:text-zinc-500">{fmt(s.scoredAt)}</td>
                 </tr>
               ))}
             </tbody>

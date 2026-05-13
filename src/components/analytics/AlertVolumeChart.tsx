@@ -40,7 +40,7 @@ export function AlertVolumeChart({ data }: AlertVolumeChartProps) {
   const grandTotal = data.bySeverity.reduce((sum, s) => sum + s.total, 0)
 
   if (grandTotal === 0) {
-    return <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">No alerts in this window</p>
+    return <p className="py-8 text-center text-sm text-slate-400 dark:text-zinc-500">No alerts in this window</p>
   }
 
   return (
@@ -62,7 +62,7 @@ export function AlertVolumeChart({ data }: AlertVolumeChartProps) {
               {s.total} {SEVERITY_CONFIG[s.severity as Severity]?.label ?? s.severity}
             </span>
           ))}
-        <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">{grandTotal} total</span>
+        <span className="ml-auto text-xs text-slate-400 dark:text-zinc-500">{grandTotal} total</span>
       </div>
 
       {/* Stacked status breakdown per severity */}
@@ -84,13 +84,13 @@ export function AlertVolumeChart({ data }: AlertVolumeChartProps) {
 
       {/* Top rules */}
       {data.topRules.length > 0 && (
-        <div className="border-t border-slate-100 pt-2 dark:border-slate-800">
-          <p className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">Top firing rules</p>
+        <div className="border-t border-slate-100 pt-2 dark:border-zinc-800">
+          <p className="mb-2 text-xs font-medium text-slate-500 dark:text-zinc-400">Top firing rules</p>
           <div className="space-y-1">
             {data.topRules.slice(0, 5).map((r, i) => (
               <div key={r.ruleId ?? r.ruleName ?? i} className="flex items-center justify-between">
-                <span className="truncate text-xs text-slate-600 dark:text-slate-400">{r.ruleName}</span>
-                <span className="ml-2 text-xs font-medium tabular-nums text-slate-900 dark:text-slate-100">{r.count}</span>
+                <span className="truncate text-xs text-slate-600 dark:text-zinc-400">{r.ruleName}</span>
+                <span className="ml-2 text-xs font-medium tabular-nums text-slate-900 dark:text-zinc-100">{r.count}</span>
               </div>
             ))}
           </div>

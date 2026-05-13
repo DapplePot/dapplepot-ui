@@ -45,14 +45,14 @@ function AlertCardTitle({ alert }: { alert: AlertSummary }) {
     ]
     if (fired.length > 0) {
       return (
-        <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
+        <p className="truncate text-sm font-medium text-slate-800 dark:text-zinc-200">
           {alert.title} | {fired.join(', ')}
         </p>
       )
     }
   }
 
-  return <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{alert.title}</p>
+  return <p className="truncate text-sm font-medium text-slate-800 dark:text-zinc-200">{alert.title}</p>
 }
 
 interface AlertFeedProps {
@@ -76,8 +76,8 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition-colors',
               severity === value && status === ''
-                ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
             )}
           >
             {label}
@@ -88,8 +88,8 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
           className={cn(
             'rounded-full px-3 py-1 text-xs font-medium transition-colors',
             status === 'open'
-              ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+              ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
           )}
         >
           Live
@@ -99,8 +99,8 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
           className={cn(
             'rounded-full px-3 py-1 text-xs font-medium transition-colors',
             status === 'acknowledged'
-              ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+              ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
           )}
         >
           Acknowledged
@@ -110,13 +110,13 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
           className={cn(
             'rounded-full px-3 py-1 text-xs font-medium transition-colors',
             status === 'resolved'
-              ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+              ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
           )}
         >
           Resolved
         </button>
-        <span className="mx-1 self-center text-slate-300 dark:text-slate-600">|</span>
+        <span className="mx-1 self-center text-slate-300 dark:text-zinc-600">|</span>
         {SOURCE_PILLS.map(({ value, label }) => (
           <button
             key={value}
@@ -125,7 +125,7 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
               'rounded-full px-3 py-1 text-xs font-medium transition-colors',
               source === value
                 ? 'bg-violet-700 text-white dark:bg-violet-600'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
             )}
           >
             {label}
@@ -134,9 +134,9 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
       </div>
 
       {/* Alert list */}
-      <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-700 dark:bg-slate-900">
+      <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">
         {alerts.length === 0 ? (
-          <div className="py-12 text-center text-sm text-slate-400 dark:text-slate-500">No alerts</div>
+          <div className="py-12 text-center text-sm text-slate-400 dark:text-zinc-500">No alerts</div>
         ) : (
           alerts.map((alert) =>
             alert.alertId === selectedId ? (
@@ -149,19 +149,19 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
               <div
                 key={alert.alertId}
                 onClick={() => setSelectedId(alert.alertId)}
-                className="flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800"
               >
                 <span
                   className={`mt-1 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[alert.severity] ?? 'bg-slate-400'}`}
                 />
                 <div className="min-w-0 flex-1">
                   <AlertCardTitle alert={alert} />
-                  <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
+                  <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-zinc-500">
                     {alert.agentId ? (agentMap[alert.agentId] ?? alert.agentId) : '—'} · {alert.sessionId ? <span className="font-mono">{alert.sessionId.slice(0, 8)}…</span> : '—'}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="text-xs text-slate-400 dark:text-slate-500">{formatAgo(alert.triggeredAt)}</span>
+                  <span className="text-xs text-slate-400 dark:text-zinc-500">{formatAgo(alert.triggeredAt)}</span>
                   <Badge
                     variant={
                       alert.status === 'resolved' ? 'success'
@@ -183,7 +183,7 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
 
 export function AlertFeedSkeleton() {
   return (
-    <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-700 dark:bg-slate-900">
+    <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-start gap-3 px-4 py-3">
           <Skeleton className="mt-1 h-2 w-2 rounded-full" />

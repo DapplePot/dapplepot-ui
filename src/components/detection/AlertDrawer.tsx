@@ -44,6 +44,13 @@ function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
   const llmSignalStatus = payload['llm_signal_status'] as Record<string, OwSignalStatus> | undefined
   const asiSignalStatus = payload['asi_signal_status'] as Record<string, OwSignalStatus> | undefined
 
+  const triggerContext  = payload['trigger_context'] as {
+    threshold_signals?: Array<{ sig_id: string; effective_score: number; threshold: number }>
+  } | undefined
+  const thresholdMap = Object.fromEntries(
+    (triggerContext?.threshold_signals ?? []).map((s) => [s.sig_id, s])
+  )
+
   const BAND_COLOR: Record<string, string> = {
     critical: 'text-red-600 dark:text-red-400',
     high:     'text-orange-500 dark:text-orange-400',
@@ -63,25 +70,25 @@ function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
   const hasChains = attackChains && attackChains.length > 0
 
   return (
-    <div className="border-t border-slate-100 px-4 py-3 space-y-3 dark:border-slate-800">
+    <div className="border-t border-slate-100 px-4 py-3 space-y-3 dark:border-zinc-800">
       {/* Score row */}
       <div className="flex flex-wrap gap-6">
         <div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">LLM Risk</p>
-          <p className={`text-lg font-semibold ${BAND_COLOR[llmBand ?? ''] ?? 'text-slate-800 dark:text-slate-200'}`}>
-            {llmScore ?? '—'}<span className="text-xs font-normal text-slate-400 dark:text-slate-500">/100</span>
+          <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">LLM Risk</p>
+          <p className={`text-lg font-semibold ${BAND_COLOR[llmBand ?? ''] ?? 'text-slate-800 dark:text-zinc-200'}`}>
+            {llmScore ?? '—'}<span className="text-xs font-normal text-slate-400 dark:text-zinc-500">/100</span>
           </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 capitalize">{llmBand}</p>
+          <p className="text-xs text-slate-400 dark:text-zinc-500 capitalize">{llmBand}</p>
           {confidenceBand && (
-            <p className="text-xs text-slate-400 dark:text-slate-500">confidence: <span className="font-medium">{confidenceBand}</span></p>
+            <p className="text-xs text-slate-400 dark:text-zinc-500">confidence: <span className="font-medium">{confidenceBand}</span></p>
           )}
         </div>
         <div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Agent Risk (ASI)</p>
-          <p className={`text-lg font-semibold ${BAND_COLOR[asiBand ?? ''] ?? 'text-slate-800 dark:text-slate-200'}`}>
-            {asiScore ?? '—'}<span className="text-xs font-normal text-slate-400 dark:text-slate-500">/100</span>
+          <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Agent Risk (ASI)</p>
+          <p className={`text-lg font-semibold ${BAND_COLOR[asiBand ?? ''] ?? 'text-slate-800 dark:text-zinc-200'}`}>
+            {asiScore ?? '—'}<span className="text-xs font-normal text-slate-400 dark:text-zinc-500">/100</span>
           </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 capitalize">{asiBand}</p>
+          <p className="text-xs text-slate-400 dark:text-zinc-500 capitalize">{asiBand}</p>
           {amplification !== undefined && amplification > 1.0 && (
             <div className="flex items-center gap-1 mt-0.5">
               <Link2 className="h-3 w-3 text-orange-500" />
@@ -91,9 +98,9 @@ function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
         </div>
         {trustScore !== undefined && (
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Trust</p>
-            <p className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-              {Math.round(trustScore)}<span className="text-xs font-normal text-slate-400 dark:text-slate-500">/100</span>
+            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Trust</p>
+            <p className="text-lg font-semibold text-slate-800 dark:text-zinc-200">
+              {Math.round(trustScore)}<span className="text-xs font-normal text-slate-400 dark:text-zinc-500">/100</span>
             </p>
             {trustTrend && (
               <div className="flex items-center gap-1">
@@ -102,14 +109,14 @@ function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
                   : trustTrend === 'degrading'
                   ? <TrendingDown className="h-3 w-3 text-red-500" />
                   : <Minus className="h-3 w-3 text-slate-400" />}
-                <span className="text-xs text-slate-400 dark:text-slate-500 capitalize">{trustTrend}</span>
+                <span className="text-xs text-slate-400 dark:text-zinc-500 capitalize">{trustTrend}</span>
               </div>
             )}
           </div>
         )}
         {summary && (
           <div className="ml-auto text-right self-start">
-            <p className="text-xs text-slate-400 dark:text-slate-500">{summary['llm_signals_fired']} LLM · {summary['asi_signals_fired']} Agent signals fired</p>
+            <p className="text-xs text-slate-400 dark:text-zinc-500">{summary['llm_signals_fired']} LLM · {summary['asi_signals_fired']} Agent signals fired</p>
           </div>
         )}
       </div>
@@ -134,22 +141,22 @@ function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
       {/* Top findings */}
       {topFindings && topFindings.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-medium text-slate-500 dark:text-slate-400">Top findings</p>
+          <p className="mb-1 text-xs font-medium text-slate-500 dark:text-zinc-400">Top findings</p>
           <div className="space-y-1">
             {topFindings.map((f) => (
-              <div key={`${f.owasp_signal_id}:${f.sub_check_id}`} className="flex items-start gap-2 rounded bg-slate-50 px-2 py-1.5 dark:bg-slate-800">
+              <div key={`${f.owasp_signal_id}:${f.sub_check_id}`} className="flex items-start gap-2 rounded bg-slate-50 px-2 py-1.5 dark:bg-zinc-800">
                 <span className="font-mono text-xs text-violet-600 dark:text-violet-400 shrink-0">{f.owasp_signal_id}:{f.sub_check_id}</span>
-                <span className="text-xs text-slate-700 dark:text-slate-300 flex-1">{f.check_label ?? f.detail}</span>
+                <span className="text-xs text-slate-700 dark:text-zinc-300 flex-1">{f.check_label ?? f.detail}</span>
                 {f.confidence_tier && (
                   <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 shrink-0 dark:bg-blue-900/30 dark:text-blue-300">
                     {f.confidence_tier}
                   </span>
                 )}
                 {f.check_score !== undefined && (
-                  <span className="font-mono text-xs text-slate-500 dark:text-slate-400 shrink-0">
+                  <span className="font-mono text-xs text-slate-500 dark:text-zinc-400 shrink-0">
                     {f.check_score}
                     {f.effective_score !== undefined && f.effective_score !== f.check_score && (
-                      <span className="text-slate-300 dark:text-slate-600"> →{Math.round(f.effective_score)}</span>
+                      <span className="text-slate-300 dark:text-zinc-600"> →{Math.round(f.effective_score)}</span>
                     )}
                   </span>
                 )}
@@ -163,13 +170,21 @@ function SecurityDetail({ payload }: { payload: Record<string, unknown> }) {
       {/* Fired signals */}
       {firedSignalIds.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-medium text-slate-500 dark:text-slate-400">Fired signals</p>
+          <p className="mb-1 text-xs font-medium text-slate-500 dark:text-zinc-400">Fired signals</p>
           <div className="flex flex-wrap gap-1">
-            {firedSignalIds.map((id) => (
-              <span key={id} className="rounded bg-red-50 px-1.5 py-0.5 font-mono text-xs text-red-700 dark:bg-red-900/20 dark:text-red-400">
-                {id}
-              </span>
-            ))}
+            {firedSignalIds.map((id) => {
+              const thr = thresholdMap[id]
+              return (
+                <span key={id} className="inline-flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 font-mono text-xs text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                  {id}
+                  {thr && (
+                    <span className="text-red-400 dark:text-red-500">
+                      [{thr.effective_score} ≥ {thr.threshold}]
+                    </span>
+                  )}
+                </span>
+              )
+            })}
           </div>
         </div>
       )}
@@ -218,7 +233,7 @@ function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> 
   }
 
   return (
-    <div className="border-t border-slate-100 px-4 py-3 space-y-3 dark:border-slate-800">
+    <div className="border-t border-slate-100 px-4 py-3 space-y-3 dark:border-zinc-800">
       {/* Action counts summary */}
       {actionCounts && Object.keys(actionCounts).length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -236,14 +251,14 @@ function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> 
 
       {/* Per-detection list */}
       <div>
-        <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+        <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-zinc-400">
           Online findings ({detections.length})
         </p>
         <div className="space-y-1.5">
           {detections.map((d) => (
             <div
               key={`${d.owasp_signal_id}:${d.sub_check_id}:${d.trigger_event_id ?? ''}`}
-              className="rounded border border-slate-100 bg-slate-50 px-2.5 py-2 dark:border-slate-800 dark:bg-slate-800/50"
+              className="rounded border border-slate-100 bg-slate-50 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-800/50"
             >
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium ${ACTION_BADGE[d.action_taken] ?? ACTION_BADGE['alert']}`}>
@@ -252,17 +267,17 @@ function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> 
                 <span className="font-mono text-xs text-violet-600 dark:text-violet-400 shrink-0">
                   {d.owasp_signal_id}:{d.sub_check_id}
                 </span>
-                <span className="text-xs text-slate-700 dark:text-slate-300 flex-1">{d.check_label}</span>
-                <span className={`text-xs font-medium shrink-0 ${SEVERITY_COLOR[d.severity] ?? 'text-slate-500 dark:text-slate-400'}`}>
+                <span className="text-xs text-slate-700 dark:text-zinc-300 flex-1">{d.check_label}</span>
+                <span className={`text-xs font-medium shrink-0 ${SEVERITY_COLOR[d.severity] ?? 'text-slate-500 dark:text-zinc-400'}`}>
                   {d.severity}
                 </span>
                 <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 shrink-0 dark:bg-blue-900/30 dark:text-blue-300">
                   {d.confidence_tier}
                 </span>
-                <span className="font-mono text-xs text-slate-400 dark:text-slate-500 shrink-0">
+                <span className="font-mono text-xs text-slate-400 dark:text-zinc-500 shrink-0">
                   {d.check_score}
                   {d.effective_score !== d.check_score && (
-                    <span className="text-slate-300 dark:text-slate-600"> →{d.effective_score}</span>
+                    <span className="text-slate-300 dark:text-zinc-600"> →{d.effective_score}</span>
                   )}
                 </span>
               </div>
@@ -271,13 +286,13 @@ function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> 
                   ? new Date(d.triggered_at).getTime() - new Date(sessionStartedAt).getTime()
                   : null
                 return (
-                  <p className="mt-0.5 font-mono text-[10px] text-slate-300 dark:text-slate-600">
+                  <p className="mt-0.5 font-mono text-[10px] text-slate-300 dark:text-zinc-600">
                     · {relMs !== null ? `+${relMs}ms` : ''}{d.trigger_event_type ? ` ${d.trigger_event_type}` : ''}
                   </p>
                 )
               })()}
               {d.matched_text && (
-                <p className="mt-1 truncate font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                <p className="mt-1 truncate font-mono text-[10px] text-slate-400 dark:text-zinc-500">
                   {d.matched_text}
                 </p>
               )}
@@ -313,22 +328,22 @@ export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
   ]
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <div className="flex items-start justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+    <div className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="flex items-start justify-between border-b border-slate-100 px-4 py-3 dark:border-zinc-800">
         <div>
-          <p className="font-medium text-slate-900 dark:text-slate-100">{alert.title}</p>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{alert.message}</p>
+          <p className="font-medium text-slate-900 dark:text-zinc-100">{alert.title}</p>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">{alert.message}</p>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300">
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="divide-y divide-slate-50 px-4 dark:divide-slate-800">
+      <div className="divide-y divide-slate-50 px-4 dark:divide-zinc-800">
         {fields.map(({ label, value }) => (
           <div key={label} className="flex items-center gap-3 py-2">
-            <span className="w-24 shrink-0 text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
-            <span className="text-xs text-slate-800 dark:text-slate-300">{value}</span>
+            <span className="w-24 shrink-0 text-xs font-medium text-slate-500 dark:text-zinc-400">{label}</span>
+            <span className="text-xs text-slate-800 dark:text-zinc-300">{value}</span>
           </div>
         ))}
       </div>
@@ -341,7 +356,7 @@ export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
         <OnlineDetectionsDetail payload={detail.payload} />
       )}
 
-      <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3 dark:border-slate-800">
+      <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3 dark:border-zinc-800">
         {alert.status === 'open' && (
           <Button
             size="sm"

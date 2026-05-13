@@ -108,7 +108,7 @@ export function SessionFilters({ agents, onFiltersChange }: SessionFiltersProps)
       {hasActiveFilters() && (
         <button
           onClick={() => { clearFilters(); onFiltersChange() }}
-          className="text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+          className="text-sm text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200"
         >
           Clear filters ×
         </button>

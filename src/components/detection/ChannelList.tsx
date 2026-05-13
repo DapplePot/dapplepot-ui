@@ -25,14 +25,14 @@ export function ChannelList({ channels }: ChannelListProps) {
         return (
           <div
             key={channel.channelId}
-            className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900"
+            className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
-              <Icon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-zinc-800">
+              <Icon className="h-4 w-4 text-slate-600 dark:text-zinc-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{channel.name}</p>
-              <p className="text-xs text-slate-400 capitalize dark:text-slate-500">{channel.channelType}</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-zinc-200">{channel.name}</p>
+              <p className="text-xs text-slate-400 capitalize dark:text-zinc-500">{channel.channelType}</p>
             </div>
             <Badge variant={channel.enabled ? 'success' : 'secondary'}>
               {channel.enabled ? 'Active' : 'Disabled'}
@@ -51,9 +51,9 @@ export function ChannelList({ channels }: ChannelListProps) {
         )
       })}
 
-      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Platform inbox</p>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-800/50">
+        <p className="text-sm font-medium text-slate-700 dark:text-zinc-300">Platform inbox</p>
+        <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
           Always on — all alerts appear in the Detection inbox regardless of channel config.
         </p>
       </div>
@@ -63,7 +63,7 @@ export function ChannelList({ channels }: ChannelListProps) {
       </button>
 
       {channels.length === 0 && (
-        <p className="text-center text-sm text-slate-400 py-4 dark:text-slate-500">No channels configured</p>
+        <p className="text-center text-sm text-slate-400 py-4 dark:text-zinc-500">No channels configured</p>
       )}
     </div>
   )
@@ -73,7 +73,7 @@ export function ChannelListSkeleton() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+        <div key={i} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
           <Skeleton className="h-9 w-9 rounded-lg" />
           <div className="flex-1 space-y-1.5">
             <Skeleton className="h-4 w-32" />

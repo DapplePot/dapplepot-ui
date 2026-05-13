@@ -47,16 +47,16 @@ function SdkKeyRow({ sdkKey, isAdmin }: SdkKeyRowProps) {
   const displayKey = revealed && fullKey ? fullKey : sdkKey.maskedKey
 
   return (
-    <tr className="border-b border-slate-100 last:border-0 dark:border-slate-800">
+    <tr className="border-b border-slate-100 last:border-0 dark:border-zinc-800">
       <td className="px-4 py-3">
         {sdkKey.name
-          ? <span className="text-sm text-slate-900 dark:text-slate-100">{sdkKey.name}</span>
-          : <span className="text-sm italic text-slate-400 dark:text-slate-500">Unnamed</span>
+          ? <span className="text-sm text-slate-900 dark:text-zinc-100">{sdkKey.name}</span>
+          : <span className="text-sm italic text-slate-400 dark:text-zinc-500">Unnamed</span>
         }
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <code className="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-700 select-all dark:bg-slate-800 dark:text-slate-300">
+          <code className="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-700 select-all dark:bg-zinc-800 dark:text-zinc-300">
             {displayKey}
           </code>
           {isAdmin && (
@@ -70,7 +70,7 @@ function SdkKeyRow({ sdkKey, isAdmin }: SdkKeyRowProps) {
               </button>
               <button
                 onClick={handleCopy}
-                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                className="text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                 title="Copy"
               >
                 {copied
@@ -89,18 +89,18 @@ function SdkKeyRow({ sdkKey, isAdmin }: SdkKeyRowProps) {
         <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
           sdkKey.enabled
             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+            : 'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400'
         }`}>
           {sdkKey.enabled ? 'Active' : 'Disabled'}
         </span>
       </td>
-      <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+      <td className="px-4 py-3 text-sm text-slate-500 dark:text-zinc-400">
         {formatDate(sdkKey.createdAt)}
       </td>
-      <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+      <td className="px-4 py-3 text-sm text-slate-500 dark:text-zinc-400">
         {sdkKey.lastUsedAt
           ? formatDate(sdkKey.lastUsedAt)
-          : <span className="text-slate-400 dark:text-slate-500">Never</span>
+          : <span className="text-slate-400 dark:text-zinc-500">Never</span>
         }
       </td>
     </tr>
@@ -115,7 +115,7 @@ export function SdkKeySection({ isAdmin }: SdkKeySectionProps) {
   const { data: keys, isLoading, isError } = useSdkKeys()
 
   if (isLoading) {
-    return <p className="text-sm text-slate-500 dark:text-slate-400">Loading SDK keys…</p>
+    return <p className="text-sm text-slate-500 dark:text-zinc-400">Loading SDK keys…</p>
   }
 
   if (isError) {
@@ -124,17 +124,17 @@ export function SdkKeySection({ isAdmin }: SdkKeySectionProps) {
 
   if (!keys?.length) {
     return (
-      <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500">
+      <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500">
         No SDK keys found for this tenant.
       </p>
     )
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
       <table className="w-full text-left">
         <thead>
-          <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-zinc-700 dark:text-zinc-400">
             <th className="px-4 py-3">Name</th>
             <th className="px-4 py-3">Key</th>
             <th className="px-4 py-3">Status</th>
@@ -149,7 +149,7 @@ export function SdkKeySection({ isAdmin }: SdkKeySectionProps) {
         </tbody>
       </table>
       {!isAdmin && (
-        <p className="border-t border-slate-100 px-4 py-2 text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        <p className="border-t border-slate-100 px-4 py-2 text-xs text-slate-400 dark:border-zinc-800 dark:text-zinc-500">
           Contact your tenant admin to view SDK keys.
         </p>
       )}

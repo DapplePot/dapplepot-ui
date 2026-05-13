@@ -37,7 +37,7 @@ export function OWASPFrequencyChart({ llmFrequency, asiFrequency }: OWASPFrequen
     .slice(0, 10)
 
   if (merged.length === 0) {
-    return <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">No signals fired in this window</p>
+    return <p className="py-8 text-center text-sm text-slate-400 dark:text-zinc-500">No signals fired in this window</p>
   }
 
   return (

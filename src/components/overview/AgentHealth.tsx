@@ -47,14 +47,14 @@ export function AgentHealth({ liveSessions }: AgentHealthProps) {
 
   if (agents.length === 0) {
     return (
-      <div className="flex h-20 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+      <div className="flex h-20 items-center justify-center text-sm text-slate-400 dark:text-zinc-500">
         No agent data
       </div>
     )
   }
 
   return (
-    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+    <div className="divide-y divide-slate-100 dark:divide-zinc-800">
       {agents.map((agent) => {
         const name = agentMap[agent.agentId] ?? agent.agentId
         const activeSessions = activeByAgent[agent.agentId] ?? 0
@@ -64,14 +64,14 @@ export function AgentHealth({ liveSessions }: AgentHealthProps) {
           <div key={agent.agentId} className="flex items-center gap-3 px-4 py-2.5">
             <span
               className={`h-2 w-2 shrink-0 rounded-full ${
-                activeSessions > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'
+                activeSessions > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300 dark:bg-zinc-600'
               }`}
             />
 
-            <span className="min-w-0 flex-1 truncate text-xs text-slate-700 dark:text-slate-300">{name}</span>
+            <span className="min-w-0 flex-1 truncate text-xs text-slate-700 dark:text-zinc-300">{name}</span>
 
             {activeSessions > 0 && (
-              <span className="shrink-0 text-xs font-medium text-slate-600 dark:text-slate-400">{activeSessions} active</span>
+              <span className="shrink-0 text-xs font-medium text-slate-600 dark:text-zinc-400">{activeSessions} active</span>
             )}
 
             {score !== undefined ? (
@@ -80,7 +80,7 @@ export function AgentHealth({ liveSessions }: AgentHealthProps) {
                 <TrendIcon trend={agent.trustTrend} />
               </span>
             ) : (
-              <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-slate-400 bg-slate-50 dark:bg-slate-800 dark:text-slate-500">
+              <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-slate-400 bg-slate-50 dark:bg-zinc-800 dark:text-zinc-500">
                 No trust score
               </span>
             )}
@@ -93,7 +93,7 @@ export function AgentHealth({ liveSessions }: AgentHealthProps) {
 
 export function AgentHealthSkeleton() {
   return (
-    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+    <div className="divide-y divide-slate-100 dark:divide-zinc-800">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-4 py-2.5">
           <Skeleton className="h-2 w-2 rounded-full" />

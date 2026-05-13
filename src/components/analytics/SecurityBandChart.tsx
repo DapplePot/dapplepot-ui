@@ -29,9 +29,9 @@ export function SecurityBandChart({
     <div className="space-y-4">
       {/* High+critical callout */}
       <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{highCriticalPct}%</span>
-        <span className="text-sm text-slate-500 dark:text-slate-400">sessions high or critical</span>
-        <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">{sessionsScored.toLocaleString()} scored</span>
+        <span className="text-2xl font-semibold text-slate-900 dark:text-zinc-100">{highCriticalPct}%</span>
+        <span className="text-sm text-slate-500 dark:text-zinc-400">sessions high or critical</span>
+        <span className="ml-auto text-xs text-slate-400 dark:text-zinc-500">{sessionsScored.toLocaleString()} scored</span>
       </div>
 
       {/* Stacked bar */}
@@ -61,8 +61,8 @@ export function SecurityBandChart({
                 className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm"
                 style={{ backgroundColor: BAND_CONFIG[band].color }}
               />
-              <span className="text-xs text-slate-600 dark:text-slate-400">{BAND_CONFIG[band].label}</span>
-              <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">{count} ({pct}%)</span>
+              <span className="text-xs text-slate-600 dark:text-zinc-400">{BAND_CONFIG[band].label}</span>
+              <span className="text-xs tabular-nums text-slate-400 dark:text-zinc-500">{count} ({pct}%)</span>
             </div>
           )
         })}

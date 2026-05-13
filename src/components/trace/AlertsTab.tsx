@@ -22,7 +22,7 @@ export function AlertsTab({ alerts }: AlertsTabProps) {
 
   if (alerts.length === 0) {
     return (
-      <div className="flex h-32 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+      <div className="flex h-32 items-center justify-center text-sm text-slate-400 dark:text-zinc-500">
         No alerts for this session
       </div>
     )
@@ -34,7 +34,7 @@ export function AlertsTab({ alerts }: AlertsTabProps) {
         const isExpanded = expandedId === alert.alertId
         const isPending = updateStatus.isPending && updateStatus.variables?.alertId === alert.alertId
         return (
-          <div key={alert.alertId} className="rounded-lg border border-slate-200 dark:border-slate-700">
+          <div key={alert.alertId} className="rounded-lg border border-slate-200 dark:border-zinc-700">
             <button
               type="button"
               className="flex w-full items-start gap-2 p-3 text-left"
@@ -44,8 +44,8 @@ export function AlertsTab({ alerts }: AlertsTabProps) {
                 className={`mt-1 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[alert.severity] ?? 'bg-slate-400'}`}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{alert.title}</p>
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{alert.ruleName} · {formatAgo(alert.triggeredAt)}</p>
+                <p className="text-sm font-medium text-slate-800 dark:text-zinc-200">{alert.title}</p>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">{alert.ruleName} · {formatAgo(alert.triggeredAt)}</p>
               </div>
               <Badge
                 variant={
@@ -59,9 +59,9 @@ export function AlertsTab({ alerts }: AlertsTabProps) {
               </Badge>
             </button>
             {isExpanded && (
-              <div className="border-t border-slate-200 px-3 pb-3 dark:border-slate-700">
+              <div className="border-t border-slate-200 px-3 pb-3 dark:border-zinc-700">
                 {alert.message && (
-                  <p className="py-2 text-xs text-slate-600 dark:text-slate-400">{alert.message}</p>
+                  <p className="py-2 text-xs text-slate-600 dark:text-zinc-400">{alert.message}</p>
                 )}
                 <div className="flex gap-2">
                   {alert.status === 'open' && (

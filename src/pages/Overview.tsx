@@ -26,7 +26,7 @@ export function Overview() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Overview</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">Overview</h1>
 
       {overview.isLoading || liveSessions.isLoading || !overview.data ? (
         <MetricCardsSkeleton />
@@ -40,9 +40,9 @@ export function Overview() {
       )}
 
       <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-          <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-            <h2 className="text-sm font-medium text-slate-700 dark:text-slate-300">Live session feed</h2>
+        <div className="col-span-2 rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="border-b border-slate-100 px-4 py-3 dark:border-zinc-800">
+            <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">Live session feed</h2>
           </div>
           {liveSessions.isLoading ? (
             <SessionFeedSkeleton />
@@ -52,9 +52,9 @@ export function Overview() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-              <h2 className="text-sm font-medium text-slate-700 dark:text-slate-300">Recent alerts</h2>
+          <div className="rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="border-b border-slate-100 px-4 py-3 dark:border-zinc-800">
+              <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">Recent alerts</h2>
             </div>
             {alerts.isLoading ? (
               <AlertPanelSkeleton />
@@ -65,9 +65,9 @@ export function Overview() {
             )}
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-              <h2 className="text-sm font-medium text-slate-700 dark:text-slate-300">Recent agents</h2>
+          <div className="rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="border-b border-slate-100 px-4 py-3 dark:border-zinc-800">
+              <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">Recent agents</h2>
             </div>
             <AgentHealth liveSessions={liveSessions.data ?? []} />
           </div>

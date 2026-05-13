@@ -13,7 +13,7 @@ export function SessionPagination({ page, totalPages, total, onPage }: SessionPa
   const pages = buildPages(page, totalPages)
 
   return (
-    <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+    <div className="flex items-center justify-between text-sm text-slate-500 dark:text-zinc-400">
       <span>{total} sessions</span>
       <div className="flex items-center gap-1">
         <Button

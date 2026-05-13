@@ -43,7 +43,7 @@ export function Security() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Security</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">Security</h1>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList>
@@ -72,26 +72,26 @@ export function Security() {
                   { label: 'High / critical', value: overview.data.highCriticalCount },
                   { label: 'Top signal',      value: overview.data.topSignalId ?? '—' },
                 ].map((m) => (
-                  <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{m.label}</p>
-                    <p className="mt-1 text-2xl font-semibold text-slate-900 truncate dark:text-slate-100">{m.value}</p>
+                  <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                    <p className="text-xs text-slate-500 dark:text-zinc-400">{m.label}</p>
+                    <p className="mt-1 text-2xl font-semibold text-slate-900 truncate dark:text-zinc-100">{m.value}</p>
                   </div>
                 ))}
               </div>
 
               <div className="grid grid-cols-3 gap-6">
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-slate-300">Risk distribution</h2>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-zinc-300">Risk distribution</h2>
                   <RiskDistribution bands={bands} total={totalScored} />
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-slate-300">LLM signal frequency</h2>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-zinc-300">LLM signal frequency</h2>
                   <OwaspFrequency entries={overview.data.owaspFrequency} />
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-slate-300">ASI signal frequency</h2>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-zinc-300">ASI signal frequency</h2>
                   {overview.data.asiFrequency.length === 0 ? (
-                    <p className="text-sm text-slate-400 dark:text-slate-500">No ASI signals detected</p>
+                    <p className="text-sm text-slate-400 dark:text-zinc-500">No ASI signals detected</p>
                   ) : (
                     <OwaspFrequency entries={overview.data.asiFrequency} />
                   )}
@@ -99,7 +99,7 @@ export function Security() {
               </div>
 
               <div>
-                <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">Highest-risk sessions</h2>
+                <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">Highest-risk sessions</h2>
                 <HighRiskTable
                   sessions={overview.data.highRiskSessions}
                   onSelect={handleSelectSession}
@@ -139,9 +139,9 @@ export function Security() {
                       { label: 'Avg composite risk',  value: avgRisk.toFixed(1) },
                       { label: 'Highest risk agent',  value: topAgent ? (agentMap[topAgent.agentId] ?? topAgent.agentId) : '—' },
                     ].map((m) => (
-                      <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{m.label}</p>
-                        <p className="mt-1 text-2xl font-semibold text-slate-900 truncate dark:text-slate-100">{m.value}</p>
+                      <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                        <p className="text-xs text-slate-500 dark:text-zinc-400">{m.label}</p>
+                        <p className="mt-1 text-2xl font-semibold text-slate-900 truncate dark:text-zinc-100">{m.value}</p>
                       </div>
                     ))}
                   </div>
@@ -149,8 +149,8 @@ export function Security() {
               })()}
 
               <div className="grid grid-cols-2 gap-6">
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-slate-300">Agent risk distribution</h2>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-zinc-300">Agent risk distribution</h2>
                   {(() => {
                     const agents = topAgents.data ?? []
                     const buckets: Record<string, number> = { clean: 0, low: 0, medium: 0, high: 0, critical: 0 }
@@ -169,10 +169,10 @@ export function Security() {
                     return <RiskDistribution bands={bands} total={agents.length} />
                   })()}
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-slate-300">Agent threat frequency (ASI)</h2>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                  <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-zinc-300">Agent threat frequency (ASI)</h2>
                   {!overview.data || overview.data.asiFrequency.length === 0 ? (
-                    <p className="text-sm text-slate-400 dark:text-slate-500">No ASI signals detected</p>
+                    <p className="text-sm text-slate-400 dark:text-zinc-500">No ASI signals detected</p>
                   ) : (
                     <OwaspFrequency entries={overview.data.asiFrequency} />
                   )}
@@ -180,43 +180,43 @@ export function Security() {
               </div>
 
               <div>
-                <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">All agents by risk</h2>
+                <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">All agents by risk</h2>
                 {!topAgents.data || topAgents.data.length === 0 ? (
-                  <p className="text-sm text-slate-400 dark:text-slate-500">No agent risk data yet</p>
+                  <p className="text-sm text-slate-400 dark:text-zinc-500">No agent risk data yet</p>
                 ) : (
-                  <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                  <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-slate-100 dark:border-slate-800">
-                          <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Agent</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Sessions</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Avg LLM</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Max LLM</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Avg ASI</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Max ASI</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Composite risk</th>
+                        <tr className="border-b border-slate-100 dark:border-zinc-800">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Agent</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-zinc-400">Sessions</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-zinc-400">Avg LLM</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-zinc-400">Max LLM</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-zinc-400">Avg ASI</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-zinc-400">Max ASI</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-zinc-400">Composite risk</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                      <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
                         {topAgents.data.map((a) => (
                           <tr
                             key={a.agentId}
                             onClick={() => void navigate({ to: '/agents/$agentId', params: { agentId: a.agentId } })}
-                            className="cursor-pointer hover:bg-slate-50 transition-colors dark:hover:bg-slate-800"
+                            className="cursor-pointer hover:bg-slate-50 transition-colors dark:hover:bg-zinc-800"
                           >
                             <td className="px-4 py-3 text-xs font-medium text-violet-600 dark:text-violet-400">
                               {agentMap[a.agentId] ?? a.agentId}
                             </td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400">{a.sessionCount}</td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400">{a.avgLlmScore.toFixed(1)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400">{a.maxLlmScore.toFixed(1)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400">{a.avgAsiScore.toFixed(1)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400">{a.maxAsiScore.toFixed(1)}</td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-zinc-400">{a.sessionCount}</td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-zinc-400">{a.avgLlmScore.toFixed(1)}</td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-zinc-400">{a.maxLlmScore.toFixed(1)}</td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-zinc-400">{a.avgAsiScore.toFixed(1)}</td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-zinc-400">{a.maxAsiScore.toFixed(1)}</td>
                             <td className="px-4 py-3 text-right text-xs font-semibold">
                               <span className={
                                 a.compositeRisk >= 65 ? 'text-red-600 dark:text-red-400'
                                 : a.compositeRisk >= 40 ? 'text-amber-600 dark:text-amber-400'
-                                : 'text-slate-700 dark:text-slate-300'
+                                : 'text-slate-700 dark:text-zinc-300'
                               }>
                                 {a.compositeRisk.toFixed(1)}
                               </span>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Link2, ShieldAlert, TrendingDown, TrendingUp, Minus, HelpCircle } from 'lucide-react'
+import { ChevronDown, ChevronRight, Link2, ShieldAlert, HelpCircle } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import type { OwSignalStatus, ConfidenceTier, TrustTrend } from '../../types/security'
 
@@ -35,7 +35,7 @@ const CONFIDENCE_TIER_VARIANT: Record<ConfidenceTier, string> = {
   high:          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   medium:        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   low:           'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  skeletal:      'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+  skeletal:      'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400',
 }
 
 const ATTACK_CHAIN_LABELS: Record<string, string> = {
@@ -66,7 +66,7 @@ function Tooltip({ text, placement = 'top' }: { text: string; placement?: 'top' 
         <HelpCircle className="h-3.5 w-3.5" />
       </button>
       {visible && (
-        <span className={`absolute ${posClass} z-20 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300`}>
+        <span className={`absolute ${posClass} z-20 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300`}>
           {text}
         </span>
       )}
@@ -76,12 +76,6 @@ function Tooltip({ text, placement = 'top' }: { text: string; placement?: 'top' 
 
 const LLM_SIGNAL_ORDER   = ['OW-LLM01','OW-LLM02','OW-LLM03','OW-LLM04','OW-LLM05','OW-LLM06','OW-LLM07','OW-LLM08','OW-LLM09','OW-LLM10']
 const AGENT_SIGNAL_ORDER = ['OW-ASI01','OW-ASI02','OW-ASI03','OW-ASI04','OW-ASI05','OW-ASI06','OW-ASI07','OW-ASI08','OW-ASI09','OW-ASI10']
-
-function TrustTrendIcon({ trend }: { trend: TrustTrend }) {
-  if (trend === 'improving')  return <TrendingUp  className="h-4 w-4 text-green-500" />
-  if (trend === 'degrading')  return <TrendingDown className="h-4 w-4 text-red-500" />
-  return <Minus className="h-4 w-4 text-slate-400" />
-}
 
 // Fired signal row — expandable sub-checks
 function FiredSignalRow({ signalId, s }: { signalId: string; s: OwSignalStatus }) {
@@ -99,7 +93,7 @@ function FiredSignalRow({ signalId, s }: { signalId: string; s: OwSignalStatus }
         onClick={() => subChecks.length > 0 && setExpanded(e => !e)}
       >
         <Badge variant="outline" className="font-mono text-xs shrink-0">{signalId}</Badge>
-        <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 min-w-0 truncate">{primaryLabel}</span>
+        <span className="text-xs text-slate-700 dark:text-zinc-300 flex-1 min-w-0 truncate">{primaryLabel}</span>
         <span className="font-mono text-xs font-semibold text-red-700 dark:text-red-400 shrink-0">{displayScore}</span>
         {effectiveScore !== undefined && effectiveScore !== displayScore && (
           <span className="font-mono text-xs text-red-400 dark:text-red-500 shrink-0">
@@ -120,22 +114,22 @@ function FiredSignalRow({ signalId, s }: { signalId: string; s: OwSignalStatus }
             <div key={id} className="ml-2 pl-2 border-l border-red-200 dark:border-red-700 py-1">
               <div className="flex items-center gap-2">
                 <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${sc.status === 'fired' ? 'bg-red-500' : 'bg-green-400'}`} />
-                <span className="font-mono text-xs text-slate-500 dark:text-slate-400 shrink-0">{id}</span>
-                <span className="text-xs text-slate-700 dark:text-slate-300 flex-1">{sc.label}</span>
+                <span className="font-mono text-xs text-slate-500 dark:text-zinc-400 shrink-0">{id}</span>
+                <span className="text-xs text-slate-700 dark:text-zinc-300 flex-1">{sc.label}</span>
                 {sc.confidenceTier && (
                   <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium shrink-0 ${CONFIDENCE_TIER_VARIANT[sc.confidenceTier]}`}>
                     {sc.confidenceTier}
                   </span>
                 )}
-                <span className="font-mono text-xs text-slate-400 dark:text-slate-500 shrink-0">{sc.score}</span>
+                <span className="font-mono text-xs text-slate-400 dark:text-zinc-500 shrink-0">{sc.score}</span>
                 {sc.effectiveScore !== undefined && sc.effectiveScore !== sc.score && (
-                  <span className="font-mono text-xs text-slate-300 dark:text-slate-600 shrink-0">
+                  <span className="font-mono text-xs text-slate-300 dark:text-zinc-600 shrink-0">
                     →{Math.round(sc.effectiveScore)}
                   </span>
                 )}
               </div>
               {sc.detail && (
-                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500 pl-4">{sc.detail}</p>
+                <p className="mt-0.5 text-xs text-slate-400 dark:text-zinc-500 pl-4">{sc.detail}</p>
               )}
             </div>
           ))}
@@ -161,9 +155,9 @@ function OwSignalStatusSection({
   const clean = order.filter(id => !statusMap[id] || statusMap[id].status === 'clean')
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{title}</p>
+        <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">{title}</p>
         <div className="flex gap-2 text-xs">
           {fired.length > 0 && <span className="text-red-600 dark:text-red-400 font-medium">{fired.length} fired</span>}
           <span className="text-green-700 dark:text-green-500 font-medium">{clean.length} clean</span>
@@ -185,7 +179,7 @@ function OwSignalStatusSection({
           <div>
             <button
               onClick={() => setCleanExpanded(e => !e)}
-              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 mt-1"
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 mt-1"
             >
               {cleanExpanded
                 ? <ChevronDown className="h-3 w-3" />
@@ -200,8 +194,8 @@ function OwSignalStatusSection({
                   return (
                     <div key={id} className="flex items-center gap-2 rounded-md border border-green-100 bg-green-50 px-3 py-1.5 dark:border-green-900/40 dark:bg-green-900/10">
                       <Badge variant="outline" className="font-mono text-xs shrink-0">{id}</Badge>
-                      <span className="text-xs text-slate-400 dark:text-slate-500 flex-1">{id}</span>
-                      <span className="font-mono text-xs text-slate-400 dark:text-slate-500 shrink-0">{s?.rawScore ?? s?.score ?? 0}</span>
+                      <span className="text-xs text-slate-400 dark:text-zinc-500 flex-1">{id}</span>
+                      <span className="font-mono text-xs text-slate-400 dark:text-zinc-500 shrink-0">{s?.rawScore ?? s?.score ?? 0}</span>
                       <span className="text-xs font-medium text-green-700 dark:text-green-500 shrink-0">✓ clean</span>
                     </div>
                   )
@@ -225,47 +219,45 @@ export function SessionRiskPanel({
   scoredAt,
   scorerVersion,
   trustScore,
-  trustTrend,
   attackChainsDetected,
   amplification,
   confidenceBand,
 }: SessionRiskPanelProps) {
-  const hasTrust  = trustScore !== undefined
   const hasChains = attackChainsDetected && attackChainsDetected.length > 0
 
   return (
     <div className="space-y-4">
-      {/* Score summary cards */}
-      <div className={`grid gap-4 ${hasTrust ? 'grid-cols-3' : 'grid-cols-2'}`}>
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+      {/* Score summary cards — always 3 columns; trust shows pending state until computed */}
+      <div className="grid gap-4 grid-cols-3">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <div className="flex items-center gap-1">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">LLM risk score</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">LLM risk score</p>
             <Tooltip placement="bottom" text="OWASP LLM Top 10 composite score for this session (0–100). Computed as: top fired signal × 60% + mean of rest × 40%. If multiple signals match a known attack chain, the score is amplified by up to ×1.35. Bands: clean 0–14, low 15–34, medium 35–59, high 60–84, critical 85–100." />
           </div>
           <div className="mt-2 flex items-end gap-3">
-            <span className="text-5xl font-bold text-slate-900 dark:text-slate-100">{llmScore}</span>
+            <span className="text-5xl font-bold text-slate-900 dark:text-zinc-100">{llmScore}</span>
             <Badge variant={BAND_VARIANT[llmBand] ?? 'secondary'} className="mb-1">
               {llmBand}
             </Badge>
           </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400">
             scored {new Date(scoredAt).toLocaleString()}
           </p>
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 font-mono">{scorerVersion}</p>
+          <p className="mt-1 text-xs text-slate-400 dark:text-zinc-500 font-mono">{scorerVersion}</p>
           {confidenceBand && (
-            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-1 text-xs text-slate-400 dark:text-zinc-500">
               confidence: <span className="font-medium">{confidenceBand}</span>
             </p>
           )}
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <div className="flex items-center gap-1">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Agent risk score (ASI)</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Agent risk score (ASI)</p>
             <Tooltip placement="bottom" text="OWASP Agentic Security Top 10 composite score for this session (0–100). Same formula as LLM — covers agentic threats: goal hijacking, tool misuse, privilege abuse, inter-agent compromise, and rogue behaviour." />
           </div>
           <div className="mt-2 flex items-end gap-3">
-            <span className="text-5xl font-bold text-slate-900 dark:text-slate-100">{asiScore}</span>
+            <span className="text-5xl font-bold text-slate-900 dark:text-zinc-100">{asiScore}</span>
             <Badge variant={BAND_VARIANT[asiBand] ?? 'secondary'} className="mb-1">
               {asiBand}
             </Badge>
@@ -280,27 +272,30 @@ export function SessionRiskPanel({
           )}
         </div>
 
-        {hasTrust && (
-          <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <div className="flex items-center gap-1">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Agent trust score</p>
-              <Tooltip placement="bottom" text="Bayesian trust score for this agent at the time of this session (0–100). Starts at ~80. Risky sessions lower it; clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Below 50 for 3+ sessions triggers a trust-degradation alert." />
-            </div>
-            <div className="mt-2 flex items-end gap-3">
-              <span className="text-5xl font-bold text-slate-900 dark:text-slate-100">{Math.round(trustScore!)}</span>
-              {trustTrend && (
-                <div className="mb-1 flex items-center gap-1">
-                  <TrustTrendIcon trend={trustTrend} />
-                  <span className={`text-xs font-medium ${
-                    trustTrend === 'improving' ? 'text-green-600 dark:text-green-400' :
-                    trustTrend === 'degrading' ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'
-                  }`}>{trustTrend}</span>
-                </div>
-              )}
-            </div>
-            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">Bayesian trust 0–100</p>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="flex items-center gap-1">
+            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Agent trust score</p>
+            <Tooltip placement="bottom" text="Bayesian trust score for this agent at the time of this session (0–100). Starts at ~80. Risky sessions lower it; clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Below 50 for 3+ sessions triggers a trust-degradation alert." />
           </div>
-        )}
+          {trustScore !== undefined ? (
+            <>
+              <div className="mt-2 flex items-end gap-3">
+                <span className="text-5xl font-bold text-slate-900 dark:text-zinc-100">{Math.round(trustScore)}</span>
+                <Badge
+                  variant={Math.round(trustScore) >= 75 ? 'success' : Math.round(trustScore) >= 50 ? 'warning' : 'destructive'}
+                  className="mb-1"
+                >
+                  {Math.round(trustScore) >= 75 ? 'Trusted' : Math.round(trustScore) >= 50 ? 'Caution' : 'At risk'}
+                </Badge>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="mt-2 text-5xl font-bold text-slate-300 dark:text-zinc-600">—</p>
+              <p className="mt-2 text-xs text-slate-400 dark:text-zinc-500">Pending scorer</p>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Attack chains */}

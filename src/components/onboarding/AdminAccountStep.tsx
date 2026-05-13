@@ -33,7 +33,7 @@ export function AdminAccountStep({ onBack, onSubmit, isPending, error }: AdminAc
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">
           Admin Name <span className="text-red-500">*</span>
         </label>
         <input
@@ -42,12 +42,12 @@ export function AdminAccountStep({ onBack, onSubmit, isPending, error }: AdminAc
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Jane Smith"
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
         />
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">
           Admin Email <span className="text-red-500">*</span>
         </label>
         <input
@@ -56,12 +56,12 @@ export function AdminAccountStep({ onBack, onSubmit, isPending, error }: AdminAc
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="admin@client.com"
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
         />
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">
           Password <span className="text-red-500">*</span>
         </label>
         <input
@@ -71,12 +71,12 @@ export function AdminAccountStep({ onBack, onSubmit, isPending, error }: AdminAc
           value={password}
           onChange={(e) => { setPassword(e.target.value); setMismatch(false) }}
           placeholder="Min. 8 characters"
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
         />
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">
           Confirm Password <span className="text-red-500">*</span>
         </label>
         <input
@@ -85,10 +85,10 @@ export function AdminAccountStep({ onBack, onSubmit, isPending, error }: AdminAc
           value={confirm}
           onChange={(e) => { setConfirm(e.target.value); setMismatch(false) }}
           placeholder="Re-enter password"
-          className={`w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:ring-1 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${
+          className={`w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:ring-1 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 ${
             mismatch
               ? 'border-red-400 focus:border-red-500 focus:ring-red-500 dark:border-red-600'
-              : 'border-slate-300 focus:border-violet-500 focus:ring-violet-500 dark:border-slate-700'
+              : 'border-slate-300 focus:border-violet-500 focus:ring-violet-500 dark:border-zinc-700'
           }`}
         />
         {mismatch && (
@@ -105,7 +105,7 @@ export function AdminAccountStep({ onBack, onSubmit, isPending, error }: AdminAc
           type="button"
           onClick={onBack}
           disabled={isPending}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           ← Back
         </button>

@@ -7,12 +7,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:     'bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200',
+        default:     'bg-slate-900 text-white hover:bg-slate-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200',
         destructive: 'bg-red-600 text-white hover:bg-red-700',
-        outline:     'border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800',
-        secondary:   'bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
-        ghost:       'hover:bg-slate-100 text-slate-900 dark:text-slate-100 dark:hover:bg-slate-800',
-        link:        'text-slate-900 underline-offset-4 hover:underline dark:text-slate-100',
+        outline:     'border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800',
+        secondary:   'bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700',
+        ghost:       'hover:bg-slate-100 text-slate-900 dark:text-zinc-100 dark:hover:bg-zinc-800',
+        link:        'text-slate-900 underline-offset-4 hover:underline dark:text-zinc-100',
       },
       size: {
         default: 'h-9 px-4 py-2',

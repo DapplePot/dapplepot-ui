@@ -43,11 +43,11 @@ export function EventRow({ event, baseTime }: EventRowProps) {
           className="flex items-center gap-3 px-4 py-2 hover:bg-red-50/40 cursor-pointer border-l-2 border-red-300 dark:hover:bg-red-950/20 dark:border-red-700"
           onClick={() => setExpanded((v) => !v)}
         >
-          <span className="w-4 shrink-0 text-slate-400 dark:text-slate-500">
+          <span className="w-4 shrink-0 text-slate-400 dark:text-zinc-500">
             {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </span>
 
-          <span className="w-20 shrink-0 font-mono text-xs text-slate-400 dark:text-slate-500">{relativeLabel}</span>
+          <span className="w-20 shrink-0 font-mono text-xs text-slate-400 dark:text-zinc-500">{relativeLabel}</span>
 
           <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-red-400 dark:text-red-500" />
 
@@ -55,7 +55,7 @@ export function EventRow({ event, baseTime }: EventRowProps) {
             security_finding
           </span>
 
-          <span className="flex-1 truncate text-xs text-slate-600 dark:text-slate-400">
+          <span className="flex-1 truncate text-xs text-slate-600 dark:text-zinc-400">
             {p['check_label'] ?? p['sub_check_id'] ?? '—'}
           </span>
 
@@ -66,13 +66,13 @@ export function EventRow({ event, baseTime }: EventRowProps) {
 
         {expanded && (
           <div className="border-l-2 border-red-300 bg-red-50/30 px-4 pb-3 space-y-2 dark:border-red-700 dark:bg-red-950/10">
-            <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 text-xs text-slate-500 dark:text-slate-400">
-              <span><span className="font-medium text-slate-600 dark:text-slate-300">Check</span> {p['owasp_signal_id']}:{p['sub_check_id']}</span>
-              <span><span className="font-medium text-slate-600 dark:text-slate-300">Severity</span> {p['severity']}</span>
-              <span><span className="font-medium text-slate-600 dark:text-slate-300">Category</span> {p['category']}</span>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 text-xs text-slate-500 dark:text-zinc-400">
+              <span><span className="font-medium text-slate-600 dark:text-zinc-300">Check</span> {p['owasp_signal_id']}:{p['sub_check_id']}</span>
+              <span><span className="font-medium text-slate-600 dark:text-zinc-300">Severity</span> {p['severity']}</span>
+              <span><span className="font-medium text-slate-600 dark:text-zinc-300">Category</span> {p['category']}</span>
             </div>
             {p['matched_text'] && (
-              <pre className="rounded bg-slate-900 p-2 font-mono text-xs text-slate-100 whitespace-pre-wrap break-all dark:bg-slate-950">
+              <pre className="rounded bg-slate-900 p-2 font-mono text-xs text-slate-100 whitespace-pre-wrap break-all dark:bg-zinc-950">
                 {p['matched_text']}
               </pre>
             )}
@@ -85,24 +85,24 @@ export function EventRow({ event, baseTime }: EventRowProps) {
   return (
     <div>
       <div
-        className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 cursor-pointer dark:hover:bg-slate-800"
+        className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 cursor-pointer dark:hover:bg-zinc-800"
         onClick={() => hasPayload && setExpanded((v) => !v)}
       >
-        <span className="w-4 shrink-0 text-slate-400 dark:text-slate-500">
+        <span className="w-4 shrink-0 text-slate-400 dark:text-zinc-500">
           {hasPayload ? (
             expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />
           ) : null}
         </span>
 
-        <span className="w-20 shrink-0 font-mono text-xs text-slate-400 dark:text-slate-500">{relativeLabel}</span>
+        <span className="w-20 shrink-0 font-mono text-xs text-slate-400 dark:text-zinc-500">{relativeLabel}</span>
 
         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: dotColor }} />
 
-        <span className="w-48 shrink-0 font-mono text-xs text-slate-700 truncate dark:text-slate-300">
+        <span className="w-48 shrink-0 font-mono text-xs text-slate-700 truncate dark:text-zinc-300">
           {event.eventType}
         </span>
 
-        <span className="flex-1 truncate text-xs text-slate-500 dark:text-slate-400">
+        <span className="flex-1 truncate text-xs text-slate-500 dark:text-zinc-400">
           {event.nodeName || event.llmModel || event.toolName || '—'}
         </span>
 

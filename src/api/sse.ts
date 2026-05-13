@@ -44,9 +44,17 @@ export function useLiveSessions() {
 
   return useQuery({
     queryKey: ['sessions', 'live'],
-    // Seed with open sessions from REST so the feed isn't empty before first SSE push
+    // Seed with recently-active open sessions so the feed isn't empty before first SSE push.
+    // Apply the same 2-minute recency window used by the SSE endpoint to exclude zombie
+    // sessions that are status=open but haven't had activity in a long time.
     queryFn: () =>
-      getSessionList({ status: 'open', limit: 50, page: 1 }).then((r) => r.data),
+      getSessionList({ status: 'open', limit: 50, page: 1 }).then((r) => {
+        const cutoff = Date.now() - 2 * 60 * 1000
+        return r.data.filter((s) => {
+          const ts = s.lastActiveAt ?? s.startedAt
+          return ts ? new Date(ts).getTime() >= cutoff : false
+        })
+      }),
     staleTime: Infinity, // SSE owns updates after initial load
   })
 }

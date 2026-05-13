@@ -60,33 +60,33 @@ export function OnboardingWizard() {
           <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" />
         </div>
         <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Client onboarded successfully</h3>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">The tenant and admin account have been created.</p>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-zinc-100">Client onboarded successfully</h3>
+          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">The tenant and admin account have been created.</p>
         </div>
 
-        <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 text-left text-sm space-y-2 dark:border-slate-700 dark:bg-slate-800">
+        <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 text-left text-sm space-y-2 dark:border-zinc-700 dark:bg-zinc-800">
           <div className="flex justify-between">
-            <span className="text-slate-500 dark:text-slate-400">Tenant</span>
-            <span className="font-medium text-slate-900 dark:text-slate-100">{result.tenant.name}</span>
+            <span className="text-slate-500 dark:text-zinc-400">Tenant</span>
+            <span className="font-medium text-slate-900 dark:text-zinc-100">{result.tenant.name}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500 dark:text-slate-400">Tenant ID</span>
-            <span className="font-mono text-xs text-slate-600 dark:text-slate-300">{result.tenant.tenantId}</span>
+            <span className="text-slate-500 dark:text-zinc-400">Tenant ID</span>
+            <span className="font-mono text-xs text-slate-600 dark:text-zinc-300">{result.tenant.tenantId}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500 dark:text-slate-400">Admin email</span>
-            <span className="text-slate-900 dark:text-slate-100">{result.admin.email}</span>
+            <span className="text-slate-500 dark:text-zinc-400">Admin email</span>
+            <span className="text-slate-900 dark:text-zinc-100">{result.admin.email}</span>
           </div>
           {result.tenant.tokenBudget !== null && (
             <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-slate-400">Token budget</span>
-              <span className="text-slate-900 dark:text-slate-100">{result.tenant.tokenBudget.toLocaleString()} tokens</span>
+              <span className="text-slate-500 dark:text-zinc-400">Token budget</span>
+              <span className="text-slate-900 dark:text-zinc-100">{result.tenant.tokenBudget.toLocaleString()} tokens</span>
             </div>
           )}
           {result.tenant.rateLimit !== null && (
             <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-slate-400">Rate limit</span>
-              <span className="text-slate-900 dark:text-slate-100">{result.tenant.rateLimit} req/min</span>
+              <span className="text-slate-500 dark:text-zinc-400">Rate limit</span>
+              <span className="text-slate-900 dark:text-zinc-100">{result.tenant.rateLimit} req/min</span>
             </div>
           )}
         </div>
@@ -119,7 +119,7 @@ export function OnboardingWizard() {
                       ? 'bg-violet-600 text-white'
                       : isActive
                         ? 'border-2 border-violet-600 text-violet-600 dark:border-violet-400 dark:text-violet-400'
-                        : 'border-2 border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-500',
+                        : 'border-2 border-slate-300 text-slate-400 dark:border-zinc-600 dark:text-zinc-500',
                   )}
                 >
                   {isComplete ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
@@ -127,7 +127,7 @@ export function OnboardingWizard() {
                 <span
                   className={cn(
                     'text-xs font-medium',
-                    isActive   ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500',
+                    isActive   ? 'text-slate-900 dark:text-zinc-100' : 'text-slate-400 dark:text-zinc-500',
                   )}
                 >
                   {label}
@@ -137,7 +137,7 @@ export function OnboardingWizard() {
                 <div
                   className={cn(
                     'mx-3 h-px w-10 transition-colors',
-                    currentStep > step ? 'bg-violet-600' : 'bg-slate-200 dark:bg-slate-700',
+                    currentStep > step ? 'bg-violet-600' : 'bg-slate-200 dark:bg-zinc-700',
                   )}
                 />
               )}

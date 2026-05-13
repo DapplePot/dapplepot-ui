@@ -67,10 +67,10 @@ export function Sessions() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">
           Sessions
           {data && (
-            <span className="ml-2 text-sm font-normal text-slate-400 dark:text-slate-500">
+            <span className="ml-2 text-sm font-normal text-slate-400 dark:text-zinc-500">
               {data.total}
             </span>
           )}

@@ -26,7 +26,7 @@ export function Detection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Detection</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">Detection</h1>
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>

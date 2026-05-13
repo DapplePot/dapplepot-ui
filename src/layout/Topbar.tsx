@@ -32,22 +32,22 @@ export function Topbar() {
   const breadcrumbs = getBreadcrumbs(pathname)
 
   return (
-    <header className="flex h-14 shrink-0 items-center border-b border-slate-200 bg-white px-4 dark:border-slate-700 dark:bg-slate-900">
+    <header className="flex h-14 shrink-0 items-center border-b border-slate-200 bg-white px-4 dark:border-zinc-700 dark:bg-zinc-900">
       <nav className="flex items-center gap-1 text-sm">
         {breadcrumbs.map((crumb, i) => {
           const isLast = i === breadcrumbs.length - 1
           return (
             <span key={crumb.path} className="flex items-center gap-1">
-              {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />}
+              {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />}
               {isLast ? (
-                <span className="font-medium text-slate-900 dark:text-slate-100">
+                <span className="font-medium text-slate-900 dark:text-zinc-100">
                   {crumb.label}
                 </span>
               ) : (
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 <Link
                   to={crumb.path as any}
-                  className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                  className="text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
                 >
                   {crumb.label}
                 </Link>

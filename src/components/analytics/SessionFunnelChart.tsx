@@ -19,23 +19,23 @@ function Stage({ label, count, pct, color, sublabel, isLast }: StageProps) {
     <div className="flex min-w-0 flex-1 items-center gap-3">
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex items-baseline justify-between">
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{label}</span>
-          <span className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+          <span className="text-xs font-medium text-slate-600 dark:text-zinc-400">{label}</span>
+          <span className="text-lg font-semibold tabular-nums text-slate-900 dark:text-zinc-100">
             {count.toLocaleString()}
           </span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+        <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-700">
           <div
             className="h-full rounded-full transition-all"
             style={{ width: `${pct}%`, backgroundColor: color }}
           />
         </div>
-        <span className="mt-1 block text-xs text-slate-400 dark:text-slate-500">
+        <span className="mt-1 block text-xs text-slate-400 dark:text-zinc-500">
           {sublabel ?? `${pct.toFixed(1)}% of total`}
         </span>
       </div>
       {!isLast && (
-        <svg className="h-4 w-4 flex-shrink-0 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 16 16">
+        <svg className="h-4 w-4 flex-shrink-0 text-slate-300 dark:text-zinc-600" fill="none" viewBox="0 0 16 16">
           <path
             d="M6 4l4 4-4 4"
             stroke="currentColor"
@@ -89,10 +89,10 @@ export function SessionFunnelChart({ data }: SessionFunnelChartProps) {
         ))}
       </div>
       {dropoffs.length > 0 && (
-        <div className="flex items-center gap-4 border-t border-slate-100 pt-2 dark:border-slate-800">
-          <span className="text-xs text-slate-400 dark:text-slate-500">Drop-off:</span>
+        <div className="flex items-center gap-4 border-t border-slate-100 pt-2 dark:border-zinc-800">
+          <span className="text-xs text-slate-400 dark:text-zinc-500">Drop-off:</span>
           {dropoffs.map((d) => (
-            <span key={d.label} className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <span key={d.label} className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400">
               <span
                 className="inline-block h-2 w-2 rounded-full"
                 style={{ backgroundColor: d.color }}
