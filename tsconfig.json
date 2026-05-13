@@ -23,8 +23,8 @@
 
     /* Path aliases */
     "paths": {
-      "@/*": ["src/*"],
-      "@dapplepot/types/*": ["src/types/*"]
+      "@/*": ["./src/*"],
+      "@dapplepot/types/*": ["./src/types/*"]
     }
   },
   "include": ["src"]
