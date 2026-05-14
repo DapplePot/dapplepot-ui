@@ -95,7 +95,23 @@ export interface AgentAlertConfig {
   signal_thresholds:           Record<string, number>
   tool_manifest:               string[]        // [] = not configured
   max_tool_calls_per_session:  number | null   // null = not configured
+  // Agent profile fields — null = auto (heuristic); non-null = manual (declared)
+  system_prompt:               string | null
+  environment:                 'production' | 'staging' | null
+  irreversible_tools:          string[] | null
+  network_allowlist:           string[] | null
+  working_directory:           string | null
+  write_namespace:             string | null
+  operating_hours:             { days: string[]; from: string; to: string } | null
+  sbom_allowlist:              string[] | null
+  mcp_endpoints:               string[] | null
 }
+
+export type AgentProfilePatch = Partial<Pick<AgentAlertConfig,
+  | 'system_prompt' | 'environment' | 'irreversible_tools' | 'network_allowlist'
+  | 'working_directory' | 'write_namespace' | 'operating_hours' | 'sbom_allowlist'
+  | 'mcp_endpoints'
+>>
 
 export const PLATFORM_COMPOSITE_DEFAULT = 60
 
@@ -178,5 +194,14 @@ export async function updateMaxToolCalls(
     .put(`v1/security/agents/${agentId}/alert-config`, {
       json: { max_tool_calls_per_session },
     })
+    .json()
+}
+
+export async function updateAgentProfile(
+  agentId: string,
+  patch: AgentProfilePatch,
+): Promise<void> {
+  await apiClient
+    .put(`v1/security/agents/${agentId}/alert-config`, { json: patch })
     .json()
 }

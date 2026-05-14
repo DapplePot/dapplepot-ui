@@ -6,9 +6,11 @@ import {
   useUpdateLlmCompositeThreshold, useUpdateAsiCompositeThreshold,
   useUpdateSignalThreshold,
   useUpdateToolManifest, useUpdateMaxToolCalls, useToolCallBaseline,
+  useUpdateAgentProfile,
 } from '../hooks/useSecurity'
 import type { OnlineAction } from '../types/security'
-import { ChevronDown, ChevronRight, Shield, ShieldOff, Settings, Zap, HelpCircle, Copy, Check } from 'lucide-react'
+import { ChevronDown, ChevronRight, Shield, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Globe, Package, Clock } from 'lucide-react'
+import { useAuthStore } from '../stores/auth'
 import {
   SIGNAL_REGISTRY,
   LLM_SIGNALS,
@@ -599,194 +601,6 @@ function ToggleSwitch({
   )
 }
 
-// ─── Inline expand rows for EA-01a (manifest) and EA-02b (max calls) ─────────
-
-function ManifestExpandRow({ agentId }: { agentId: string }) {
-  const { data: alertConfig } = useAlertConfig(agentId)
-  const updateManifest = useUpdateToolManifest(agentId)
-  const [input, setInput] = useState('')
-
-  if (!alertConfig) return null
-
-  const manifest: string[] = Array.isArray(alertConfig.tool_manifest) ? alertConfig.tool_manifest : []
-
-  function add() {
-    const t = input.trim().replace(/,$/, '')
-    if (!t || manifest.includes(t)) return
-    updateManifest.mutate([...manifest, t])
-    setInput('')
-  }
-
-  return (
-    <tr className="bg-violet-50/30 border-b border-slate-100 dark:bg-violet-900/10 dark:border-zinc-800">
-      <td colSpan={8} className="px-6 py-3">
-        <div className="flex items-center gap-1.5 mb-1">
-          <p className="text-[10px] font-semibold text-violet-700 dark:text-violet-400 uppercase tracking-wide">Tool manifest</p>
-          <Tooltip text="Declare which tool names this agent is allowed to call. When set, the langgraph-sdk will block any unlisted tool call in real time (EA-01a: block_call). Post-session scoring also checks ASCV-01a and TME-06a against this list. Leave empty to disable manifest enforcement." />
-          {manifest.length > 0 && (
-            <span className="ml-1 rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400">
-              {manifest.length} tool{manifest.length !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-        <p className="text-[10px] text-slate-500 dark:text-zinc-400 mb-2">
-          Type a tool name and press{' '}
-          <kbd className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono dark:border-zinc-700 dark:bg-zinc-800">Enter</kbd>
-          {' '}or{' '}
-          <kbd className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono dark:border-zinc-700 dark:bg-zinc-800">,</kbd>
-          {' '}to add. Click a tag to remove it.
-        </p>
-        <div className="flex flex-wrap gap-1.5 mb-2 min-h-[22px]">
-          {manifest.map(tool => (
-            <button
-              key={tool}
-              type="button"
-              onClick={() => updateManifest.mutate(manifest.filter(t => t !== tool))}
-              className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-[11px] text-violet-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors dark:border-violet-800 dark:bg-zinc-800 dark:text-violet-400 dark:hover:bg-red-900/20 dark:hover:border-red-800 dark:hover:text-red-400"
-              title="Click to remove"
-            >
-              {tool}<span className="opacity-50 text-[10px]">×</span>
-            </button>
-          ))}
-          {manifest.length === 0 && (
-            <span className="text-[11px] text-slate-400 dark:text-zinc-500 italic">No tools declared — manifest enforcement disabled</span>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add() }
-            }}
-            placeholder="e.g. read_file, search_web …"
-            className="w-56 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
-          />
-          <button
-            type="button"
-            onClick={add}
-            className="rounded border border-violet-200 bg-white px-2.5 py-1 text-[11px] font-medium text-violet-700 hover:bg-violet-100 transition-colors dark:border-violet-800 dark:bg-zinc-800 dark:text-violet-400 dark:hover:bg-violet-900/30"
-          >
-            Add
-          </button>
-          {manifest.length > 0 && (
-            <button
-              type="button"
-              onClick={() => updateManifest.mutate([])}
-              className="rounded border border-slate-200 px-2.5 py-1 text-[11px] text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors dark:border-zinc-700 dark:text-zinc-500 dark:hover:text-red-400 dark:hover:border-red-800"
-            >
-              Clear all
-            </button>
-          )}
-        </div>
-      </td>
-    </tr>
-  )
-}
-
-function MaxCallsExpandRow({ agentId }: { agentId: string }) {
-  const { data: alertConfig }  = useAlertConfig(agentId)
-  const { data: baseline, isLoading: baselineLoading } = useToolCallBaseline(agentId)
-  const updateMaxCalls = useUpdateMaxToolCalls(agentId)
-  const [draft, setDraft] = useState('')
-
-  if (!alertConfig) return null
-
-  function commit() {
-    const num = parseInt(draft, 10)
-    if (!isNaN(num) && num >= 1) {
-      updateMaxCalls.mutate(num)
-      setDraft('')
-    }
-  }
-
-  const hasBaseline = baseline && baseline.sessionCount >= 2 && baseline.mean != null
-
-  return (
-    <tr className="bg-amber-50/30 border-b border-slate-100 dark:bg-amber-900/10 dark:border-zinc-800">
-      <td colSpan={8} className="px-6 py-3">
-        <div className="flex items-center gap-1.5 mb-1">
-          <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Max tool calls / session</p>
-          <Tooltip text="Set a hard cap on total tool calls per session (EA-02b). Fires immediately when exceeded — no baseline warmup needed. Once enough session history exists (≥2 sessions), statistical anomaly detection also kicks in automatically as a second layer." />
-        </div>
-        <p className="text-[10px] text-slate-500 dark:text-zinc-400 mb-3">
-          Fires EA-02b immediately if exceeded. Statistical baseline also applies once ≥2 sessions exist.
-          Leave empty to rely on statistical detection only.
-        </p>
-
-        {/* ── Statistical baseline card ── */}
-        <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-900/20">
-          <p className="text-[10px] font-medium text-amber-700 dark:text-amber-400 mb-1.5">7-day statistical baseline</p>
-          {baselineLoading ? (
-            <div className="h-3 w-48 animate-pulse rounded bg-amber-200 dark:bg-amber-800" />
-          ) : !hasBaseline ? (
-            <p className="text-[11px] text-slate-400 dark:text-zinc-500 italic">
-              {baseline && baseline.sessionCount < 2
-                ? `Not enough data yet — ${baseline.sessionCount} session${baseline.sessionCount === 1 ? '' : 's'} recorded (need ≥2)`
-                : 'No sessions recorded in the last 7 days'}
-            </p>
-          ) : (
-            <div className="flex flex-wrap items-center gap-4">
-              <div>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400">Mean</span>
-                <p className="text-sm font-bold text-slate-800 dark:text-zinc-200">{baseline!.mean} calls</p>
-              </div>
-              <div>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400">Std dev</span>
-                <p className="text-sm font-bold text-slate-800 dark:text-zinc-200">±{baseline!.stddev}</p>
-              </div>
-              <div>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400">P90</span>
-                <p className="text-sm font-bold text-slate-800 dark:text-zinc-200">{baseline!.p90} calls</p>
-              </div>
-              <div>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400">Based on</span>
-                <p className="text-sm font-bold text-slate-800 dark:text-zinc-200">{baseline!.sessionCount} sessions</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Manual cap input ── */}
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min={1}
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={e => { if (e.key === 'Enter') commit() }}
-            placeholder="Set manual cap"
-            className="w-32 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
-          />
-          {alertConfig.max_tool_calls_per_session != null ? (
-            <span className="text-[11px] text-slate-600 dark:text-zinc-400">
-              Manual cap ·{' '}
-              <span className="font-semibold text-slate-800 dark:text-zinc-200">{alertConfig.max_tool_calls_per_session} calls</span>
-              <button
-                type="button"
-                onClick={() => updateMaxCalls.mutate(null)}
-                className="ml-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                title="Remove cap"
-              >reset</button>
-            </span>
-          ) : (
-            <span className="text-[11px] text-slate-500 dark:text-zinc-400">
-              Statistical detection
-              {hasBaseline
-                ? ` · ~${baseline!.mean} avg · P90 ${baseline!.p90} calls`
-                : baseline && baseline.sessionCount > 0
-                  ? ` · ${baseline.sessionCount} session${baseline.sessionCount === 1 ? '' : 's'}, warming up`
-                  : ' · no data yet'}
-            </span>
-          )}
-        </div>
-      </td>
-    </tr>
-  )
-}
-
 // ─── Sub-component: single sub-check row ─────────────────────────────────────
 
 const ACTION_LABELS: Record<OnlineAction, string> = {
@@ -866,6 +680,84 @@ function ActionSelect({
   )
 }
 
+// Subchecks that have a real heuristic fallback when the profile field is null.
+// Every other profile-linked subcheck produces zero findings when unconfigured.
+const SUBCHECK_HAS_HEURISTIC = new Set([
+  'TME-03b',  // URL pattern detects prod endpoints (assumes staging when undeclared)
+  'EA-01c',   // read-intent vs write-tool heuristic
+  'EA-02a',   // tool-name pattern heuristic
+  'TME-03a',  // tool-name pattern heuristic
+  'ASCV-04a', // always fires on any install command regardless
+  'EA-02b',   // statistical baseline (7-day mean + 1σ)
+])
+
+// Maps each subcheck to the Agent Profile section anchor it configures.
+const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
+  'EA-01a':  'profile-tool-manifest',
+  'EA-02b':  'profile-max-tool-calls',
+  'SPL-01a': 'profile-system-prompt', 'SPL-01b': 'profile-system-prompt',
+  'EA-02c':  'profile-system-prompt',
+  'TME-03b': 'profile-environment',
+  'EA-01c':  'profile-write-namespace',
+  'EA-02a':  'profile-irreversible-tools', 'TME-03a': 'profile-irreversible-tools',
+  'EA-03a':  'profile-working-directory',
+  'EA-03b':  'profile-network-allowlist',
+  'RA-01b':  'profile-operating-hours',
+  'ASCV-01a': 'profile-mcp-endpoints', 'ASCV-01b': 'profile-mcp-endpoints', 'ASCV-01c': 'profile-mcp-endpoints',
+  'ASCV-02b': 'profile-sbom', 'ASCV-04a': 'profile-sbom',
+}
+
+// Which alertConfig field each profile-linked subcheck reads at analysis time.
+const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
+  'EA-01a':  'tool_manifest',
+  'EA-02b':  'max_tool_calls_per_session',
+  'SPL-01a': 'system_prompt',    'SPL-01b': 'system_prompt',
+  'EA-02c':  'system_prompt',
+  'TME-03b': 'environment',
+  'EA-01c':  'write_namespace',
+  'EA-02a':  'irreversible_tools', 'TME-03a': 'irreversible_tools',
+  'EA-03a':  'working_directory',
+  'EA-03b':  'network_allowlist',
+  'RA-01b':  'operating_hours',
+  'ASCV-01a': 'mcp_endpoints', 'ASCV-01b': 'mcp_endpoints', 'ASCV-01c': 'mcp_endpoints',
+  'ASCV-02b': 'sbom_allowlist', 'ASCV-04a': 'sbom_allowlist',
+}
+
+const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
+  'EA-01a':  'no tool manifest declared — EA-01a is blind, any tool name is permitted',
+  'EA-02b':  'statistical detection active — uses 7-day rolling mean + 1σ to flag anomalies',
+  'SPL-01a': 'no system prompt declared — verbatim match disabled',
+  'SPL-01b': 'no system prompt declared — probe comparison disabled',
+  'EA-02c':  'no system prompt declared — modification diff disabled',
+  'TME-03b': 'no environment declared — URL pattern heuristic active (treats every agent as staging)',
+  'EA-01c':  'no write namespace declared — read-intent heuristic active',
+  'EA-02a':  'no tool list declared — name-pattern heuristic active',
+  'TME-03a': 'no tool list declared — name-pattern heuristic active',
+  'EA-03a':  'no working directory declared — check disabled',
+  'EA-03b':  'no host allowlist declared — check disabled',
+  'RA-01b':  'no schedule declared — check disabled',
+  'ASCV-01a': 'no MCP endpoints declared — check disabled',
+  'ASCV-01b': 'no MCP endpoints declared — check disabled',
+  'ASCV-01c': 'no MCP endpoints declared — check disabled',
+  'ASCV-02b': 'no SBOM declared — unknown-package check disabled',
+  'ASCV-04a': 'heuristic: flags pip/npm/yarn/gem/cargo install commands',
+}
+
+function _formatProfileValue(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '(empty list)'
+    const preview = (value as string[]).slice(0, 3).join(', ')
+    return value.length > 3 ? `${preview} +${value.length - 3} more` : preview
+  }
+  if (typeof value === 'object' && value !== null && 'days' in value) {
+    const h = value as { days: string[]; from: string; to: string }
+    return `${h.days.join(', ')} · ${h.from}–${h.to} UTC`
+  }
+  const s = String(value)
+  return s.length > 60 ? `${s.slice(0, 60)}… (${s.length} chars)` : s
+}
+
 function SubCheckRow({
   check,
   agentId,
@@ -873,6 +765,7 @@ function SubCheckRow({
   action,
   onToggleOnline,
   onActionChange,
+  onGoToProfile,
 }: {
   check: SubCheck
   agentId?: string
@@ -880,13 +773,23 @@ function SubCheckRow({
   action: OnlineAction
   onToggleOnline: (subCheckId: string, online: boolean) => void
   onActionChange: (subCheckId: string, action: OnlineAction) => void
+  onGoToProfile?: (anchor: string) => void
 }) {
   const [showMatches, setShowMatches] = useState(false)
-  const [showConfigExpand, setShowConfigExpand] = useState(false)
   const hasMatches = check.matches && check.matches.length > 0
   const canToggle = check.onlineCapable === true && !check.excluded
-  const isManifestCheck  = check.subCheckId === 'EA-01a'
-  const isMaxCallsCheck  = check.subCheckId === 'EA-02b'
+
+  // Profile config display
+  const profileFieldKey = SUBCHECK_PROFILE_FIELD[check.subCheckId]
+  const hasProfileField  = !!profileFieldKey
+  const { data: alertConfig } = useAlertConfig(agentId ?? '')
+  const profileValue = hasProfileField && alertConfig
+    ? (alertConfig as unknown as Record<string, unknown>)[profileFieldKey!]
+    : undefined
+  // Empty array counts as "not configured" (tool_manifest = [] means no manifest set)
+  const isManualProfile = profileValue !== null && profileValue !== undefined
+    && !(Array.isArray(profileValue) && profileValue.length === 0)
+  const showPatternsBtn = !check.excluded && (!!hasMatches || hasProfileField)
 
   const effectivePhase: DetectionPhase =
     check.excluded        ? 'excluded' :
@@ -939,22 +842,7 @@ function SubCheckRow({
           )}
         </td>
         <td className="py-2 text-right">
-          {(isManifestCheck || isMaxCallsCheck) && agentId && !check.excluded ? (
-            <button
-              onClick={() => setShowConfigExpand(v => !v)}
-              className={`inline-flex items-center gap-0.5 text-[10px] font-medium transition-colors ${
-                isManifestCheck
-                  ? 'text-violet-600 hover:text-violet-800'
-                  : 'text-amber-600 hover:text-amber-800'
-              }`}
-            >
-              {isManifestCheck ? 'tool manifest' : 'max tool calls'}
-              {showConfigExpand
-                ? <ChevronDown className="h-3 w-3" />
-                : <ChevronRight className="h-3 w-3" />
-              }
-            </button>
-          ) : hasMatches && !check.excluded ? (
+          {showPatternsBtn ? (
             <button
               onClick={() => setShowMatches(v => !v)}
               className="inline-flex items-center gap-0.5 text-[10px] text-violet-600 hover:text-violet-800"
@@ -1002,32 +890,62 @@ function SubCheckRow({
         </td>
       </tr>
 
-      {showMatches && hasMatches && (
+      {showMatches && (hasMatches || hasProfileField) && (
         <tr className="bg-violet-50/40 border-b border-slate-100 dark:bg-violet-900/10 dark:border-zinc-800">
-          <td colSpan={8} className="px-6 py-2">
-            <p className="mb-1.5 text-[10px] font-medium text-violet-600 dark:text-violet-400 uppercase tracking-wide">
-              Detection patterns
-            </p>
-            <ul className="flex flex-wrap gap-1.5">
-              {check.matches!.map((m, i) => (
-                <li
-                  key={i}
-                  className="rounded bg-white border border-violet-200 px-2 py-0.5 font-mono text-[10px] text-violet-800 dark:bg-zinc-800 dark:border-violet-800 dark:text-violet-300"
-                >
-                  {m}
-                </li>
-              ))}
-            </ul>
+          <td colSpan={8} className="px-6 py-2 space-y-2">
+            {hasProfileField && (
+              <div className="flex items-center gap-2">
+                {isManualProfile ? (
+                  <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
+                    manual
+                  </span>
+                ) : SUBCHECK_HAS_HEURISTIC.has(check.subCheckId) ? (
+                  <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-slate-200 bg-white text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                    auto
+                  </span>
+                ) : (
+                  <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-500">
+                    blind
+                  </span>
+                )}
+                <span className="text-[10px] text-slate-600 dark:text-zinc-400">
+                  {isManualProfile
+                    ? _formatProfileValue(profileValue)
+                    : SUBCHECK_AUTO_DESC[check.subCheckId]}
+                </span>
+                {!isManualProfile && onGoToProfile && SUBCHECK_PROFILE_ANCHOR[check.subCheckId] && (
+                  <button
+                    type="button"
+                    onClick={() => onGoToProfile(SUBCHECK_PROFILE_ANCHOR[check.subCheckId]!)}
+                    className="ml-auto shrink-0 inline-flex items-center gap-1 rounded border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-50 hover:border-violet-400 transition-colors dark:border-violet-800 dark:bg-zinc-800 dark:text-violet-400 dark:hover:bg-violet-900/30"
+                  >
+                    Set in Agent Profile
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            )}
+            {hasMatches && (
+              <>
+                <p className="text-[10px] font-medium text-violet-600 dark:text-violet-400 uppercase tracking-wide">
+                  Detection patterns
+                </p>
+                <ul className="flex flex-wrap gap-1.5">
+                  {check.matches!.map((m, i) => (
+                    <li
+                      key={i}
+                      className="rounded bg-white border border-violet-200 px-2 py-0.5 font-mono text-[10px] text-violet-800 dark:bg-zinc-800 dark:border-violet-800 dark:text-violet-300"
+                    >
+                      {m}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </td>
         </tr>
       )}
 
-      {showConfigExpand && isManifestCheck && agentId && (
-        <ManifestExpandRow agentId={agentId} />
-      )}
-      {showConfigExpand && isMaxCallsCheck && agentId && (
-        <MaxCallsExpandRow agentId={agentId} />
-      )}
     </>
   )
 }
@@ -1043,6 +961,7 @@ function SignalCard({
   actionOverrides,
   onToggleOnline,
   onActionChange,
+  onGoToProfile,
 }: {
   signal: SignalConfig
   agentId?: string
@@ -1051,6 +970,7 @@ function SignalCard({
   actionOverrides: Record<string, OnlineAction>
   onToggleOnline: (subCheckId: string, online: boolean) => void
   onActionChange: (subCheckId: string, action: OnlineAction) => void
+  onGoToProfile?: (anchor: string) => void
 }) {
   const [open, setOpen] = useState(defaultOpen)
   const active   = countActive(signal)
@@ -1119,6 +1039,7 @@ function SignalCard({
                     action={actionOverrides[check.subCheckId] ?? 'alert'}
                     onToggleOnline={onToggleOnline}
                     onActionChange={onActionChange}
+                    onGoToProfile={onGoToProfile}
                   />
                 ))}
               </tbody>
@@ -1140,6 +1061,7 @@ function FrameworkSection({
   actionOverrides,
   onToggleOnline,
   onActionChange,
+  onGoToProfile,
 }: {
   label: string
   signals: SignalConfig[]
@@ -1148,6 +1070,7 @@ function FrameworkSection({
   actionOverrides: Record<string, OnlineAction>
   onToggleOnline: (subCheckId: string, online: boolean) => void
   onActionChange: (subCheckId: string, action: OnlineAction) => void
+  onGoToProfile?: (anchor: string) => void
 }) {
   const totalActive   = signals.flatMap(s => s.subChecks).filter(c => !c.excluded).length
   const totalExcluded = signals.flatMap(s => s.subChecks).filter(c => c.excluded).length
@@ -1175,6 +1098,7 @@ function FrameworkSection({
             actionOverrides={actionOverrides}
             onToggleOnline={onToggleOnline}
             onActionChange={onActionChange}
+            onGoToProfile={onGoToProfile}
           />
         ))}
       </div>
@@ -1215,6 +1139,677 @@ function PhaseLegend() {
   )
 }
 
+// ─── Agent Profile tab ───────────────────────────────────────────────────────
+//
+// Lets tenant admins declare the agent's expected behaviour: tool allowlist,
+// resource boundaries, operating hours, etc. These values are read by the
+// post-session scorer to run checks that would otherwise fall back to
+// heuristics or be silently skipped.
+//
+// Role gating:
+//   admin / superadmin → all fields editable
+//   editor / viewer    → all fields read-only (no save controls rendered)
+//
+// All fields are persisted in agent_alert_config via PUT /agents/:id/alert-config.
+
+// ── Reusable tag chip list ────────────────────────────────────────────────────
+
+function TagList({
+  tags, onRemove, readOnly, emptyText, colorClass,
+}: {
+  tags: string[]
+  onRemove?: (t: string) => void
+  readOnly: boolean
+  emptyText?: string
+  colorClass: string
+}) {
+  return (
+    <div className={`flex flex-wrap gap-1.5${tags.length > 0 || emptyText ? ' min-h-[22px]' : ''}`}>
+      {tags.length === 0 ? (
+        emptyText ? <span className="text-[11px] text-slate-400 dark:text-zinc-500 italic">{emptyText}</span> : null
+      ) : tags.map(tag => (
+        <span
+          key={tag}
+          onClick={() => { if (!readOnly && onRemove) onRemove(tag) }}
+          title={!readOnly && onRemove ? 'Click to remove' : undefined}
+          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${colorClass} ${
+            !readOnly && onRemove
+              ? 'cursor-pointer hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:border-red-800 dark:hover:text-red-400 transition-colors'
+              : ''
+          }`}
+        >
+          {tag}
+          {!readOnly && onRemove && <span className="opacity-50 text-[10px]">×</span>}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function InlineTagInput({ onAdd, placeholder }: { onAdd: (t: string) => void; placeholder: string }) {
+  const [val, setVal] = useState('')
+  function commit() {
+    const t = val.trim().replace(/,$/, '')
+    if (t) { onAdd(t); setVal('') }
+  }
+  return (
+    <div className="flex gap-2 mt-2">
+      <input
+        type="text"
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit() } }}
+        placeholder={placeholder}
+        className="w-52 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
+      />
+      <button type="button" onClick={commit}
+        className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700">
+        Add
+      </button>
+    </div>
+  )
+}
+
+// ── Layout helpers ────────────────────────────────────────────────────────────
+
+function ProfileSection({ title, icon, children, open, onToggle }: {
+  title: string
+  icon: React.ReactNode
+  children: React.ReactNode
+  open: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 border-b border-slate-100 bg-slate-50/60 px-4 py-2.5 hover:bg-slate-100/60 transition-colors dark:border-zinc-800 dark:bg-zinc-800/40 dark:hover:bg-zinc-700/40"
+      >
+        <span className="text-slate-400 dark:text-zinc-500">{icon}</span>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-zinc-400">{title}</h3>
+        <span className="ml-auto text-slate-400 dark:text-zinc-500">
+          {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        </span>
+      </button>
+      {open && <div className="divide-y divide-slate-50 dark:divide-zinc-800/60">{children}</div>}
+    </div>
+  )
+}
+
+// Lookup: subcheck ID → parent OWASP signal ID (for badge display in Agent Profile)
+const SUBCHECK_SIGNAL: Record<string, string> = {
+  'SPL-01a': 'OW-LLM07', 'SPL-01b': 'OW-LLM07',
+  'EA-02c':  'OW-LLM06',
+  'TME-03b': 'OW-ASI02', 'TME-03a': 'OW-ASI02',
+  'EA-01a':  'OW-LLM06', 'EA-01b':  'OW-LLM06', 'EA-01c': 'OW-LLM06',
+  'EA-02a':  'OW-LLM06', 'EA-02b':  'OW-LLM06',
+  'EA-03a':  'OW-LLM06', 'EA-03b':  'OW-LLM06',
+  'RA-01b':  'OW-ASI10',
+  'ASCV-01a': 'OW-ASI04', 'ASCV-01b': 'OW-ASI04', 'ASCV-01c': 'OW-ASI04',
+  'ASCV-02b': 'OW-ASI04', 'ASCV-04a': 'OW-ASI04',
+}
+
+const PROFILE_STATUS_STYLE: Record<'auto' | 'manual' | 'blind', string> = {
+  auto:   'border-slate-200 bg-white text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400',
+  manual: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400',
+  blind:  'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-500',
+}
+
+function ProfileRow({ label, subChecks, tooltip, id, status, autoDesc, manualDesc, how, howPatterns, onReset, children }: {
+  label: string
+  subChecks: string[]
+  tooltip: string
+  id?: string
+  status: 'auto' | 'manual' | 'blind'
+  autoDesc: string
+  manualDesc?: string
+  how?: string
+  howPatterns?: string[]
+  onReset?: () => void
+  children?: React.ReactNode
+}) {
+  const [howOpen, setHowOpen] = useState(false)
+  const isManual = status === 'manual'
+
+  return (
+    <div id={id} className="px-4 py-4">
+      {/* Header: label + subcheck badges + status badge */}
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">{label}</span>
+        <Tooltip text={tooltip} />
+        {subChecks.map(sc => (
+          <span key={sc} className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[9px] text-slate-500 dark:bg-zinc-700 dark:text-zinc-400">
+            {sc}{SUBCHECK_SIGNAL[sc] ? ` | ${SUBCHECK_SIGNAL[sc]}` : ''}
+          </span>
+        ))}
+        <span className={`ml-auto rounded border px-1.5 py-0.5 text-[9px] font-medium ${PROFILE_STATUS_STYLE[status]}`}>
+          {status}
+        </span>
+      </div>
+
+      {/* Description line + how? or reset */}
+      <div className="flex items-start gap-3 mb-3">
+        <p className="flex-1 text-[11px] leading-relaxed text-slate-500 dark:text-zinc-400">
+          {isManual && manualDesc ? manualDesc : autoDesc}
+        </p>
+        {isManual ? (
+          onReset && (
+            <button type="button" onClick={onReset}
+              className="shrink-0 rounded border border-slate-200 px-2 py-0.5 text-[10px] text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors dark:border-zinc-700 dark:text-zinc-500 dark:hover:text-red-400 dark:hover:border-red-800">
+              reset
+            </button>
+          )
+        ) : (
+          how && (
+            <button type="button" onClick={() => setHowOpen(v => !v)}
+              className="shrink-0 flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-500 hover:border-violet-300 hover:text-violet-700 transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-violet-400">
+              <HelpCircle className="h-3 w-3" /> how?
+            </button>
+          )
+        )}
+      </div>
+
+      {/* Expandable how? */}
+      {howOpen && !isManual && how && (
+        <div className="mb-3 rounded-md border border-violet-100 bg-violet-50/60 px-3 py-2 space-y-2 dark:border-violet-900 dark:bg-violet-900/10">
+          <p className="text-[11px] text-violet-800 dark:text-violet-300 leading-relaxed">{how}</p>
+          {howPatterns && howPatterns.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {howPatterns.map(p => (
+                <code key={p} className="rounded border border-violet-200 bg-white px-1.5 py-0.5 font-mono text-[10px] text-violet-800 dark:border-violet-800 dark:bg-zinc-900 dark:text-violet-300">
+                  {p}
+                </code>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {children}
+    </div>
+  )
+}
+
+
+// ── AgentProfileTab ──────────────────────────────────────────────────────────
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+
+// ── AgentProfileTab ──────────────────────────────────────────────────────────
+
+const ANCHOR_SECTION: Record<string, 'identity' | 'toolScope' | 'network' | 'schedule' | 'supply'> = {
+  'profile-system-prompt':      'identity',
+  'profile-environment':        'identity',
+  'profile-tool-manifest':      'toolScope',
+  'profile-max-tool-calls':     'toolScope',
+  'profile-irreversible-tools': 'toolScope',
+  'profile-network-allowlist':  'network',
+  'profile-working-directory':  'network',
+  'profile-write-namespace':    'network',
+  'profile-operating-hours':    'schedule',
+  'profile-sbom':               'supply',
+  'profile-mcp-endpoints':      'supply',
+}
+
+function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAdmin: boolean; scrollTo?: string }) {
+  const { data: alertConfig } = useAlertConfig(agentId)
+  const { data: baseline }    = useToolCallBaseline(agentId)
+  const updateManifest  = useUpdateToolManifest(agentId)
+  const updateMaxCalls  = useUpdateMaxToolCalls(agentId)
+  const updateProfile   = useUpdateAgentProfile(agentId)
+
+  const [manifestInput, setManifestInput] = useState('')
+  const [maxCallsDraft, setMaxCallsDraft] = useState('')
+
+  const manifest: string[] = Array.isArray(alertConfig?.tool_manifest) ? alertConfig!.tool_manifest : []
+
+  function addToManifest() {
+    const t = manifestInput.trim().replace(/,$/, '')
+    if (!t || manifest.includes(t)) return
+    updateManifest.mutate([...manifest, t])
+    setManifestInput('')
+  }
+
+  function commitMaxCalls() {
+    const n = parseInt(maxCallsDraft, 10)
+    if (!isNaN(n) && n >= 1) { updateMaxCalls.mutate(n); setMaxCallsDraft('') }
+  }
+
+  const hasBaseline = baseline && baseline.sessionCount >= 2 && baseline.mean != null
+
+  const [systemPromptDraft, setSystemPromptDraft] = useState('')
+  const [workingDirDraft,   setWorkingDirDraft]   = useState('')
+  const [writeNSDraft,      setWriteNSDraft]      = useState('')
+
+  const [activeDays, setActiveDays] = useState<string[]>(['Mon','Tue','Wed','Thu','Fri'])
+  const [hoursFrom,  setHoursFrom]  = useState('09:00')
+  const [hoursTo,    setHoursTo]    = useState('18:00')
+
+  useEffect(() => {
+    if (!alertConfig) return
+    if (alertConfig.system_prompt != null)     setSystemPromptDraft(alertConfig.system_prompt)
+    if (alertConfig.working_directory != null) setWorkingDirDraft(alertConfig.working_directory)
+    if (alertConfig.write_namespace != null)   setWriteNSDraft(alertConfig.write_namespace)
+    if (alertConfig.operating_hours != null) {
+      setActiveDays(alertConfig.operating_hours.days)
+      setHoursFrom(alertConfig.operating_hours.from)
+      setHoursTo(alertConfig.operating_hours.to)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alertConfig?.system_prompt, alertConfig?.working_directory,
+      alertConfig?.write_namespace, alertConfig?.operating_hours])
+
+  const irreversible = alertConfig?.irreversible_tools ?? []
+  const networkAllow = alertConfig?.network_allowlist  ?? []
+  const sbom         = alertConfig?.sbom_allowlist     ?? []
+  const mcpEndpoints = alertConfig?.mcp_endpoints      ?? []
+
+  // Section open state — all collapsed by default
+  const [openSections, setOpenSections] = useState({
+    identity: false, toolScope: false, network: false, schedule: false, supply: false,
+  })
+  function toggleSection(key: keyof typeof openSections) {
+    setOpenSections(s => ({ ...s, [key]: !s[key] }))
+  }
+
+  // When navigated here from a subcheck link, open the target section then scroll
+  useEffect(() => {
+    if (!scrollTo) return
+    const section = ANCHOR_SECTION[scrollTo]
+    if (section) setOpenSections(s => ({ ...s, [section]: true }))
+    setTimeout(() => {
+      document.getElementById(scrollTo)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 120)
+  }, [scrollTo])
+
+  const tagColor  = 'border-violet-200 bg-white text-violet-700 dark:border-violet-800 dark:bg-zinc-800 dark:text-violet-400'
+  const hostColor = 'border-blue-200 bg-white text-blue-700 dark:border-blue-800 dark:bg-zinc-800 dark:text-blue-400'
+  const pkgColor  = 'border-teal-200 bg-white text-teal-700 dark:border-teal-800 dark:bg-zinc-800 dark:text-teal-400'
+  const mcpColor  = 'border-slate-200 bg-white text-slate-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
+
+  return (
+    <div className="space-y-4">
+      {!isAdmin ? (
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 dark:border-zinc-700 dark:bg-zinc-800">
+          <Lock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+          <p className="text-xs text-slate-500 dark:text-zinc-400">
+            View only — contact your tenant admin to modify agent profile settings.
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 dark:border-violet-800 dark:bg-violet-900/20">
+          <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />
+          <p className="text-xs text-violet-700 dark:text-violet-300 leading-relaxed">
+            Declare what is <strong>normal</strong> for this agent. Fields marked{' '}
+            <span className="rounded border border-amber-200 bg-amber-50 px-1 py-px text-[9px] font-medium text-amber-600 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400">blind</span>
+            {' '}cannot fire without a declared value.
+            Fields marked{' '}
+            <span className="rounded border border-slate-200 bg-white px-1 py-px text-[9px] font-medium text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">auto</span>
+            {' '}use a heuristic — click <strong>how?</strong> to understand it.
+            Once you declare a value it turns{' '}
+            <span className="rounded border border-emerald-200 bg-emerald-50 px-1 py-px text-[9px] font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">manual</span>
+            {' '}and the heuristic is bypassed. Use <strong>reset</strong> to revert.
+          </p>
+        </div>
+      )}
+
+      {/* ════════ SECTION 1 — Agent Identity ════════ */}
+      <ProfileSection title="Agent Identity" icon={<Settings className="h-3.5 w-3.5" />} open={openSections.identity} onToggle={() => toggleSection('identity')}>
+
+        <ProfileRow
+          id="profile-system-prompt"
+          label="System prompt"
+          subChecks={['SPL-01a', 'SPL-01b', 'EA-02c']}
+          tooltip="Paste the agent's exact system prompt. Without it SPL-01a, SPL-01b, and EA-02c cannot run."
+          status={alertConfig?.system_prompt != null ? 'manual' : 'blind'}
+          autoDesc="No system prompt declared — SPL-01a, SPL-01b, and EA-02c are blind. These checks cannot run without it."
+          manualDesc={`System prompt declared (${alertConfig?.system_prompt?.length ?? 0} chars) — SPL-01a verbatim match, SPL-01b probe detection, and EA-02c self-modification diff are active.`}
+          how="SPL-01a uses SequenceMatcher to detect verbatim segments of the declared prompt in LLM output. SPL-01b checks if the agent confirms its instructions when probed. EA-02c diffs the declared prompt against subsequent system messages to detect self-modification."
+          onReset={() => { updateProfile.mutate({ system_prompt: null }); setSystemPromptDraft('') }}
+        >
+          {isAdmin && (
+            <div className="space-y-2">
+              <textarea
+                rows={4}
+                value={systemPromptDraft}
+                onChange={e => setSystemPromptDraft(e.target.value)}
+                placeholder="Paste the agent's system prompt here…"
+                className="w-full rounded border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500 resize-none font-mono leading-relaxed"
+              />
+              <button type="button"
+                onClick={() => updateProfile.mutate({ system_prompt: systemPromptDraft || null })}
+                className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700">
+                Save
+              </button>
+            </div>
+          )}
+        </ProfileRow>
+
+        <ProfileRow
+          id="profile-environment"
+          label="Environment"
+          subChecks={['TME-03b']}
+          tooltip="Is this agent running in production or staging? Declaring 'production' suppresses TME-03b. Without a declaration the URL-pattern heuristic treats it as staging."
+          status={alertConfig?.environment != null ? 'manual' : 'auto'}
+          autoDesc="Assumed staging — URL pattern heuristic active. TME-03b fires if any tool call URL matches production patterns."
+          manualDesc={alertConfig?.environment === 'production'
+            ? 'Set to production — TME-03b suppressed (production agents hitting production URLs is expected).'
+            : 'Set to staging — TME-03b active, any production-pattern URL fires.'}
+          how="We match tool call URL parameters against regex patterns. Declaring 'production' suppresses TME-03b entirely for this agent."
+          howPatterns={['prod\\.', 'production\\.', 'live\\.', '/api/v\\d+/']}
+          onReset={() => updateProfile.mutate({ environment: null })}
+        >
+          {isAdmin && (
+            <div className="flex gap-2">
+              {(['staging', 'production'] as const).map(env => (
+                <button key={env} type="button"
+                  onClick={() => updateProfile.mutate({ environment: env })}
+                  className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-colors capitalize ${
+                    alertConfig?.environment === env
+                      ? env === 'production'
+                        ? 'border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'
+                        : 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+                      : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
+                  }`}
+                >{env}</button>
+              ))}
+            </div>
+          )}
+        </ProfileRow>
+      </ProfileSection>
+
+      {/* ════════ SECTION 2 — Tool Scope ════════ */}
+      <ProfileSection title="Tool Scope" icon={<Shield className="h-3.5 w-3.5" />} open={openSections.toolScope} onToggle={() => toggleSection('toolScope')}>
+
+        <ProfileRow
+          id="profile-tool-manifest"
+          label="Tool manifest"
+          subChecks={['EA-01a']}
+          tooltip="Declare which tool names this agent is allowed to call. When set, the SDK blocks any unlisted tool call in real time. Without a manifest, EA-01a never fires."
+          status={manifest.length > 0 ? 'manual' : 'blind'}
+          autoDesc="No tool manifest declared — EA-01a is blind. Any tool name is permitted."
+          manualDesc={`${manifest.length} tool${manifest.length === 1 ? '' : 's'} in manifest — EA-01a blocks unlisted tool calls in real time.`}
+          how="EA-01a runs online in the SDK. When a tool name not in the declared manifest is invoked, the call is blocked immediately without waiting for session end."
+          onReset={() => updateManifest.mutate([])}
+        >
+          {isAdmin && (
+            <>
+              <TagList
+                tags={manifest}
+                onRemove={t => updateManifest.mutate(manifest.filter(x => x !== t))}
+                readOnly={false}
+                colorClass={tagColor}
+              />
+              <div className="flex gap-2 mt-2">
+                <input type="text" value={manifestInput}
+                  onChange={e => setManifestInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addToManifest() } }}
+                  placeholder="e.g. read_file, search_web …"
+                  className="w-52 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
+                />
+                <button type="button" onClick={addToManifest}
+                  className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700">
+                  Add
+                </button>
+              </div>
+            </>
+          )}
+        </ProfileRow>
+
+        <ProfileRow
+          id="profile-max-tool-calls"
+          label="Max tool calls per session"
+          subChecks={['EA-02b']}
+          tooltip="Set a hard cap on total tool calls per session. Without a manual cap, EA-02b uses statistical anomaly detection on the 7-day baseline."
+          status={alertConfig?.max_tool_calls_per_session != null ? 'manual' : 'auto'}
+          autoDesc={hasBaseline
+            ? `Statistical baseline: ~${Math.round(baseline!.mean!)} calls/session (7-day mean, ${baseline!.sessionCount} sessions) — EA-02b fires when a session exceeds mean + 1σ.`
+            : 'Statistical baseline warming up — need ≥2 sessions in the last 7 days for EA-02b to be active.'}
+          manualDesc={`Hard cap: ${alertConfig?.max_tool_calls_per_session} calls/session — EA-02b fires immediately when exceeded.`}
+          how="We compute a 7-day rolling mean and standard deviation of tool_start event counts per session. When the current session's count exceeds mean + 1σ, EA-02b fires. A manual cap provides a hard ceiling independent of the baseline."
+          onReset={() => updateMaxCalls.mutate(null)}
+        >
+          {isAdmin && (
+            <div className="flex items-center gap-3">
+              <input type="number" min={1} value={maxCallsDraft}
+                onChange={e => setMaxCallsDraft(e.target.value)}
+                onBlur={commitMaxCalls}
+                onKeyDown={e => { if (e.key === 'Enter') commitMaxCalls() }}
+                placeholder={alertConfig?.max_tool_calls_per_session != null
+                  ? String(alertConfig.max_tool_calls_per_session)
+                  : 'Set hard cap…'}
+                className="w-44 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
+              />
+            </div>
+          )}
+        </ProfileRow>
+
+        <ProfileRow
+          id="profile-irreversible-tools"
+          label="Irreversible / destructive tools"
+          subChecks={['EA-02a', 'TME-03a']}
+          tooltip="Which of this agent's tools perform actions that cannot be undone? EA-02a fires when one is called without a confirm-gate event. Without a declaration, a name-pattern heuristic is used."
+          status={alertConfig?.irreversible_tools != null ? 'manual' : 'auto'}
+          autoDesc="Name-pattern heuristic active — EA-02a and TME-03a flag tools matching write/delete/send/deploy patterns."
+          manualDesc={`${irreversible.length} tool${irreversible.length === 1 ? '' : 's'} declared — EA-02a and TME-03a use this exact list (heuristic patterns bypassed).`}
+          how="Two regex patterns are applied to every tool_start event tool name. Declaring an explicit list narrows detection to only tools you consider irreversible, reducing false positives."
+          howPatterns={['write|create|insert|update|delete|remove|send|post|put|patch|drop|exec', 'payment|charge|transfer|purchase|deploy|publish']}
+          onReset={() => updateProfile.mutate({ irreversible_tools: null })}
+        >
+          {isAdmin && (
+            <>
+              <TagList
+                tags={irreversible}
+                onRemove={t => updateProfile.mutate({ irreversible_tools: irreversible.filter(x => x !== t) })}
+                readOnly={false}
+                colorClass="border-red-200 bg-white text-red-700 dark:border-red-800 dark:bg-zinc-800 dark:text-red-400"
+              />
+              <InlineTagInput
+                onAdd={t => { if (!irreversible.includes(t)) updateProfile.mutate({ irreversible_tools: [...irreversible, t] }) }}
+                placeholder="e.g. delete_record, send_email …"
+              />
+            </>
+          )}
+        </ProfileRow>
+      </ProfileSection>
+
+      {/* ════════ SECTION 3 — Network & Filesystem ════════ */}
+      <ProfileSection title="Network & Filesystem" icon={<Globe className="h-3.5 w-3.5" />} open={openSections.network} onToggle={() => toggleSection('network')}>
+
+        <ProfileRow
+          id="profile-network-allowlist"
+          label="Network allowlist"
+          subChecks={['EA-03b']}
+          tooltip="Which hosts is this agent allowed to contact? EA-03b fires on any tool call targeting a host not on this list. Without a list, EA-03b cannot fire."
+          status={alertConfig?.network_allowlist != null ? 'manual' : 'blind'}
+          autoDesc="No host allowlist declared — EA-03b is blind. All outbound hosts are implicitly permitted."
+          manualDesc={`${networkAllow.length} host${networkAllow.length === 1 ? '' : 's'} in allowlist — EA-03b active, any unlisted outbound host fires.`}
+          how="EA-03b requires an explicit allowlist. Without one, every outbound call is implicitly allowed and the check produces no findings. Declaring a list is the only way to enable host-based egress control."
+          onReset={() => updateProfile.mutate({ network_allowlist: null })}
+        >
+          {isAdmin && (
+            <>
+              <TagList
+                tags={networkAllow}
+                onRemove={t => updateProfile.mutate({ network_allowlist: networkAllow.filter(x => x !== t) })}
+                readOnly={false}
+                colorClass={hostColor}
+              />
+              <InlineTagInput
+                onAdd={t => { if (!networkAllow.includes(t)) updateProfile.mutate({ network_allowlist: [...networkAllow, t] }) }}
+                placeholder="e.g. api.openai.com, *.internal.example.com …"
+              />
+            </>
+          )}
+        </ProfileRow>
+
+        <ProfileRow
+          id="profile-working-directory"
+          label="Working directory"
+          subChecks={['EA-03a']}
+          tooltip="Declare the filesystem path the agent should stay within. EA-03a fires when file-read tool calls reference paths outside this prefix. Without it, EA-03a cannot fire."
+          status={alertConfig?.working_directory != null ? 'manual' : 'blind'}
+          autoDesc="No working directory declared — EA-03a is blind. File-read paths cannot be validated."
+          manualDesc={`Boundary set to ${alertConfig?.working_directory} — EA-03a fires on any file-read outside this path.`}
+          how="EA-03a checks every file-read tool call's path argument against the declared prefix. There is no heuristic fallback — without a declared directory, the check produces no findings."
+          onReset={() => { updateProfile.mutate({ working_directory: null }); setWorkingDirDraft('') }}
+        >
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <input type="text" value={workingDirDraft}
+                onChange={e => setWorkingDirDraft(e.target.value)}
+                onBlur={() => updateProfile.mutate({ working_directory: workingDirDraft || null })}
+                onKeyDown={e => { if (e.key === 'Enter') updateProfile.mutate({ working_directory: workingDirDraft || null }) }}
+                placeholder="e.g. /app/workspace"
+                className="w-72 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-mono text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
+              />
+              {alertConfig?.working_directory && (
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400">Saved</span>
+              )}
+            </div>
+          )}
+        </ProfileRow>
+
+        <ProfileRow
+          id="profile-write-namespace"
+          label="Write namespace"
+          subChecks={['EA-01c']}
+          tooltip="Declare the path or namespace prefix this agent is permitted to write to. EA-01c fires when write calls target outside it. Without a declaration, a read-intent heuristic is used."
+          status={alertConfig?.write_namespace != null ? 'manual' : 'auto'}
+          autoDesc="Read-intent heuristic active — EA-01c fires when a session's opening prompt signals read-intent but a write-named tool is called."
+          manualDesc={`Write namespace declared (${alertConfig?.write_namespace}) — EA-01c uses this boundary (heuristic bypassed).`}
+          how="We check the session's initial_input against a read-intent regex. If it matches AND a write-named tool is subsequently called, EA-01c fires. Declaring a namespace lets the scorer be more precise."
+          howPatterns={['show|list|get|find|search|lookup|read|view|fetch|retrieve  (read intent)', 'write|create|insert|update|delete|remove|send|post|put|patch|drop|exec  (write tools)']}
+          onReset={() => { updateProfile.mutate({ write_namespace: null }); setWriteNSDraft('') }}
+        >
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <input type="text" value={writeNSDraft}
+                onChange={e => setWriteNSDraft(e.target.value)}
+                onBlur={() => updateProfile.mutate({ write_namespace: writeNSDraft || null })}
+                onKeyDown={e => { if (e.key === 'Enter') updateProfile.mutate({ write_namespace: writeNSDraft || null }) }}
+                placeholder="e.g. /app/output or s3://my-bucket/agent/"
+                className="w-80 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-mono text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
+              />
+              {alertConfig?.write_namespace && (
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400">Saved</span>
+              )}
+            </div>
+          )}
+        </ProfileRow>
+      </ProfileSection>
+
+      {/* ════════ SECTION 4 — Operating Schedule ════════ */}
+      <ProfileSection title="Operating Schedule" icon={<Clock className="h-3.5 w-3.5" />} open={openSections.schedule} onToggle={() => toggleSection('schedule')}>
+        <ProfileRow
+          id="profile-operating-hours"
+          label="Operating hours"
+          subChecks={['RA-01b']}
+          tooltip="Declare the days and UTC time window when this agent should be active. Sessions starting outside this window fire RA-01b. Without a schedule, RA-01b cannot fire."
+          status={alertConfig?.operating_hours != null ? 'manual' : 'blind'}
+          autoDesc="No schedule declared — RA-01b is blind. The agent is assumed to be active 24/7."
+          manualDesc={`Schedule: ${activeDays.join(', ')} · ${hoursFrom}–${hoursTo} UTC — RA-01b fires on sessions starting outside this window.`}
+          how="RA-01b requires a declared operating window to compare session start times against. Without one, every session start time is implicitly within-schedule and the check produces no findings."
+          onReset={() => updateProfile.mutate({ operating_hours: null })}
+        >
+          {isAdmin && (
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                {DAYS.map(day => (
+                  <button key={day} type="button"
+                    onClick={() => setActiveDays(
+                      activeDays.includes(day) ? activeDays.filter(d => d !== day) : [...activeDays, day]
+                    )}
+                    className={`rounded border px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer hover:opacity-80 ${
+                      activeDays.includes(day)
+                        ? 'border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400'
+                        : 'border-slate-200 bg-white text-slate-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500'
+                    }`}
+                  >{day}</button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-zinc-400">
+                <span className="text-slate-400">From</span>
+                <input type="time" value={hoursFrom} onChange={e => setHoursFrom(e.target.value)}
+                  className="rounded border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" />
+                <span className="text-slate-400">to</span>
+                <input type="time" value={hoursTo} onChange={e => setHoursTo(e.target.value)}
+                  className="rounded border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" />
+                <span className="text-slate-400">(UTC)</span>
+              </div>
+              <button type="button"
+                onClick={() => updateProfile.mutate({ operating_hours: { days: activeDays, from: hoursFrom, to: hoursTo } })}
+                className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700">
+                Save schedule
+              </button>
+            </div>
+          )}
+        </ProfileRow>
+      </ProfileSection>
+
+      {/* ════════ SECTION 5 — Supply Chain ════════ */}
+      <ProfileSection title="Supply Chain" icon={<Package className="h-3.5 w-3.5" />} open={openSections.supply} onToggle={() => toggleSection('supply')}>
+
+        <ProfileRow
+          id="profile-sbom"
+          label="Approved packages (SBOM)"
+          subChecks={['ASCV-02b', 'ASCV-04a']}
+          tooltip="List the package names this agent is allowed to install. ASCV-04a fires on any install command. ASCV-02b additionally fires when the package is not on your declared SBOM."
+          status={alertConfig?.sbom_allowlist != null ? 'manual' : 'auto'}
+          autoDesc="No SBOM declared — ASCV-04a fires on every package install command; ASCV-02b (unknown package check) is blind without a declared allowlist."
+          manualDesc={`${sbom.length} approved package${sbom.length === 1 ? '' : 's'} declared — ASCV-02b active for unlisted packages; ASCV-04a still fires on all installs.`}
+          how="We scan tool_start event inputs for install commands. Any match fires ASCV-04a unconditionally. ASCV-02b additionally fires when the installed package is NOT in your declared SBOM."
+          howPatterns={['pip install', 'npm install', 'yarn add', 'gem install', 'cargo install']}
+          onReset={() => updateProfile.mutate({ sbom_allowlist: null })}
+        >
+          {isAdmin && (
+            <>
+              <TagList
+                tags={sbom}
+                onRemove={t => updateProfile.mutate({ sbom_allowlist: sbom.filter(x => x !== t) })}
+                readOnly={false}
+                colorClass={pkgColor}
+              />
+              <InlineTagInput
+                onAdd={t => { if (!sbom.includes(t)) updateProfile.mutate({ sbom_allowlist: [...sbom, t] }) }}
+                placeholder="e.g. requests, langchain, numpy …"
+              />
+            </>
+          )}
+        </ProfileRow>
+
+        <ProfileRow
+          id="profile-mcp-endpoints"
+          label="Declared MCP server endpoints"
+          subChecks={['ASCV-01a', 'ASCV-01b', 'ASCV-01c']}
+          tooltip="Register the MCP server URLs this agent is authorised to connect to. Without a declaration, ASCV-01a, ASCV-01b, and ASCV-01c cannot fire."
+          status={alertConfig?.mcp_endpoints != null ? 'manual' : 'blind'}
+          autoDesc="No MCP endpoints declared — ASCV-01a, ASCV-01b, and ASCV-01c are blind."
+          manualDesc={`${mcpEndpoints.length} endpoint${mcpEndpoints.length === 1 ? '' : 's'} registered — ASCV-01a URL anomaly, ASCV-01b TLS change, and ASCV-01c schema change detection are active.`}
+          how="ASCV-01a fires when a tool call targets an MCP server URL not on the declared list. ASCV-01b fires when the TLS certificate fingerprint changes. ASCV-01c fires when the tool schema changes without a version bump."
+          onReset={() => updateProfile.mutate({ mcp_endpoints: null })}
+        >
+          {isAdmin && (
+            <>
+              <TagList
+                tags={mcpEndpoints}
+                onRemove={t => updateProfile.mutate({ mcp_endpoints: mcpEndpoints.filter(x => x !== t) })}
+                readOnly={false}
+                colorClass={mcpColor}
+              />
+              <InlineTagInput
+                onAdd={t => { if (!mcpEndpoints.includes(t)) updateProfile.mutate({ mcp_endpoints: [...mcpEndpoints, t] }) }}
+                placeholder="e.g. https://mcp.internal/tools …"
+              />
+            </>
+          )}
+        </ProfileRow>
+      </ProfileSection>
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function AgentConfig() {
@@ -1223,7 +1818,11 @@ export function AgentConfig() {
   const { data: subcheckConfig = {} } = useSubcheckConfig(agentId)
   const toggleMutation = useToggleSubcheckOnline(agentId)
 
-  const [activeTab, setActiveTab] = useState<'llm' | 'asi' | 'thresholds'>('llm')
+  const user     = useAuthStore(s => s.user)
+  const isAdmin  = user?.role === 'admin' || user?.role === 'superadmin'
+
+  const [activeTab, setActiveTab] = useState<'profile' | 'llm' | 'asi' | 'thresholds'>('profile')
+  const [profileScrollTo, setProfileScrollTo] = useState<string | undefined>(undefined)
 
   const agentName = data?.name ?? agentId
 
@@ -1242,6 +1841,12 @@ export function AgentConfig() {
 
   function handleActionChange(subCheckId: string, action: OnlineAction) {
     toggleMutation.mutate({ subCheckId, online_detection: true, action })
+  }
+
+  function handleGoToProfile(anchor: string) {
+    setProfileScrollTo(undefined)         // reset first so useEffect fires even if same anchor
+    setActiveTab('profile')
+    setTimeout(() => setProfileScrollTo(anchor), 0)
   }
 
   const onlineCount = Object.values(onlineOverrides).filter(Boolean).length
@@ -1310,9 +1915,10 @@ export function AgentConfig() {
       <div className="flex gap-1 border-b border-slate-200 dark:border-zinc-700">
         {(
           [
-            { id: 'llm',        label: 'LLM Framework',      subtitle: 'OW-LLM01–10' },
-            { id: 'asi',        label: 'ASI Framework',       subtitle: 'OW-ASI01–10' },
-            { id: 'thresholds', label: 'Alert Thresholds',    subtitle: 'composite & per-signal' },
+            { id: 'profile',    label: 'Agent Profile',       subtitle: isAdmin ? 'editable' : 'view only' },
+            { id: 'llm',        label: 'LLM Framework',       subtitle: 'OW-LLM01–10' },
+            { id: 'asi',        label: 'ASI Framework',        subtitle: 'OW-ASI01–10' },
+            { id: 'thresholds', label: 'Alert Thresholds',     subtitle: 'composite & per-signal' },
           ] as const
         ).map(tab => (
           <button
@@ -1342,6 +1948,7 @@ export function AgentConfig() {
             actionOverrides={actionOverrides}
             onToggleOnline={handleToggleOnline}
             onActionChange={handleActionChange}
+            onGoToProfile={handleGoToProfile}
           />
         </>
       ) : activeTab === 'asi' ? (
@@ -1355,10 +1962,13 @@ export function AgentConfig() {
             actionOverrides={actionOverrides}
             onToggleOnline={handleToggleOnline}
             onActionChange={handleActionChange}
+            onGoToProfile={handleGoToProfile}
           />
         </>
-      ) : (
+      ) : activeTab === 'thresholds' ? (
         <AlertThresholdsTab agentId={agentId} />
+      ) : (
+        <AgentProfileTab agentId={agentId} isAdmin={isAdmin} scrollTo={profileScrollTo} />
       )}
     </div>
   )

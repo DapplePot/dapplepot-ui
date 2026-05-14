@@ -10,6 +10,15 @@ const _emptyAlertConfig = (): securityApi.AgentAlertConfig => ({
   signal_thresholds: {},
   tool_manifest: [],
   max_tool_calls_per_session: null,
+  system_prompt: null,
+  environment: null,
+  irreversible_tools: null,
+  network_allowlist: null,
+  working_directory: null,
+  write_namespace: null,
+  operating_hours: null,
+  sbom_allowlist: null,
+  mcp_endpoints: null,
 })
 
 // Tenant-level security overview — refreshes every 2 minutes
@@ -275,6 +284,32 @@ export function useUpdateMaxToolCalls(agentId: string) {
       queryClient.setQueryData(key, (old: securityApi.AgentAlertConfig | undefined) =>
         old ? { ...old, max_tool_calls_per_session }
             : { ..._emptyAlertConfig(), max_tool_calls_per_session }
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      queryClient.setQueryData(key, ctx?.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key })
+    },
+  })
+}
+
+// Mutation: update agent profile fields (system_prompt, environment, irreversible_tools, …)
+// Accepts a partial patch — only the keys present are sent to the API.
+// null = revert to auto (heuristic); non-null = manual (declared).
+export function useUpdateAgentProfile(agentId: string) {
+  const queryClient = useQueryClient()
+  const key = ['security', 'agent', agentId, 'alert-config']
+  return useMutation({
+    mutationFn: (patch: securityApi.AgentProfilePatch) =>
+      securityApi.updateAgentProfile(agentId, patch),
+    onMutate: async (patch) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const prev = queryClient.getQueryData<securityApi.AgentAlertConfig>(key)
+      queryClient.setQueryData(key, (old: securityApi.AgentAlertConfig | undefined) =>
+        old ? { ...old, ...patch } : { ..._emptyAlertConfig(), ...patch }
       )
       return { prev }
     },
