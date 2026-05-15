@@ -50,6 +50,22 @@ export function useCost(window: string) {
   })
 }
 
+export function useTrends(window: string) {
+  return useQuery({
+    queryKey: ['analytics', 'trends', window],
+    queryFn:  () => analyticsApi.getTrends({ window }),
+    staleTime: 60_000,
+  })
+}
+
+export function useAgentSessions(window: string) {
+  return useQuery({
+    queryKey: ['analytics', 'agent-sessions', window],
+    queryFn:  () => analyticsApi.getAgentSessions({ window }),
+    staleTime: 60_000,
+  })
+}
+
 export function useSessionFunnel(window: string) {
   return useQuery({
     queryKey: ['analytics', 'session-funnel', window],

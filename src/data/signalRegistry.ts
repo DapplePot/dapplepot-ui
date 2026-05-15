@@ -374,6 +374,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       { subCheckId: 'EA-02c', label: 'Agent self-modifies system prompt', phase: 'post_session', score: 98, severity: 'critical', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-03a', label: 'Reads outside working directory', phase: 'post_session', score: 65, severity: 'medium', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-03b', label: 'Network call to host not in allowlist', phase: 'post_session', score: 75, severity: 'high', confidenceTier: 'high', excluded: false },
+      { subCheckId: 'EA-04a', label: 'Undeclared LLM model used', phase: 'post_session', score: 70, severity: 'medium', confidenceTier: 'high', excluded: false },
     ],
   },
 

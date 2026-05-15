@@ -201,7 +201,7 @@ export function Security() {
                         {topAgents.data.map((a) => (
                           <tr
                             key={a.agentId}
-                            onClick={() => void navigate({ to: '/agents/$agentId', params: { agentId: a.agentId } })}
+                            onClick={() => void navigate({ to: '/inventory/agents/$agentId', params: { agentId: a.agentId } })}
                             className="cursor-pointer hover:bg-slate-50 transition-colors dark:hover:bg-zinc-800"
                           >
                             <td className="px-4 py-3 text-xs font-medium text-violet-600 dark:text-violet-400">

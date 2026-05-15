@@ -6,9 +6,10 @@ import {
   Bell,
   Shield,
   Settings,
-  Bot,
+  Boxes,
   Building2,
   UserPlus,
+  FileCheck2,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -20,13 +21,14 @@ import { useAuthStore } from '../stores/auth'
 import { useTenant } from '../hooks/useTenants'
 
 const NAV_ITEMS = [
-  { path: '/',                label: 'Overview',       icon: LayoutDashboard, exclude: ['superadmin'] },
-  { path: '/sessions',        label: 'Sessions',       icon: List,            exclude: ['superadmin'] },
-  { path: '/analytics',       label: 'Analytics',      icon: BarChart2,       exclude: ['superadmin'] },
-  { path: '/detection',       label: 'Detection',      icon: Bell,            exclude: ['superadmin'] },
-  { path: '/security',        label: 'Security',       icon: Shield,          exclude: ['superadmin'] },
-  { path: '/agents',          label: 'Agents',         icon: Bot,             exclude: ['superadmin'] },
-  { path: '/settings',        label: 'Settings',       icon: Settings,        exclude: ['superadmin'] },
+  { path: '/',          label: 'Overview',  icon: LayoutDashboard, exclude: ['superadmin'] },
+  { path: '/sessions',  label: 'Sessions',  icon: List,            exclude: ['superadmin'] },
+  { path: '/detection', label: 'Detection', icon: Bell,            exclude: ['superadmin'] },
+  { path: '/analytics', label: 'Analytics', icon: BarChart2,       exclude: ['superadmin'] },
+  { path: '/security',  label: 'Security',  icon: Shield,          exclude: ['superadmin'] },
+  { path: '/inventory', label: 'Inventory', icon: Boxes,           exclude: ['superadmin'] },
+  { path: '/audit',     label: 'Audit',     icon: FileCheck2,      exclude: ['superadmin', 'editor', 'viewer'] },
+  { path: '/settings',  label: 'Settings',  icon: Settings,        exclude: ['superadmin'] },
   { path: '/tenants',         label: 'Tenants',         icon: Building2,       exclude: ['admin', 'editor', 'viewer'] },
   { path: '/onboard-client',  label: 'Onboard Client',  icon: UserPlus,        exclude: ['admin', 'editor', 'viewer'] },
 ]
@@ -48,12 +50,10 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-slate-200 px-3 dark:border-zinc-700">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600">
-          <span className="text-xs font-bold text-white">dp</span>
-        </div>
+        <img src="/dapplePotLogo.svg" alt="DapplePot" className="h-5 w-5 shrink-0 rounded invert dark:invert-0" />
         {!collapsed && (
           <span className="ml-2.5 truncate text-sm font-semibold text-slate-900 dark:text-zinc-100">
-            {tenant?.name ?? 'Dapplepot'}
+            DapplePot
           </span>
         )}
       </div>
@@ -88,8 +88,8 @@ export function Sidebar() {
       <div className="border-t border-slate-200 px-2 py-2 space-y-1 dark:border-zinc-700">
         {!collapsed && user && (
           <div className="px-2 py-1.5">
-            <p className="truncate text-xs font-medium text-slate-900 dark:text-zinc-100">{user.name}</p>
-            <p className="truncate text-xs text-slate-500 dark:text-zinc-400">{user.email}</p>
+            <p className="truncate text-xs font-medium text-slate-900 dark:text-zinc-100">{tenant?.name ?? '—'}</p>
+            <p className="truncate text-xs text-slate-500 dark:text-zinc-400">{user.name}</p>
           </div>
         )}
 

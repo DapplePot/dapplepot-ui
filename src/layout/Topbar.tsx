@@ -7,7 +7,8 @@ const ROUTE_LABELS: Record<string, string> = {
   '/analytics':      'Analytics',
   '/detection':      'Detection',
   '/security':       'Security',
-  '/agents':         'Agents',
+  '/inventory':          'Inventory',
+  '/inventory/agents':   'Agents',
   '/settings':       'Settings',
   '/tenants':        'Tenants',
   '/onboard-client': 'Onboard Client',
@@ -22,7 +23,8 @@ function getBreadcrumbs(pathname: string): Crumb[] {
   let path = ''
   for (const part of parts) {
     path += `/${part}`
-    crumbs.push({ label: ROUTE_LABELS[path] ?? part, path })
+    const label = ROUTE_LABELS[path] ?? (part.length > 12 ? `${part.slice(0, 8)}…` : part)
+    crumbs.push({ label, path })
   }
   return crumbs
 }

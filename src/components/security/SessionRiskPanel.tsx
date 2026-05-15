@@ -275,7 +275,7 @@ export function SessionRiskPanel({
         <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <div className="flex items-center gap-1">
             <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Agent trust score</p>
-            <Tooltip placement="bottom" text="Bayesian trust score for this agent at the time of this session (0–100). Starts at ~80. Risky sessions lower it; clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Below 50 for 3+ sessions triggers a trust-degradation alert." />
+            <Tooltip placement="bottom" text="Bayesian trust score for this agent at the time of this session (0–100). Starts at ~80. Risky sessions lower it; clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Alert fires when the last 3 consecutive sessions all score below 50." />
           </div>
           {trustScore !== undefined ? (
             <>

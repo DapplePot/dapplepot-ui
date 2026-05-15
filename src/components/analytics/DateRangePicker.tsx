@@ -2,10 +2,15 @@ import { cn } from '../../utils/cn'
 
 type Window = '24h' | '7d' | '30d'
 
+interface AgentOption {
+  id: string
+  name: string | null
+}
+
 interface DateRangePickerProps {
   window: Window
   agentId: string
-  agents: string[]
+  agents: AgentOption[]
   onWindowChange: (w: Window) => void
   onAgentChange: (agentId: string) => void
 }
@@ -51,7 +56,7 @@ export function DateRangePicker({
       >
         <option value="">All agents</option>
         {agents.map((a) => (
-          <option key={a} value={a}>{a}</option>
+          <option key={a.id} value={a.id}>{a.name ?? a.id.slice(0, 8)}</option>
         ))}
       </select>
     </div>

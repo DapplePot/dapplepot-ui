@@ -1,121 +1,71 @@
-import type { OverviewMetrics } from '@dapplepot/types/analytics'
+import type { SessionFunnel } from '@dapplepot/types/analytics'
 import { Skeleton } from '../ui/skeleton'
 
 interface SessionFunnelChartProps {
-  data: OverviewMetrics
-}
-
-interface StageProps {
-  label: string
-  count: number
-  pct: number
-  color: string
-  sublabel?: string
-  isLast?: boolean
-}
-
-function Stage({ label, count, pct, color, sublabel, isLast }: StageProps) {
-  return (
-    <div className="flex min-w-0 flex-1 items-center gap-3">
-      <div className="min-w-0 flex-1">
-        <div className="mb-1.5 flex items-baseline justify-between">
-          <span className="text-xs font-medium text-slate-600 dark:text-zinc-400">{label}</span>
-          <span className="text-lg font-semibold tabular-nums text-slate-900 dark:text-zinc-100">
-            {count.toLocaleString()}
-          </span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-700">
-          <div
-            className="h-full rounded-full transition-all"
-            style={{ width: `${pct}%`, backgroundColor: color }}
-          />
-        </div>
-        <span className="mt-1 block text-xs text-slate-400 dark:text-zinc-500">
-          {sublabel ?? `${pct.toFixed(1)}% of total`}
-        </span>
-      </div>
-      {!isLast && (
-        <svg className="h-4 w-4 flex-shrink-0 text-slate-300 dark:text-zinc-600" fill="none" viewBox="0 0 16 16">
-          <path
-            d="M6 4l4 4-4 4"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-    </div>
-  )
+  data: SessionFunnel
 }
 
 export function SessionFunnelChart({ data }: SessionFunnelChartProps) {
-  const total = data.totalSessions || 1
-  const terminal = data.completedSessions + data.errorSessions
-
-  const stages: StageProps[] = [
-    {
-      label: 'Started',
-      count: data.totalSessions,
-      pct: 100,
-      color: '#64748b',
-      sublabel: 'total',
-    },
-    {
-      label: 'Reached terminal',
-      count: terminal,
-      pct: (terminal / total) * 100,
-      color: '#7F77DD',
-    },
-    {
-      label: 'Completed',
-      count: data.completedSessions,
-      pct: (data.completedSessions / total) * 100,
-      color: '#1D9E75',
-      isLast: true,
-    },
-  ]
-
-  const dropoffs = [
-    { label: 'Errored', count: data.errorSessions,  color: '#ef4444' },
-    { label: 'In progress', count: data.liveSessions, color: '#94a3b8' },
-  ].filter((d) => d.count > 0)
+  const total         = data.totalStarted || 1
+  const finalisedPct  = (data.finalised   / total) * 100
+  const terminatedPct = (data.terminated  / total) * 100
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start gap-2">
-        {stages.map((s, i) => (
-          <Stage key={s.label} {...s} isLast={i === stages.length - 1} />
-        ))}
+    <div className="space-y-3">
+      <div className="h-4 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800 flex gap-px">
+        {finalisedPct >= 0.5 && (
+          <div
+            style={{ width: `${finalisedPct}%`, backgroundColor: '#1D9E75' }}
+            title={`Finalised: ${data.finalised.toLocaleString()} (${finalisedPct.toFixed(1)}%)`}
+          />
+        )}
+        {terminatedPct >= 0.5 && (
+          <div
+            style={{ width: `${terminatedPct}%`, backgroundColor: '#ef4444' }}
+            title={`Terminated: ${data.terminated.toLocaleString()} (${terminatedPct.toFixed(1)}%)`}
+          />
+        )}
       </div>
-      {dropoffs.length > 0 && (
-        <div className="flex items-center gap-4 border-t border-slate-100 pt-2 dark:border-zinc-800">
-          <span className="text-xs text-slate-400 dark:text-zinc-500">Drop-off:</span>
-          {dropoffs.map((d) => (
-            <span key={d.label} className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400">
-              <span
-                className="inline-block h-2 w-2 rounded-full"
-                style={{ backgroundColor: d.color }}
-              />
-              {d.label}: {d.count.toLocaleString()}
-            </span>
-          ))}
+
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm bg-slate-300 dark:bg-zinc-600" />
+          <span className="text-xs text-slate-500 dark:text-zinc-400">Started</span>
+          <span className="text-xs tabular-nums text-slate-400 dark:text-zinc-500">{data.totalStarted.toLocaleString()}</span>
         </div>
-      )}
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm" style={{ backgroundColor: '#1D9E75' }} />
+          <span className="text-xs text-slate-500 dark:text-zinc-400">Finalised</span>
+          <span className="text-xs tabular-nums text-slate-400 dark:text-zinc-500">
+            {data.finalised.toLocaleString()} ({finalisedPct.toFixed(0)}%)
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm" style={{ backgroundColor: '#ef4444' }} />
+          <span className="text-xs text-slate-500 dark:text-zinc-400">Terminated</span>
+          <span className="text-xs tabular-nums text-slate-400 dark:text-zinc-500">
+            {data.terminated.toLocaleString()} ({terminatedPct.toFixed(0)}%)
+          </span>
+        </div>
+        {data.open > 0 && (
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm bg-violet-400 dark:bg-violet-600" />
+            <span className="text-xs text-slate-500 dark:text-zinc-400">In progress</span>
+            <span className="text-xs tabular-nums text-slate-400 dark:text-zinc-500">{data.open.toLocaleString()}</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
 export function SessionFunnelSkeleton() {
   return (
-    <div className="flex gap-3">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="flex-1 space-y-2">
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-2 w-full" />
-          <Skeleton className="h-3 w-12" />
-        </div>
-      ))}
+    <div className="space-y-3">
+      <Skeleton className="h-4 w-full rounded-full" />
+      <div className="flex gap-4">
+        {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-3 w-24" />)}
+      </div>
     </div>
   )
 }

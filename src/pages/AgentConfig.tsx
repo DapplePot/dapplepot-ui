@@ -8,8 +8,10 @@ import {
   useUpdateToolManifest, useUpdateMaxToolCalls, useToolCallBaseline,
   useUpdateAgentProfile,
 } from '../hooks/useSecurity'
+import { useAgentLlmModels, useSetAgentLlmModels } from '../hooks/useAgentLlmModels'
+import { useLlmModels } from '../hooks/useLlmModels'
 import type { OnlineAction } from '../types/security'
-import { ChevronDown, ChevronRight, Shield, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Globe, Package, Clock } from 'lucide-react'
+import { ChevronDown, ChevronRight, Shield, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Globe, Package, Clock, Cpu, X } from 'lucide-react'
 import { useAuthStore } from '../stores/auth'
 import {
   SIGNAL_REGISTRY,
@@ -363,7 +365,7 @@ function AlertThresholdsTab({ agentId }: { agentId: string }) {
             <div>
               <div className="flex items-center gap-1.5">
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200">Agent trust degradation</h3>
-                <Tooltip text="Trust alerts fire when this agent's trust score drops below 50 for 3+ consecutive sessions. This detects agents that are systematically behaving poorly over time, not just a one-off risky session. The threshold is platform-wide and cannot be overridden per-agent." />
+                <Tooltip text="Trust alert fires when the last 3 consecutive sessions all have a trust score below 50. This detects sustained degradation, not a one-off risky session. The threshold is platform-wide and cannot be overridden per-agent." />
               </div>
               <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
                 Tracks cross-session trust decay for <span className="font-medium text-slate-700 dark:text-zinc-300">this agent</span>.
@@ -376,11 +378,10 @@ function AlertThresholdsTab({ agentId }: { agentId: string }) {
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs rounded-md bg-slate-50 border border-slate-100 px-3 py-2 dark:bg-zinc-800 dark:border-zinc-700">
-          <span className="text-slate-400 dark:text-zinc-500">Alert fires when trust score</span>
+          <span className="text-slate-400 dark:text-zinc-500">Alert fires when the</span>
+          <span className="font-semibold text-slate-800 dark:text-zinc-200">last 3 consecutive sessions</span>
+          <span className="text-slate-400 dark:text-zinc-500">all have trust score</span>
           <span className="font-semibold text-slate-800 dark:text-zinc-200">&lt; 50</span>
-          <span className="text-slate-400 dark:text-zinc-500">for</span>
-          <span className="font-semibold text-slate-800 dark:text-zinc-200">3+</span>
-          <span className="text-slate-400 dark:text-zinc-500">consecutive sessions on this agent</span>
         </div>
       </div>
 
@@ -702,6 +703,7 @@ const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
   'EA-02a':  'profile-irreversible-tools', 'TME-03a': 'profile-irreversible-tools',
   'EA-03a':  'profile-working-directory',
   'EA-03b':  'profile-network-allowlist',
+  'EA-04a':  'profile-connected-llms',
   'RA-01b':  'profile-operating-hours',
   'ASCV-01a': 'profile-mcp-endpoints', 'ASCV-01b': 'profile-mcp-endpoints', 'ASCV-01c': 'profile-mcp-endpoints',
   'ASCV-02b': 'profile-sbom', 'ASCV-04a': 'profile-sbom',
@@ -718,6 +720,7 @@ const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
   'EA-02a':  'irreversible_tools', 'TME-03a': 'irreversible_tools',
   'EA-03a':  'working_directory',
   'EA-03b':  'network_allowlist',
+  'EA-04a':  'connected_llms',
   'RA-01b':  'operating_hours',
   'ASCV-01a': 'mcp_endpoints', 'ASCV-01b': 'mcp_endpoints', 'ASCV-01c': 'mcp_endpoints',
   'ASCV-02b': 'sbom_allowlist', 'ASCV-04a': 'sbom_allowlist',
@@ -735,6 +738,7 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'TME-03a': 'no tool list declared — name-pattern heuristic active',
   'EA-03a':  'no working directory declared — check disabled',
   'EA-03b':  'no host allowlist declared — check disabled',
+  'EA-04a':  'no models declared — check disabled; map models under Connected LLMs in Agent Config',
   'RA-01b':  'no schedule declared — check disabled',
   'ASCV-01a': 'no MCP endpoints declared — check disabled',
   'ASCV-01b': 'no MCP endpoints declared — check disabled',
@@ -1203,7 +1207,7 @@ function InlineTagInput({ onAdd, placeholder }: { onAdd: (t: string) => void; pl
         className="w-52 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
       />
       <button type="button" onClick={commit}
-        className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700">
+        className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-violet-700 dark:hover:bg-violet-900/20 dark:hover:text-violet-400">
         Add
       </button>
     </div>
@@ -1248,6 +1252,10 @@ const SUBCHECK_SIGNAL: Record<string, string> = {
   'RA-01b':  'OW-ASI10',
   'ASCV-01a': 'OW-ASI04', 'ASCV-01b': 'OW-ASI04', 'ASCV-01c': 'OW-ASI04',
   'ASCV-02b': 'OW-ASI04', 'ASCV-04a': 'OW-ASI04',
+  'UBC-01a': 'OW-LLM10', 'UBC-01b': 'OW-LLM10',
+  'UBC-02a': 'OW-LLM10',
+  'UBC-05a': 'OW-LLM10',
+  'EA-04a':  'OW-LLM06',
 }
 
 const PROFILE_STATUS_STYLE: Record<'auto' | 'manual' | 'blind', string> = {
@@ -1331,6 +1339,111 @@ function ProfileRow({ label, subChecks, tooltip, id, status, autoDesc, manualDes
   )
 }
 
+
+// ── Connected LLMs section ────────────────────────────────────────────────────
+
+function ConnectedLlmsSection({ agentId, isAdmin }: { agentId: string; isAdmin: boolean }) {
+  const { data: mapped = [], isLoading } = useAgentLlmModels(agentId)
+  const { data: allModels = [] }         = useLlmModels()
+  const setModels                        = useSetAgentLlmModels(agentId)
+  const [open, setOpen]                  = useState(false)
+  const [addValue, setAddValue]          = useState('')
+
+  const mappedIds = new Set(mapped.map(m => m.modelId))
+  const available = allModels.filter(m => !mappedIds.has(m.modelId))
+  const status: 'auto' | 'manual' = mapped.length > 0 ? 'manual' : 'auto'
+
+  function handleAdd(modelId: string) {
+    setAddValue('')
+    setModels.mutate([...Array.from(mappedIds), modelId])
+  }
+  function handleRemove(modelId: string) {
+    setModels.mutate(Array.from(mappedIds).filter(id => id !== modelId))
+  }
+
+  const modelNames = mapped.map(m => m.name).join(', ')
+
+  return (
+    <ProfileSection
+      title="Connected LLMs"
+      icon={<Cpu className="h-3.5 w-3.5" />}
+      open={open}
+      onToggle={() => setOpen(v => !v)}
+    >
+      <ProfileRow
+        id="profile-connected-llms"
+        label="Connected LLMs"
+        subChecks={['UBC-01a', 'UBC-01b', 'UBC-02a', 'UBC-05a', 'EA-04a']}
+        tooltip="Map the LLM models this agent uses. Required for per-model cost calculations, context window enforcement, accurate statistical baselines, and detecting use of undeclared models."
+        status={status}
+        autoDesc="No models declared — UBC-05a uses a global cost rate for all models. Baselines for UBC-01a and UBC-02a mix token counts across models. UBC-01b context window check and EA-04a undeclared-model detection cannot run."
+        manualDesc={`${mapped.length} model${mapped.length !== 1 ? 's' : ''} connected (${modelNames}) — UBC-05a uses per-model cost rates. Baselines scoped per model. UBC-01b fires if input tokens exceed 85% of declared context window. EA-04a fires if a session uses a model not in this list.`}
+        how="UBC-05a looks up input_cost_per_1k and output_cost_per_1k from the registered model in Inventory to compute accurate cost per session instead of a global fallback rate. UBC-01a and UBC-02a build a separate 7-day baseline per model so a token spike in GPT-4o doesn't get masked by lower-usage sessions on Claude Haiku. UBC-01b fires when session input tokens exceed 85% of the declared context_window_tokens — indicating a context stuffing attempt. EA-04a fires post-session if any llm_end event carries a model name not in this declared list."
+        onReset={isAdmin ? () => setModels.mutate([]) : undefined}
+      >
+        {isLoading ? (
+          <div className="h-6 w-32 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
+        ) : (
+          <div className="flex flex-wrap items-center gap-2">
+            {mapped.map(m => (
+              <span
+                key={m.modelId}
+                className="flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400"
+              >
+                <span className="font-mono">{m.name}</span>
+                {m.provider && (
+                  <span className="text-violet-400 dark:text-violet-600">· {m.provider}</span>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={() => handleRemove(m.modelId)}
+                    className="ml-0.5 text-violet-400 hover:text-violet-700 dark:text-violet-600 dark:hover:text-violet-400"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            ))}
+
+            {isAdmin && available.length > 0 && (
+              <select
+                value={addValue}
+                onChange={e => {
+                  const val = e.target.value
+                  setAddValue(val)
+                  if (val) handleAdd(val)
+                }}
+                className="rounded-full border border-dashed border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-500 outline-none hover:border-violet-400 hover:text-violet-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-violet-600"
+              >
+                <option value="">+ Add model</option>
+                {available.map(m => (
+                  <option key={m.modelId} value={m.modelId}>
+                    {m.name}{m.provider ? ` (${m.provider})` : ''}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {isAdmin && allModels.length === 0 && (
+              <span className="text-xs text-slate-400 dark:text-zinc-500">
+                No models in inventory —{' '}
+                <Link to="/inventory" className="text-violet-500 hover:underline dark:text-violet-400">add in Inventory</Link>.
+              </span>
+            )}
+
+            {isAdmin && allModels.length > 0 && available.length === 0 && mapped.length > 0 && (
+              <span className="text-xs text-slate-400 dark:text-zinc-500">All inventory models connected.</span>
+            )}
+
+            {mapped.length === 0 && !isAdmin && (
+              <span className="text-xs text-slate-400 dark:text-zinc-500">No models connected.</span>
+            )}
+          </div>
+        )}
+      </ProfileRow>
+    </ProfileSection>
+  )
+}
 
 // ── AgentProfileTab ──────────────────────────────────────────────────────────
 
@@ -1454,6 +1567,9 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
         </div>
       )}
 
+      {/* ════════ SECTION 0 — Connected LLMs ════════ */}
+      <ConnectedLlmsSection agentId={agentId} isAdmin={isAdmin} />
+
       {/* ════════ SECTION 1 — Agent Identity ════════ */}
       <ProfileSection title="Agent Identity" icon={<Settings className="h-3.5 w-3.5" />} open={openSections.identity} onToggle={() => toggleSection('identity')}>
 
@@ -1479,7 +1595,7 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
               />
               <button type="button"
                 onClick={() => updateProfile.mutate({ system_prompt: systemPromptDraft || null })}
-                className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700">
+                className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-violet-700 dark:hover:bg-violet-900/20 dark:hover:text-violet-400">
                 Save
               </button>
             </div>
@@ -1549,7 +1665,7 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
                   className="w-52 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
                 />
                 <button type="button" onClick={addToManifest}
-                  className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700">
+                  className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-violet-700 dark:hover:bg-violet-900/20 dark:hover:text-violet-400">
                   Add
                 </button>
               </div>
@@ -1740,7 +1856,7 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
               </div>
               <button type="button"
                 onClick={() => updateProfile.mutate({ operating_hours: { days: activeDays, from: hoursFrom, to: hoursTo } })}
-                className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700">
+                className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-violet-700 dark:hover:bg-violet-900/20 dark:hover:text-violet-400">
                 Save schedule
               </button>
             </div>
@@ -1813,7 +1929,7 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function AgentConfig() {
-  const { agentId } = useParams({ from: '/agents/$agentId/config' })
+  const { agentId } = useParams({ from: '/inventory/agents/$agentId/config' })
   const { data, isLoading } = useAgentProfile(agentId)
   const { data: subcheckConfig = {} } = useSubcheckConfig(agentId)
   const toggleMutation = useToggleSubcheckOnline(agentId)
@@ -1855,7 +1971,7 @@ export function AgentConfig() {
     <div className="space-y-6">
       {/* ── Header ── */}
       <div>
-        <Link to="/agents" className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300">
+        <Link to="/inventory" className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300">
           ← Agents
         </Link>
         <div className="mt-1 flex items-center justify-between gap-4">
@@ -1864,11 +1980,11 @@ export function AgentConfig() {
           </h1>
           <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 shrink-0 dark:border-zinc-700 dark:bg-zinc-800">
             <Link
-              to="/agents/$agentId"
+              to="/inventory/agents/$agentId"
               params={{ agentId }}
               className="rounded px-3 py-1.5 text-xs text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
             >
-              Profile
+              Health
             </Link>
             <span className="flex items-center gap-1.5 rounded bg-white px-3 py-1.5 text-xs font-medium text-violet-700 shadow-sm dark:bg-zinc-700 dark:text-violet-300">
               <Settings className="h-3 w-3" /> Config

@@ -10,9 +10,10 @@ import { Security }       from './pages/Security'
 import { Settings }       from './pages/Settings'
 import { OnboardClient }  from './pages/OnboardClient'
 import { Tenants }        from './pages/Tenants'
-import { Agents }                from './pages/Agents'
+import { Inventory }            from './pages/Inventory'
 import { AgentSecurityProfile } from './pages/AgentSecurityProfile'
 import { AgentConfig }          from './pages/AgentConfig'
+import { Audit }          from './pages/Audit'
 import { Login }          from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword }  from './pages/ResetPassword'
@@ -128,25 +129,49 @@ const tenantsRoute = createRoute({
   component: Tenants,
 })
 
-const agentsRoute = createRoute({
+const inventorySearchSchema = z.object({
+  tab: z.enum(['agents', 'llms']).optional(),
+})
+
+const inventoryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/inventory',
+  beforeLoad: requireAuth,
+  component: Inventory,
+  validateSearch: inventorySearchSchema,
+})
+
+const inventoryAgentsRedirectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/inventory/agents',
+  beforeLoad: () => { throw redirect({ to: '/inventory', search: { tab: 'agents' } }) },
+})
+
+const agentsRedirectRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/agents',
-  beforeLoad: requireAuth,
-  component: Agents,
+  beforeLoad: () => { throw redirect({ to: '/inventory' }) },
 })
 
 const agentSecurityProfileRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/agents/$agentId',
+  path: '/inventory/agents/$agentId',
   beforeLoad: requireAuth,
   component: AgentSecurityProfile,
 })
 
 const agentConfigRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/agents/$agentId/config',
+  path: '/inventory/agents/$agentId/config',
   beforeLoad: requireAuth,
   component: AgentConfig,
+})
+
+const auditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/audit',
+  beforeLoad: requireAuth,
+  component: Audit,
 })
 
 const routeTree = rootRoute.addChildren([
@@ -163,9 +188,12 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
   onboardClientRoute,
   tenantsRoute,
-  agentsRoute,
+  inventoryRoute,
+  inventoryAgentsRedirectRoute,
+  agentsRedirectRoute,
   agentSecurityProfileRoute,
   agentConfigRoute,
+  auditRoute,
 ])
 
 export const router = createRouter({ routeTree })

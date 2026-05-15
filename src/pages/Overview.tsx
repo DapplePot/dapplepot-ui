@@ -1,4 +1,4 @@
-import { useOverview } from '../hooks/useAnalytics'
+import { useOverview, useTrends } from '../hooks/useAnalytics'
 import { useAlerts } from '../hooks/useAlerts'
 import { useLiveSessions } from '../hooks/useControl'
 import { MetricCards, MetricCardsSkeleton } from '../components/overview/MetricCards'
@@ -19,6 +19,7 @@ function ErrorCard({ message }: { message: string }) {
 export function Overview() {
   const role = useAuthStore((s) => s.user?.role)
   const overview = useOverview('24h')
+  const trends = useTrends('24h')
   const liveSessions = useLiveSessions()
   const alerts = useAlerts({ limit: 4, sort: 'triggered_at:desc' })
 
@@ -36,6 +37,7 @@ export function Overview() {
         <MetricCards
           overview={overview.data}
           liveSessions={liveSessions.data ?? []}
+          trends={trends.data ?? []}
         />
       )}
 

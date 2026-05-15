@@ -329,14 +329,15 @@ export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="flex items-start justify-between border-b border-slate-100 px-4 py-3 dark:border-zinc-800">
+      <div
+        onClick={onClose}
+        className="flex cursor-pointer items-start justify-between border-b border-slate-100 px-4 py-3 hover:bg-slate-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+      >
         <div>
           <p className="font-medium text-slate-900 dark:text-zinc-100">{alert.title}</p>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">{alert.message}</p>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300">
-          <X className="h-4 w-4" />
-        </button>
+        <X className="h-4 w-4 shrink-0 text-slate-400" />
       </div>
 
       <div className="divide-y divide-slate-50 px-4 dark:divide-zinc-800">

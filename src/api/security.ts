@@ -105,6 +105,7 @@ export interface AgentAlertConfig {
   operating_hours:             { days: string[]; from: string; to: string } | null
   sbom_allowlist:              string[] | null
   mcp_endpoints:               string[] | null
+  connected_llms:              string[] | null  // null = no models declared (EA-04a blind)
 }
 
 export type AgentProfilePatch = Partial<Pick<AgentAlertConfig,

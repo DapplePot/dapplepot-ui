@@ -5,6 +5,8 @@ import type {
   LatencyStat,
   CostPoint,
   SessionFunnel,
+  AgentSessionCount,
+  TrendPoint,
 } from '@dapplepot/types/analytics'
 import { apiClient } from './client'
 
@@ -45,5 +47,13 @@ export async function getCost(params: { window: string }): Promise<CostPoint[]> 
 }
 
 export async function getSessionFunnel(params: { window: string }): Promise<SessionFunnel> {
-  return apiClient.get('v1/analytics/session-funnel', { searchParams: params }).json()
+  return apiClient.get('v1/analytics/sessions/funnel', { searchParams: params }).json()
+}
+
+export async function getAgentSessions(params: { window: string }): Promise<AgentSessionCount[]> {
+  return apiClient.get('v1/analytics/agents/sessions', { searchParams: params }).json()
+}
+
+export async function getTrends(params: { window: string }): Promise<TrendPoint[]> {
+  return apiClient.get('v1/analytics/trends', { searchParams: params }).json()
 }

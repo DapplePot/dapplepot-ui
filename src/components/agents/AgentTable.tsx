@@ -92,7 +92,7 @@ export function AgentTable() {
                 <tr key={agent.agentId} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-zinc-800 dark:hover:bg-zinc-800">
                   <td className="p-0">
                     <Link
-                      to="/agents/$agentId"
+                      to="/inventory/agents/$agentId"
                       params={{ agentId: agent.agentId }}
                       className="flex items-center px-4 py-3 text-sm font-medium text-slate-900 dark:text-zinc-100"
                     >
@@ -101,7 +101,7 @@ export function AgentTable() {
                   </td>
                   <td className="p-0">
                     <Link
-                      to="/agents/$agentId"
+                      to="/inventory/agents/$agentId"
                       params={{ agentId: agent.agentId }}
                       className="flex items-center px-4 py-3"
                     >
@@ -112,7 +112,7 @@ export function AgentTable() {
                   </td>
                   <td className="p-0">
                     <Link
-                      to="/agents/$agentId"
+                      to="/inventory/agents/$agentId"
                       params={{ agentId: agent.agentId }}
                       className="flex items-center px-4 py-3"
                     >
@@ -124,7 +124,7 @@ export function AgentTable() {
                   </td>
                   <td className="p-0">
                     <Link
-                      to="/agents/$agentId"
+                      to="/inventory/agents/$agentId"
                       params={{ agentId: agent.agentId }}
                       className="flex items-center px-4 py-3 text-sm text-slate-500 dark:text-zinc-400"
                     >

@@ -2,21 +2,21 @@ import { useState } from 'react'
 import {
   useOverview,
   useLlmUsage,
-  useErrorRates,
   useLatency,
   useCost,
-  useSecurityAnalytics,
   useAlertStats,
+  useSessionFunnel,
+  useAgentSessions,
+  useTrends,
 } from '../hooks/useAnalytics'
 import { DateRangePicker } from '../components/analytics/DateRangePicker'
 import { TokenChart, TokenChartSkeleton } from '../components/analytics/TokenChart'
-import { ErrorRateChart, ErrorRateChartSkeleton } from '../components/analytics/ErrorRateChart'
 import { LatencyChart, LatencyChartSkeleton } from '../components/analytics/LatencyChart'
 import { CostTable, CostTableSkeleton } from '../components/analytics/CostTable'
 import { SessionFunnelChart, SessionFunnelSkeleton } from '../components/analytics/SessionFunnelChart'
-import { SecurityBandChart, SecurityBandSkeleton } from '../components/analytics/SecurityBandChart'
-import { OWASPFrequencyChart, OWASPFrequencySkeleton } from '../components/analytics/OWASPFrequencyChart'
 import { AlertVolumeChart, AlertVolumeSkeleton } from '../components/analytics/AlertVolumeChart'
+import { AgentUsageChart, AgentUsageSkeleton } from '../components/analytics/AgentUsageChart'
+import { Sparkline } from '../components/ui/Sparkline'
 import { formatCost } from '../utils/format'
 
 type Window = '24h' | '7d' | '30d'
@@ -41,16 +41,13 @@ export function Analytics() {
   const [agentId, setAgentId] = useState('')
 
   const overview     = useOverview(window)
+  const funnel       = useSessionFunnel(window)
   const llmUsage     = useLlmUsage(window, agentId || undefined)
-  const errorRates   = useErrorRates(window, agentId || undefined)
   const latency      = useLatency(window, agentId || undefined)
-  const cost         = useCost(window)
-  const security     = useSecurityAnalytics(window)
-  const alertStats   = useAlertStats(window)
-
-  const agents = Array.from(
-    new Set((errorRates.data ?? []).map((d) => d.agentId).filter(Boolean))
-  )
+  const cost          = useCost(window)
+  const trends        = useTrends(window)
+  const agentSessions = useAgentSessions(window)
+  const alertStats    = useAlertStats(window)
 
   const totalCost = (cost.data ?? []).reduce((s, d) => s + d.estimatedCostUsd, 0)
 
@@ -58,16 +55,21 @@ export function Analytics() {
     ? ((overview.data.completedSessions / overview.data.totalSessions) * 100).toFixed(1)
     : null
 
-  const highCriticalPct = security.data && security.data.sessionsScored > 0
-    ? ((security.data.highCriticalCount / security.data.sessionsScored) * 100).toFixed(1)
-    : null
+  function fmtDuration(ms: number) {
+    if (!ms) return '—'
+    if (ms < 1000)  return `${ms}ms`
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
+    const m = Math.floor(ms / 60000)
+    const s = Math.round((ms % 60000) / 1000)
+    return `${m}m ${s}s`
+  }
 
   const heroMetrics = overview.data
     ? [
-        { label: 'Total sessions',   value: overview.data.totalSessions.toLocaleString() },
-        { label: 'Completion rate',  value: completionRate != null ? `${completionRate}%` : '—' },
-        { label: 'High+critical',    value: highCriticalPct != null ? `${highCriticalPct}%` : '—' },
-        { label: 'Estimated cost',   value: formatCost(totalCost) },
+        { label: 'Total sessions',      value: overview.data.totalSessions.toLocaleString() },
+        { label: 'Completion rate',     value: completionRate != null ? `${completionRate}%` : '—' },
+        { label: 'Avg session duration', value: fmtDuration(overview.data.avgLatencyMs) },
+        { label: 'Estimated cost',      value: formatCost(totalCost) },
       ]
     : null
 
@@ -78,7 +80,7 @@ export function Analytics() {
         <DateRangePicker
           window={window}
           agentId={agentId}
-          agents={agents}
+          agents={(agentSessions.data ?? []).map(a => ({ id: a.agentId, name: a.agentName }))}
           onWindowChange={setWindow}
           onAgentChange={setAgentId}
         />
@@ -86,64 +88,50 @@ export function Analytics() {
 
       {heroMetrics && (
         <div className="grid grid-cols-4 gap-4">
-          {heroMetrics.map((m) => (
-            <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+          {[
+            { ...heroMetrics[0], trend: (trends.data ?? []).map(t => t.sessionCount),  color: '#7F77DD', id: 'a-sessions' },
+            { ...heroMetrics[1], trend: (trends.data ?? []).map(t => t.sessionCount),  color: '#1D9E75', id: 'a-completion' },
+            { ...heroMetrics[2], trend: (trends.data ?? []).map(t => t.avgLatencyMs),  color: '#f59e0b', id: 'a-duration' },
+            { ...heroMetrics[3], trend: (trends.data ?? []).map(t => t.tokenCount),    color: '#7F77DD', id: 'a-cost' },
+          ].map((m) => (
+            <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
               <p className="text-xs text-slate-500 dark:text-zinc-400">{m.label}</p>
               <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-zinc-100">{m.value}</p>
+              <div className="mt-3 -mx-1">
+                <Sparkline data={m.trend} color={m.color} id={m.id} height={28} />
+              </div>
             </div>
           ))}
         </div>
       )}
 
       <Card title="Session funnel">
-        {overview.isLoading ? <SessionFunnelSkeleton /> :
-         overview.isError   ? <ErrorMsg message={overview.error.message} /> :
-         overview.data      ? <SessionFunnelChart data={overview.data} /> :
+        {funnel.isLoading ? <SessionFunnelSkeleton /> :
+         funnel.isError   ? <ErrorMsg message={funnel.error.message} /> :
+         funnel.data      ? <SessionFunnelChart data={funnel.data} /> :
          null}
       </Card>
 
+
       <div className="grid grid-cols-2 gap-6">
-        <Card title="Risk band distribution">
-          {security.isLoading ? <SecurityBandSkeleton /> :
-           security.isError   ? <ErrorMsg message={security.error.message} /> :
-           security.data      ? (
-             <SecurityBandChart
-               bandDistribution={security.data.bandDistribution}
-               sessionsScored={security.data.sessionsScored}
-               highCriticalCount={security.data.highCriticalCount}
-             />
-           ) : null}
+        <Card title="Agent usage">
+          {agentSessions.isLoading ? <AgentUsageSkeleton /> :
+           agentSessions.isError   ? <ErrorMsg message={agentSessions.error.message} /> :
+           <AgentUsageChart data={agentSessions.data ?? []} />}
         </Card>
-        <Card title="OWASP signal frequency">
-          {security.isLoading ? <OWASPFrequencySkeleton /> :
-           security.isError   ? <ErrorMsg message={security.error.message} /> :
-           security.data      ? (
-             <OWASPFrequencyChart
-               llmFrequency={security.data.owaspFrequency}
-               asiFrequency={security.data.asiFrequency}
-             />
-           ) : null}
+        <Card title="Alert volume by severity">
+          {alertStats.isLoading ? <AlertVolumeSkeleton /> :
+           alertStats.isError   ? <ErrorMsg message={alertStats.error.message} /> :
+           alertStats.data      ? <AlertVolumeChart data={alertStats.data} /> :
+           null}
         </Card>
       </div>
 
-      <Card title="Alert volume by severity">
-        {alertStats.isLoading ? <AlertVolumeSkeleton /> :
-         alertStats.isError   ? <ErrorMsg message={alertStats.error.message} /> :
-         alertStats.data      ? <AlertVolumeChart data={alertStats.data} /> :
-         null}
-      </Card>
-
-      <Card title="Token usage by model">
-        {llmUsage.isLoading ? <TokenChartSkeleton /> :
-         llmUsage.isError   ? <ErrorMsg message={llmUsage.error.message} /> :
-         <TokenChart data={llmUsage.data ?? []} />}
-      </Card>
-
       <div className="grid grid-cols-2 gap-6">
-        <Card title="Error rate by agent">
-          {errorRates.isLoading ? <ErrorRateChartSkeleton /> :
-           errorRates.isError   ? <ErrorMsg message={errorRates.error.message} /> :
-           <ErrorRateChart data={errorRates.data ?? []} />}
+        <Card title="Token usage by model">
+          {llmUsage.isLoading ? <TokenChartSkeleton /> :
+           llmUsage.isError   ? <ErrorMsg message={llmUsage.error.message} /> :
+           <TokenChart data={llmUsage.data ?? []} />}
         </Card>
         <Card title="Latency (avg / p95)">
           {latency.isLoading ? <LatencyChartSkeleton /> :

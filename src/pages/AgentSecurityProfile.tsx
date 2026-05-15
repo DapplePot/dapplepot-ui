@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from '@tanstack/react-router'
 import { useAgentProfile } from '../hooks/useSecurity'
 import { Skeleton } from '../components/ui/skeleton'
+import { Sparkline } from '../components/ui/Sparkline'
 import { TrendingDown, TrendingUp, Minus, Settings, Copy, Check, HelpCircle } from 'lucide-react'
 import type { RiskBand } from '../types/security'
 
@@ -72,17 +73,30 @@ const BAND_BG: Record<RiskBand, string> = {
 }
 
 
-function ScoreCard({ label, score, band, tooltip }: { label: string; score: number; band: RiskBand; tooltip: string }) {
+const BAND_LINE_COLOR: Record<RiskBand, string> = {
+  clean:    '#10b981',
+  low:      '#3b82f6',
+  medium:   '#f59e0b',
+  high:     '#f97316',
+  critical: '#ef4444',
+}
+
+function ScoreCard({ label, score, band, tooltip, history }: { label: string; score: number; band: RiskBand; tooltip: string; history?: number[] }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
       <div className="flex items-center gap-1 mb-1">
         <p className="text-xs text-slate-500 dark:text-zinc-400">{label}</p>
         <Tooltip text={tooltip} />
       </div>
       <p className={`text-3xl font-bold ${BAND_COLOR[band]}`}>{score}</p>
-      <span className={`mt-2 inline-block rounded border px-2 py-0.5 text-xs font-medium capitalize ${BAND_BG[band]}`}>
+      <span className={`mt-2 inline-block self-start rounded border px-2 py-0.5 text-xs font-medium capitalize ${BAND_BG[band]}`}>
         {band}
       </span>
+      {history && (
+        <div className="mt-3 -mx-1">
+          <Sparkline data={history} color={BAND_LINE_COLOR[band]} id={label} />
+        </div>
+      )}
     </div>
   )
 }
@@ -99,37 +113,6 @@ function trustLineColor(score: number): string {
   return '#ef4444'
 }
 
-function TrustSparkline({ history, score }: { history: number[]; score: number }) {
-  if (history.length < 2) return null
-  const W = 100
-  const H = 36
-  const yPad = 4
-  const yMin = Math.max(0,   Math.min(...history) - yPad)
-  const yMax = Math.min(100, Math.max(...history) + yPad)
-  const yRange = yMax - yMin || 1
-  const color = trustLineColor(score)
-
-  const pts = history.map((v, i) => ({
-    x: (i / (history.length - 1)) * W,
-    y: H - ((v - yMin) / yRange) * H,
-  }))
-
-  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
-  const areaPath = `${linePath} L${pts[pts.length - 1].x.toFixed(1)},${H} L${pts[0].x.toFixed(1)},${H} Z`
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full" style={{ height: H }}>
-      <defs>
-        <linearGradient id="trust-spark-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaPath} fill="url(#trust-spark-grad)" />
-      <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 function trustStatusBadge(score: number) {
   if (score >= 75) return { label: 'Trusted',  cls: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800' }
@@ -145,17 +128,15 @@ function TrustCard({ score, history }: { score: number; history: number[] }) {
     <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
       <div className="flex items-center gap-1 mb-1">
         <p className="text-xs text-slate-500 dark:text-zinc-400">Agent trust score</p>
-        <Tooltip text="Bayesian trust score (0–100). Starts at ~80. Each session updates the score: risky sessions (composite > 40) lower it, clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Below 50 for 3+ sessions in a row triggers a trust-degradation alert." />
+        <Tooltip text="Bayesian trust score (0–100). Starts at ~80. Each session updates the score: risky sessions (composite > 40) lower it, clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Alert fires when the last 3 consecutive sessions all score below 50." />
       </div>
       <p className={`text-3xl font-bold ${trustScoreColor(rounded)}`}>{rounded}</p>
       <span className={`mt-2 inline-block self-start rounded border px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
         {badge.label}
       </span>
-      {history.length >= 2 && (
-        <div className="mt-3 -mx-1">
-          <TrustSparkline history={history} score={rounded} />
-        </div>
-      )}
+      <div className="mt-3 -mx-1">
+        <Sparkline data={history} color={trustLineColor(rounded)} id="trust" />
+      </div>
     </div>
   )
 }
@@ -168,7 +149,7 @@ function fmt(iso: string | null) {
 }
 
 export function AgentSecurityProfile() {
-  const { agentId } = useParams({ from: '/agents/$agentId' })
+  const { agentId } = useParams({ from: '/inventory/agents/$agentId' })
   const { data, isLoading, isError, error } = useAgentProfile(agentId)
 
   if (isLoading) {
@@ -191,7 +172,7 @@ export function AgentSecurityProfile() {
     return (
       <div className="py-16 text-center">
         <p className="text-slate-500 text-sm">No security data found for this agent.</p>
-        <Link to="/agents" className="mt-4 inline-block text-sm text-blue-600 hover:underline">
+        <Link to="/inventory" className="mt-4 inline-block text-sm text-blue-600 hover:underline">
           Back to Agents
         </Link>
       </div>
@@ -228,20 +209,20 @@ export function AgentSecurityProfile() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <Link to="/agents" className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300">
+        <Link to="/inventory" className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300">
           ← Agents
         </Link>
         <div className="mt-1 flex items-center justify-between gap-4">
           <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">
-            {data.name ?? 'Agent Security Profile'}
+            {data.name ?? 'Agent Health'}
           </h1>
-          {/* Page navigation: Profile ↔ Config */}
+          {/* Page navigation: Health ↔ Config */}
           <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 shrink-0 dark:border-zinc-700 dark:bg-zinc-800">
             <span className="rounded bg-white px-3 py-1.5 text-xs font-medium text-violet-700 shadow-sm dark:bg-zinc-700 dark:text-violet-300">
-              Profile
+              Health
             </span>
             <Link
-              to="/agents/$agentId/config"
+              to="/inventory/agents/$agentId/config"
               params={{ agentId }}
               className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
             >
@@ -325,18 +306,21 @@ export function AgentSecurityProfile() {
           score={Math.round(data.compositeRisk)}
           band={compositeRiskBand}
           tooltip="Average of (avg LLM score + avg ASI score) / 2 across all scored sessions. Gives an overall picture of how risky this agent has been over time."
+          history={[...data.recentSessions].reverse().map(s => Math.round((s.llmScore + s.asiScore) / 2))}
         />
         <ScoreCard
           label="Avg LLM risk score"
           score={Math.round(data.avgLlmScore)}
           band={llmBand}
           tooltip="Average OWASP LLM Top 10 composite score across all sessions. Per session: top fired signal × 60% + mean of rest × 40%, then amplified by attack chains (up to ×1.35). Bands: clean 0–14, low 15–34, medium 35–59, high 60–84, critical 85–100."
+          history={[...data.recentSessions].reverse().map(s => s.llmScore)}
         />
         <ScoreCard
           label="Avg ASI risk score"
           score={Math.round(data.avgAsiScore)}
           band={asiBand}
           tooltip="Average OWASP Agentic Security Top 10 composite score across all sessions. Same formula as LLM — covers agentic threats like goal hijacking, tool misuse, inter-agent compromise, and rogue behaviour."
+          history={[...data.recentSessions].reverse().map(s => s.asiScore)}
         />
         {data.trustScore !== undefined ? (
           <TrustCard
@@ -350,7 +334,7 @@ export function AgentSecurityProfile() {
           <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
             <div className="flex items-center gap-1 mb-1">
               <p className="text-xs text-slate-500 dark:text-zinc-400">Agent trust score</p>
-              <Tooltip text="Bayesian trust score (0–100). Starts at ~80. Each session updates the score: risky sessions (composite > 40) lower it, clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Below 50 for 3+ sessions in a row triggers a trust-degradation alert." />
+              <Tooltip text="Bayesian trust score (0–100). Starts at ~80. Each session updates the score: risky sessions (composite > 40) lower it, clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Alert fires when the last 3 consecutive sessions all score below 50." />
             </div>
             <p className="text-3xl font-bold text-slate-300 dark:text-zinc-600">—</p>
             <p className="mt-2 text-xs text-slate-400 dark:text-zinc-500">
