@@ -22,8 +22,6 @@ export function Sparkline({ data, color, height = 36, id }: SparklineProps) {
   const pad = 2
   const min = Math.max(0, Math.min(...nums) - pad)
   const max = Math.max(min + 1, Math.max(...nums) + pad)
-  const range = max - min
-
   const pts = nums.map((v, i) => ({
     x: (i / (data.length - 1)) * W,
     y: H - ((v - min) / (max - min)) * H,
