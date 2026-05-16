@@ -106,6 +106,7 @@ export interface AgentAlertConfig {
   sbom_allowlist:              string[] | null
   mcp_endpoints:               string[] | null
   connected_llms:              string[] | null  // null = no models declared (EA-04a blind)
+  connected_agents:            string[] | null  // null = no agents declared (IAC-05a blind)
 }
 
 export type AgentProfilePatch = Partial<Pick<AgentAlertConfig,

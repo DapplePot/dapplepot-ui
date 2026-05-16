@@ -10,8 +10,10 @@ import {
 } from '../hooks/useSecurity'
 import { useAgentLlmModels, useSetAgentLlmModels } from '../hooks/useAgentLlmModels'
 import { useLlmModels } from '../hooks/useLlmModels'
+import { useAgentConnectedAgents, useSetAgentConnectedAgents } from '../hooks/useAgentConnectedAgents'
+import { useAgents } from '../hooks/useAgents'
 import type { OnlineAction } from '../types/security'
-import { ChevronDown, ChevronRight, Shield, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Globe, Package, Clock, Cpu, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Shield, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Globe, Package, Clock, Cpu, Bot, X } from 'lucide-react'
 import { useAuthStore } from '../stores/auth'
 import {
   SIGNAL_REGISTRY,
@@ -704,6 +706,7 @@ const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
   'EA-03a':  'profile-working-directory',
   'EA-03b':  'profile-network-allowlist',
   'EA-04a':  'profile-connected-llms',
+  'IAC-05a': 'profile-connected-agents',
   'RA-01b':  'profile-operating-hours',
   'ASCV-01a': 'profile-mcp-endpoints', 'ASCV-01b': 'profile-mcp-endpoints', 'ASCV-01c': 'profile-mcp-endpoints',
   'ASCV-02b': 'profile-sbom', 'ASCV-04a': 'profile-sbom',
@@ -721,6 +724,7 @@ const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
   'EA-03a':  'working_directory',
   'EA-03b':  'network_allowlist',
   'EA-04a':  'connected_llms',
+  'IAC-05a': 'connected_agents',
   'RA-01b':  'operating_hours',
   'ASCV-01a': 'mcp_endpoints', 'ASCV-01b': 'mcp_endpoints', 'ASCV-01c': 'mcp_endpoints',
   'ASCV-02b': 'sbom_allowlist', 'ASCV-04a': 'sbom_allowlist',
@@ -739,6 +743,7 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'EA-03a':  'no working directory declared — check disabled',
   'EA-03b':  'no host allowlist declared — check disabled',
   'EA-04a':  'no models declared — check disabled; map models under Connected LLMs in Agent Config',
+  'IAC-05a': 'no connected agents declared — IAC-05a is blind; declare permitted sub-agents under Connected Agents in Agent Profile',
   'RA-01b':  'no schedule declared — check disabled',
   'ASCV-01a': 'no MCP endpoints declared — check disabled',
   'ASCV-01b': 'no MCP endpoints declared — check disabled',
@@ -1256,7 +1261,9 @@ const SUBCHECK_SIGNAL: Record<string, string> = {
   'UBC-02a': 'OW-LLM10',
   'UBC-05a': 'OW-LLM10',
   'EA-04a':  'OW-LLM06',
+  'IAC-05a': 'OW-ASI07',
 }
+
 
 const PROFILE_STATUS_STYLE: Record<'auto' | 'manual' | 'blind', string> = {
   auto:   'border-slate-200 bg-white text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400',
@@ -1445,6 +1452,117 @@ function ConnectedLlmsSection({ agentId, isAdmin }: { agentId: string; isAdmin: 
   )
 }
 
+// ── Connected Agents section ──────────────────────────────────────────────────
+
+function ConnectedAgentsSection({ agentId, isAdmin, scrollTo }: { agentId: string; isAdmin: boolean; scrollTo?: string }) {
+  const { data: connected = [], isLoading } = useAgentConnectedAgents(agentId)
+  const { data: allAgents = [] }            = useAgents()
+  const setConnected                        = useSetAgentConnectedAgents(agentId)
+  const [open, setOpen]                     = useState(false)
+  const [addValue, setAddValue]             = useState('')
+
+  useEffect(() => {
+    if (scrollTo === 'profile-connected-agents') {
+      setOpen(true)
+      setTimeout(() => {
+        document.getElementById('profile-connected-agents')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 120)
+    }
+  }, [scrollTo])
+
+  const connectedIds = new Set(connected.map(a => a.agentId))
+  // Exclude the agent itself and already-connected agents from the dropdown
+  const available = allAgents.filter(a => a.agentId !== agentId && !connectedIds.has(a.agentId))
+  const status: 'auto' | 'manual' = connected.length > 0 ? 'manual' : 'auto'
+
+  function handleAdd(id: string) {
+    setAddValue('')
+    setConnected.mutate([...Array.from(connectedIds), id])
+  }
+  function handleRemove(id: string) {
+    setConnected.mutate(Array.from(connectedIds).filter(cid => cid !== id))
+  }
+
+  const agentNames = connected.map(a => a.name).join(', ')
+
+  return (
+    <ProfileSection
+      title="Connected Agents"
+      icon={<Bot className="h-3.5 w-3.5" />}
+      open={open}
+      onToggle={() => setOpen(v => !v)}
+    >
+      <ProfileRow
+        id="profile-connected-agents"
+        label="Connected Agents"
+        subChecks={['IAC-05a']}
+        tooltip="Declare which sub-agents this agent is permitted to delegate to. Without a declared list IAC-05a is blind. Once set, any delegation whose target is not in this list fires a critical finding."
+        status={status}
+        autoDesc="No connected agents declared — IAC-05a is blind and cannot detect delegations to unknown or compromised sub-agents."
+        manualDesc={`${connected.length} agent${connected.length !== 1 ? 's' : ''} connected (${agentNames}) — IAC-05a fires if a session delegates to an agent not in this list.`}
+        how="IAC-05a checks every invoke_agent / delegate / call_agent tool call and looks up the target name against this allowlist. If the target is absent, a critical finding is emitted — indicating delegation to an unregistered or potentially compromised agent."
+        onReset={isAdmin ? () => setConnected.mutate([]) : undefined}
+      >
+        {isLoading ? (
+          <div className="h-6 w-32 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
+        ) : (
+          <div className="flex flex-wrap items-center gap-2">
+            {connected.map(a => (
+              <span
+                key={a.agentId}
+                className="flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-400"
+              >
+                <span className="font-mono">{a.name}</span>
+                {isAdmin && (
+                  <button
+                    onClick={() => handleRemove(a.agentId)}
+                    className="ml-0.5 text-teal-400 hover:text-teal-700 dark:text-teal-600 dark:hover:text-teal-400"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            ))}
+
+            {isAdmin && available.length > 0 && (
+              <select
+                value={addValue}
+                onChange={e => {
+                  const val = e.target.value
+                  setAddValue(val)
+                  if (val) handleAdd(val)
+                }}
+                className="rounded-full border border-dashed border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-500 outline-none hover:border-teal-400 hover:text-teal-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-teal-600"
+              >
+                <option value="">+ Add agent</option>
+                {available.map(a => (
+                  <option key={a.agentId} value={a.agentId}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {isAdmin && allAgents.filter(a => a.agentId !== agentId).length === 0 && (
+              <span className="text-xs text-slate-400 dark:text-zinc-500">
+                No other agents in tenant yet.
+              </span>
+            )}
+
+            {isAdmin && available.length === 0 && connected.length > 0 && allAgents.filter(a => a.agentId !== agentId).length > 0 && (
+              <span className="text-xs text-slate-400 dark:text-zinc-500">All tenant agents connected.</span>
+            )}
+
+            {connected.length === 0 && !isAdmin && (
+              <span className="text-xs text-slate-400 dark:text-zinc-500">No agents connected.</span>
+            )}
+          </div>
+        )}
+      </ProfileRow>
+    </ProfileSection>
+  )
+}
+
 // ── AgentProfileTab ──────────────────────────────────────────────────────────
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
@@ -1567,8 +1685,11 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
         </div>
       )}
 
-      {/* ════════ SECTION 0 — Connected LLMs ════════ */}
+      {/* ════════ SECTION 0a — Connected LLMs ════════ */}
       <ConnectedLlmsSection agentId={agentId} isAdmin={isAdmin} />
+
+      {/* ════════ SECTION 0b — Connected Agents ════════ */}
+      <ConnectedAgentsSection agentId={agentId} isAdmin={isAdmin} scrollTo={scrollTo} />
 
       {/* ════════ SECTION 1 — Agent Identity ════════ */}
       <ProfileSection title="Agent Identity" icon={<Settings className="h-3.5 w-3.5" />} open={openSections.identity} onToggle={() => toggleSection('identity')}>
