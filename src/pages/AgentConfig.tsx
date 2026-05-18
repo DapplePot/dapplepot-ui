@@ -745,7 +745,7 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'SPL-01a': 'no system prompt declared — verbatim match disabled',
   'SPL-01b': 'no system prompt declared — probe comparison disabled',
   'EA-02c':  'no system prompt declared — modification diff disabled',
-  'TME-03b': 'no environment declared — URL pattern heuristic active (treats every agent as staging)',
+  'TME-03b': 'no environment declared — treated as non-production, TME-03b active post-session',
   'EA-01c':  'no write namespace declared — read-intent heuristic active',
   'EA-02a':  'no tool list declared — name-pattern heuristic active',
   'TME-03a': 'no tool list declared — name-pattern heuristic active',
@@ -765,6 +765,9 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
 // value when the configured limit needs context to be meaningful.
 const SUBCHECK_MANUAL_DESC: Partial<Record<string, (value: unknown) => string>> = {
   'TME-01b': (v) => `cap set to ${v} — fires when session count exceeds 3 × ${v} = ${Number(v) * 3} calls`,
+  'TME-03b': (v) => v === 'production'
+    ? 'production — TME-03b suppressed, this agent is authorised to target production endpoints and no findings will be generated'
+    : 'staging — TME-03b active post-session, fires if any tool call URL matches production domain prefixes (prod., production., live.) or versioned API path patterns',
 }
 
 function _formatProfileValue(value: unknown): string {
@@ -1794,14 +1797,13 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
           id="profile-environment"
           label="Environment"
           subChecks={['TME-03b']}
-          tooltip="Is this agent running in production or staging? Declaring 'production' suppresses TME-03b. Without a declaration the URL-pattern heuristic treats it as staging."
+          tooltip="Is this agent running in production or staging? Declaring 'production' suppresses TME-03b. Without a declaration the agent is treated as non-production and TME-03b remains active."
           status={alertConfig?.environment != null ? 'manual' : 'auto'}
-          autoDesc="Assumed staging — URL pattern heuristic active. TME-03b fires if any tool call URL matches production patterns."
+          autoDesc="No environment declared — treated as non-production. TME-03b is active and will fire post-session if any tool call targets a production URL."
           manualDesc={alertConfig?.environment === 'production'
-            ? 'Set to production — TME-03b suppressed (production agents hitting production URLs is expected).'
-            : 'Set to staging — TME-03b active, any production-pattern URL fires.'}
-          how="We match tool call URL parameters against regex patterns. Declaring 'production' suppresses TME-03b entirely for this agent."
-          howPatterns={['prod\\.', 'production\\.', 'live\\.', '/api/v\\d+/']}
+            ? 'Declared production — TME-03b suppressed for this agent. Calling production endpoints is expected behaviour and will not generate findings.'
+            : 'Declared staging — TME-03b active post-session. Any tool call where a URL matches production domain or versioned API patterns will generate a critical finding at session end.'}
+          how="TME-03b runs at session end and inspects every tool call across the session. It scans all URL-like values in tool inputs — not just the url key — for production domain prefixes (prod., production., live.) and versioned API path structures. Declare this agent as production to suppress the check entirely; declare staging to make the active state explicit."
           onReset={() => updateProfile.mutate({ environment: null })}
         >
           {isAdmin && (

@@ -524,12 +524,8 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         matches: ['write/create/delete/remove/send/drop/truncate/exec tool names without confirm gate'],
       },
       {
-        subCheckId: 'TME-03b', label: 'Production target from non-prod agent', phase: 'online', score: 95,
+        subCheckId: 'TME-03b', label: 'Production target from non-prod agent', phase: 'post_session', score: 95,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false,
-        matches: [
-          'prod./production./live. URL patterns in tool params',
-          'https://[domain].(com|io|app)/api/v[n]/ patterns',
-        ],
       },
       { subCheckId: 'TME-04a', label: 'Over-privileged tool invocation', phase: 'post_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false },
       { subCheckId: 'TME-05a', label: 'Cross-tool exfiltration chain', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false },
