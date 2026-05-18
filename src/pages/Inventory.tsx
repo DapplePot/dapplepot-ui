@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useSearch } from '@tanstack/react-router'
 import { AgentTable } from '../components/agents/AgentTable'
 import { LlmTable } from '../components/inventory/LlmTable'
+import { ToolTable } from '../components/inventory/ToolTable'
 
-type Tab = 'agents' | 'llms'
+type Tab = 'agents' | 'llms' | 'tools'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'agents', label: 'Agents' },
   { id: 'llms',   label: 'LLMs'   },
+  { id: 'tools',  label: 'Tools'  },
 ]
 
 export function Inventory() {
@@ -38,6 +40,7 @@ export function Inventory() {
 
       {tab === 'agents' && <AgentTable />}
       {tab === 'llms'   && <LlmTable />}
+      {tab === 'tools'  && <ToolTable />}
     </div>
   )
 }

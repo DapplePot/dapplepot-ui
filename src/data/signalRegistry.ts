@@ -505,12 +505,11 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'TME-01a', label: 'Tool called with out-of-schema params', phase: 'online', score: 65,
         severity: 'medium', confidenceTier: 'high', excluded: false,
-        matches: ['tool_start params violate declared JSON schema'],
       },
       {
         subCheckId: 'TME-01b', label: 'Tool call frequency spike (> 3× baseline)', phase: 'online', score: 70,
         severity: 'high', confidenceTier: 'high', excluded: false,
-        matches: ['tool call count > 3× 7-day per-session average'],
+        matches: [],
       },
       {
         subCheckId: 'TME-01c', label: 'Tool call sequence deviates from workflow', phase: 'online', score: 80,

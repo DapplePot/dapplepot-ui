@@ -12,6 +12,7 @@ import { useAgentLlmModels, useSetAgentLlmModels } from '../hooks/useAgentLlmMod
 import { useLlmModels } from '../hooks/useLlmModels'
 import { useAgentConnectedAgents, useSetAgentConnectedAgents } from '../hooks/useAgentConnectedAgents'
 import { useAgents } from '../hooks/useAgents'
+import { useTools } from '../hooks/useTools'
 import type { OnlineAction } from '../types/security'
 import { ChevronDown, ChevronRight, Shield, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Globe, Package, Clock, Cpu, Bot, X } from 'lucide-react'
 import { useAuthStore } from '../stores/auth'
@@ -690,14 +691,18 @@ const SUBCHECK_HAS_HEURISTIC = new Set([
   'EA-01c',   // read-intent vs write-tool heuristic
   'EA-02a',   // tool-name pattern heuristic
   'TME-03a',  // tool-name pattern heuristic
+  'TME-01a',  // pattern-matching fallback when no schema declared
   'ASCV-04a', // always fires on any install command regardless
   'EA-02b',   // statistical baseline (7-day mean + 1σ)
+  'TME-01b',  // statistical baseline (7-day per-session avg × 3.0)
 ])
 
 // Maps each subcheck to the Agent Profile section anchor it configures.
 const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
   'EA-01a':  'profile-tool-manifest',
+  'TME-01a': 'profile-tool-manifest',
   'EA-02b':  'profile-max-tool-calls',
+  'TME-01b': 'profile-max-tool-calls',
   'SPL-01a': 'profile-system-prompt', 'SPL-01b': 'profile-system-prompt',
   'EA-02c':  'profile-system-prompt',
   'TME-03b': 'profile-environment',
@@ -715,7 +720,9 @@ const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
 // Which alertConfig field each profile-linked subcheck reads at analysis time.
 const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
   'EA-01a':  'tool_manifest',
+  'TME-01a': 'tool_manifest',
   'EA-02b':  'max_tool_calls_per_session',
+  'TME-01b': 'max_tool_calls_per_session',
   'SPL-01a': 'system_prompt',    'SPL-01b': 'system_prompt',
   'EA-02c':  'system_prompt',
   'TME-03b': 'environment',
@@ -732,7 +739,9 @@ const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
 
 const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'EA-01a':  'no tool manifest declared — EA-01a is blind, any tool name is permitted',
+  'TME-01a': 'no schema declared — pattern-matching fallback active (shell chain / base64 / code injection / XSS)',
   'EA-02b':  'statistical detection active — uses 7-day rolling mean + 1σ to flag anomalies',
+  'TME-01b': 'no cap set — statistical baseline active, fires when session exceeds 3× the 7-day per-session average (≥5 sessions required)',
   'SPL-01a': 'no system prompt declared — verbatim match disabled',
   'SPL-01b': 'no system prompt declared — probe comparison disabled',
   'EA-02c':  'no system prompt declared — modification diff disabled',
@@ -750,6 +759,12 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'ASCV-01c': 'no MCP endpoints declared — check disabled',
   'ASCV-02b': 'no SBOM declared — unknown-package check disabled',
   'ASCV-04a': 'heuristic: flags pip/npm/yarn/gem/cargo install commands',
+}
+
+// Per-subcheck manual description formatters. Used instead of the raw profile
+// value when the configured limit needs context to be meaningful.
+const SUBCHECK_MANUAL_DESC: Partial<Record<string, (value: unknown) => string>> = {
+  'TME-01b': (v) => `cap set to ${v} — fires when session count exceeds 3 × ${v} = ${Number(v) * 3} calls`,
 }
 
 function _formatProfileValue(value: unknown): string {
@@ -791,10 +806,20 @@ function SubCheckRow({
   // Profile config display
   const profileFieldKey = SUBCHECK_PROFILE_FIELD[check.subCheckId]
   const hasProfileField  = !!profileFieldKey
-  const { data: alertConfig } = useAlertConfig(agentId ?? '')
+  const { data: alertConfig }  = useAlertConfig(agentId ?? '')
+  const { data: toolInventory } = useTools()
   const profileValue = hasProfileField && alertConfig
     ? (alertConfig as unknown as Record<string, unknown>)[profileFieldKey!]
     : undefined
+
+  // TME-01a: split manifest tools into those with/without a schema
+  const tme01aManifest: string[] = check.subCheckId === 'TME-01a' && Array.isArray(profileValue)
+    ? profileValue as string[]
+    : []
+  const tme01aWithSchema    = tme01aManifest.filter(n =>
+    (toolInventory ?? []).some(t => t.name === n && t.schema != null && Object.keys(t.schema).length > 0)
+  )
+  const tme01aWithoutSchema = tme01aManifest.filter(n => !tme01aWithSchema.includes(n))
   // Empty array counts as "not configured" (tool_manifest = [] means no manifest set)
   const isManualProfile = profileValue !== null && profileValue !== undefined
     && !(Array.isArray(profileValue) && profileValue.length === 0)
@@ -903,36 +928,64 @@ function SubCheckRow({
         <tr className="bg-violet-50/40 border-b border-slate-100 dark:bg-violet-900/10 dark:border-zinc-800">
           <td colSpan={8} className="px-6 py-2 space-y-2">
             {hasProfileField && (
-              <div className="flex items-center gap-2">
-                {isManualProfile ? (
-                  <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
-                    manual
+              check.subCheckId === 'TME-01a' && tme01aManifest.length > 0 ? (
+                <div className="space-y-1">
+                  {tme01aWithSchema.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
+                        manual
+                      </span>
+                      <span className="text-[10px] text-slate-600 dark:text-zinc-400 font-mono">
+                        {tme01aWithSchema.join(', ')}
+                      </span>
+                    </div>
+                  )}
+                  {tme01aWithoutSchema.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-slate-200 bg-white text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                        auto
+                      </span>
+                      <span className="text-[10px] text-slate-600 dark:text-zinc-400 font-mono">
+                        {tme01aWithoutSchema.join(', ')}
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                        — no schema, pattern-matching fallback active
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {isManualProfile ? (
+                    <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
+                      manual
+                    </span>
+                  ) : SUBCHECK_HAS_HEURISTIC.has(check.subCheckId) ? (
+                    <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-slate-200 bg-white text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                      auto
+                    </span>
+                  ) : (
+                    <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-500">
+                      blind
+                    </span>
+                  )}
+                  <span className="text-[10px] text-slate-600 dark:text-zinc-400">
+                    {isManualProfile
+                      ? (SUBCHECK_MANUAL_DESC[check.subCheckId]?.(profileValue) ?? _formatProfileValue(profileValue))
+                      : SUBCHECK_AUTO_DESC[check.subCheckId]}
                   </span>
-                ) : SUBCHECK_HAS_HEURISTIC.has(check.subCheckId) ? (
-                  <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-slate-200 bg-white text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                    auto
-                  </span>
-                ) : (
-                  <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-500">
-                    blind
-                  </span>
-                )}
-                <span className="text-[10px] text-slate-600 dark:text-zinc-400">
-                  {isManualProfile
-                    ? _formatProfileValue(profileValue)
-                    : SUBCHECK_AUTO_DESC[check.subCheckId]}
-                </span>
-                {!isManualProfile && onGoToProfile && SUBCHECK_PROFILE_ANCHOR[check.subCheckId] && (
-                  <button
-                    type="button"
-                    onClick={() => onGoToProfile(SUBCHECK_PROFILE_ANCHOR[check.subCheckId]!)}
-                    className="ml-auto shrink-0 inline-flex items-center gap-1 rounded border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-50 hover:border-violet-400 transition-colors dark:border-violet-800 dark:bg-zinc-800 dark:text-violet-400 dark:hover:bg-violet-900/30"
-                  >
-                    Set in Agent Profile
-                    <ChevronRight className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
+                  {!isManualProfile && onGoToProfile && SUBCHECK_PROFILE_ANCHOR[check.subCheckId] && (
+                    <button
+                      type="button"
+                      onClick={() => onGoToProfile(SUBCHECK_PROFILE_ANCHOR[check.subCheckId]!)}
+                      className="ml-auto shrink-0 inline-flex items-center gap-1 rounded border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-50 hover:border-violet-400 transition-colors dark:border-violet-800 dark:bg-zinc-800 dark:text-violet-400 dark:hover:bg-violet-900/30"
+                    >
+                      Set in Agent Profile
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              )
             )}
             {hasMatches && (
               <>
@@ -1250,7 +1303,7 @@ function ProfileSection({ title, icon, children, open, onToggle }: {
 const SUBCHECK_SIGNAL: Record<string, string> = {
   'SPL-01a': 'OW-LLM07', 'SPL-01b': 'OW-LLM07',
   'EA-02c':  'OW-LLM06',
-  'TME-03b': 'OW-ASI02', 'TME-03a': 'OW-ASI02',
+  'TME-01a': 'OW-ASI02', 'TME-01b': 'OW-ASI02', 'TME-03b': 'OW-ASI02', 'TME-03a': 'OW-ASI02',
   'EA-01a':  'OW-LLM06', 'EA-01b':  'OW-LLM06', 'EA-01c': 'OW-LLM06',
   'EA-02a':  'OW-LLM06', 'EA-02b':  'OW-LLM06',
   'EA-03a':  'OW-LLM06', 'EA-03b':  'OW-LLM06',
@@ -1271,12 +1324,13 @@ const PROFILE_STATUS_STYLE: Record<'auto' | 'manual' | 'blind', string> = {
   blind:  'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-500',
 }
 
-function ProfileRow({ label, subChecks, tooltip, id, status, autoDesc, manualDesc, how, howPatterns, onReset, children }: {
+function ProfileRow({ label, subChecks, tooltip, id, status, statusNode, autoDesc, manualDesc, how, howPatterns, onReset, children }: {
   label: string
   subChecks: string[]
   tooltip: string
   id?: string
   status: 'auto' | 'manual' | 'blind'
+  statusNode?: React.ReactNode
   autoDesc: string
   manualDesc?: string
   how?: string
@@ -1298,9 +1352,11 @@ function ProfileRow({ label, subChecks, tooltip, id, status, autoDesc, manualDes
             {sc}{SUBCHECK_SIGNAL[sc] ? ` | ${SUBCHECK_SIGNAL[sc]}` : ''}
           </span>
         ))}
-        <span className={`ml-auto rounded border px-1.5 py-0.5 text-[9px] font-medium ${PROFILE_STATUS_STYLE[status]}`}>
-          {status}
-        </span>
+        {statusNode ?? (
+          <span className={`ml-auto rounded border px-1.5 py-0.5 text-[9px] font-medium ${PROFILE_STATUS_STYLE[status]}`}>
+            {status}
+          </span>
+        )}
       </div>
 
       {/* Description line + how? or reset */}
@@ -1590,16 +1646,27 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
   const updateMaxCalls  = useUpdateMaxToolCalls(agentId)
   const updateProfile   = useUpdateAgentProfile(agentId)
 
-  const [manifestInput, setManifestInput] = useState('')
   const [maxCallsDraft, setMaxCallsDraft] = useState('')
+  const [addValue, setAddValue]          = useState('')
 
   const manifest: string[] = Array.isArray(alertConfig?.tool_manifest) ? alertConfig!.tool_manifest : []
 
-  function addToManifest() {
-    const t = manifestInput.trim().replace(/,$/, '')
-    if (!t || manifest.includes(t)) return
-    updateManifest.mutate([...manifest, t])
-    setManifestInput('')
+  const { data: toolInventory } = useTools()
+  const availableTools = (toolInventory ?? []).filter(t => !manifest.includes(t.name))
+
+  const manifestSchemaCount = manifest.filter(name =>
+    (toolInventory ?? []).some(t => t.name === name && t.schema != null && Object.keys(t.schema).length > 0)
+  ).length
+  const tme01aStatus: 'auto' | 'manual' | 'manual/auto' =
+    manifest.length === 0       ? 'auto' :
+    manifestSchemaCount === 0   ? 'auto' :
+    manifestSchemaCount === manifest.length ? 'manual' :
+    'manual/auto'
+
+  function addFromInventory(name: string) {
+    setAddValue('')
+    if (!name || manifest.includes(name)) return
+    updateManifest.mutate([...manifest, name])
   }
 
   function commitMaxCalls() {
@@ -1762,49 +1829,107 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
         <ProfileRow
           id="profile-tool-manifest"
           label="Tool manifest"
-          subChecks={['EA-01a']}
-          tooltip="Declare which tool names this agent is allowed to call. When set, the SDK blocks any unlisted tool call in real time. Without a manifest, EA-01a never fires."
+          subChecks={['EA-01a', 'TME-01a']}
+          tooltip="Declare which tool names this agent is allowed to call, then define their parameter schemas in Inventory → Tools. EA-01a (online) blocks any unlisted tool name in real time. TME-01a (online) validates each tool_start input against its declared schema — fires when the input carries undeclared parameters."
           status={manifest.length > 0 ? 'manual' : 'blind'}
-          autoDesc="No tool manifest declared — EA-01a is blind. Any tool name is permitted."
-          manualDesc={`${manifest.length} tool${manifest.length === 1 ? '' : 's'} in manifest — EA-01a blocks unlisted tool calls in real time.`}
-          how="EA-01a runs online in the SDK. When a tool name not in the declared manifest is invoked, the call is blocked immediately without waiting for session end."
+          statusNode={
+            <div className="ml-auto flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] font-mono text-slate-400 dark:text-zinc-500">EA-01a</span>
+                <span className={`rounded border px-1.5 py-0.5 text-[9px] font-medium ${
+                  manifest.length > 0 ? PROFILE_STATUS_STYLE.manual : PROFILE_STATUS_STYLE.blind
+                }`}>
+                  {manifest.length > 0 ? 'manual' : 'blind'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] font-mono text-slate-400 dark:text-zinc-500">TME-01a</span>
+                <span className={`rounded border px-1.5 py-0.5 text-[9px] font-medium ${
+                  tme01aStatus === 'manual'      ? PROFILE_STATUS_STYLE.manual :
+                  tme01aStatus === 'manual/auto' ? 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400' :
+                  PROFILE_STATUS_STYLE.auto
+                }`}>
+                  {tme01aStatus}
+                </span>
+              </div>
+            </div>
+          }
+          autoDesc="No tool manifest declared — EA-01a is blind and TME-01a falls back to pattern matching (shell chain / base64 / code injection / XSS)."
+          manualDesc={`${manifest.length} tool${manifest.length === 1 ? '' : 's'} in manifest — EA-01a blocks unlisted tool calls in real time. TME-01a uses schema validation for tools with declared parameters; pattern-matching for the rest.`}
+          how="EA-01a: online check in the SDK — if a tool_start event names a tool not in this list, the call is blocked before any LLM sees it. TME-01a: if a parameter schema is defined for the tool in Inventory → Tools, the tool_input keys are checked against the declared schema properties; any undeclared key fires the check (deterministic, score 80). When no schema is declared, TME-01a falls back to scanning the serialised tool_input for shell-chaining characters, base64 blobs ≥ 40 chars, Python code injection, and XSS patterns (score 65)."
+          howPatterns={['shell chain: && | || ; $() `cmd`', 'base64 blob ≥ 40 chars', 'import os | import subprocess | __import__ | open(', '<script']}
           onReset={() => updateManifest.mutate([])}
         >
-          {isAdmin && (
-            <>
-              <TagList
-                tags={manifest}
-                onRemove={t => updateManifest.mutate(manifest.filter(x => x !== t))}
-                readOnly={false}
-                colorClass={tagColor}
-              />
-              <div className="flex gap-2 mt-2">
-                <input type="text" value={manifestInput}
-                  onChange={e => setManifestInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addToManifest() } }}
-                  placeholder="e.g. read_file, search_web …"
-                  className="w-52 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
-                />
-                <button type="button" onClick={addToManifest}
-                  className="rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-violet-700 dark:hover:bg-violet-900/20 dark:hover:text-violet-400">
-                  Add
-                </button>
-              </div>
-            </>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {manifest.map(name => {
+              const toolSchema = (toolInventory ?? []).find(t => t.name === name)?.schema
+              const paramCount = toolSchema ? Object.keys(toolSchema).length : 0
+              return (
+              <span
+                key={name}
+                className="flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400"
+              >
+                <span className="font-mono">{name}</span>
+                {paramCount > 0 && (
+                  <span className="text-violet-400 dark:text-violet-600">· {paramCount} param{paramCount !== 1 ? 's' : ''}</span>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={() => updateManifest.mutate(manifest.filter(x => x !== name))}
+                    className="ml-0.5 text-violet-400 hover:text-violet-700 dark:text-violet-600 dark:hover:text-violet-400"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+              )
+            })}
+
+            {isAdmin && (
+              <select
+                value={addValue}
+                disabled={availableTools.length === 0}
+                onChange={e => {
+                  const val = e.target.value
+                  setAddValue(val)
+                  if (val) addFromInventory(val)
+                }}
+                className="rounded-full border border-dashed border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-500 outline-none hover:border-violet-400 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-violet-600"
+              >
+                {availableTools.length === 0 ? (
+                  <option value="">
+                    {(toolInventory?.length ?? 0) === 0 ? 'No tools in inventory' : 'All tools added'}
+                  </option>
+                ) : (
+                  <>
+                    <option value="">+ Add tool</option>
+                    {availableTools.map(t => (
+                      <option key={t.toolId} value={t.name}>
+                        {t.name}{t.category ? ` (${t.category})` : ''}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+            )}
+
+            {manifest.length === 0 && !isAdmin && (
+              <span className="text-xs text-slate-400 dark:text-zinc-500">No tools in manifest.</span>
+            )}
+          </div>
         </ProfileRow>
 
         <ProfileRow
           id="profile-max-tool-calls"
           label="Max tool calls per session"
-          subChecks={['EA-02b']}
-          tooltip="Set a hard cap on total tool calls per session. Without a manual cap, EA-02b uses statistical anomaly detection on the 7-day baseline."
+          subChecks={['EA-02b', 'TME-01b']}
+          tooltip="Set a hard cap on total tool calls per session. Without a manual cap, EA-02b uses statistical anomaly detection (mean + 1σ) and TME-01b uses a 3× average spike threshold."
           status={alertConfig?.max_tool_calls_per_session != null ? 'manual' : 'auto'}
           autoDesc={hasBaseline
-            ? `Statistical baseline: ~${Math.round(baseline!.mean!)} calls/session (7-day mean, ${baseline!.sessionCount} sessions) — EA-02b fires when a session exceeds mean + 1σ.`
-            : 'Statistical baseline warming up — need ≥2 sessions in the last 7 days for EA-02b to be active.'}
-          manualDesc={`Hard cap: ${alertConfig?.max_tool_calls_per_session} calls/session — EA-02b fires immediately when exceeded.`}
-          how="We compute a 7-day rolling mean and standard deviation of tool_start event counts per session. When the current session's count exceeds mean + 1σ, EA-02b fires. A manual cap provides a hard ceiling independent of the baseline."
+            ? `Statistical baseline: ~${Math.round(baseline!.mean!)} calls/session (7-day mean, ${baseline!.sessionCount} sessions) — EA-02b fires above mean + 1σ; TME-01b fires above 3× average.`
+            : 'Statistical baseline warming up — need ≥2 sessions for EA-02b and ≥5 sessions for TME-01b to activate.'}
+          manualDesc={`Hard cap: ${alertConfig?.max_tool_calls_per_session} calls/session — EA-02b fires immediately when exceeded; TME-01b fires when count exceeds 3× the cap.`}
+          how="EA-02b enforces the hard cap (or mean + 1σ statistically) and flags any overage. TME-01b detects runaway spikes — it only fires when the session is more than 3× above the configured cap or 7-day average, targeting exfiltration loops rather than accidental overruns."
           onReset={() => updateMaxCalls.mutate(null)}
         >
           {isAdmin && (
