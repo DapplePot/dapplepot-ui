@@ -94,6 +94,7 @@ export interface AgentAlertConfig {
   asi_composite_threshold:     number | null  // null = platform default (60)
   signal_thresholds:           Record<string, number>
   tool_manifest:               string[]        // [] = not configured
+  privilege_scope:             string[]        // subset of tool_manifest authorized for privilege ops
   max_tool_calls_per_session:  number | null   // null = not configured
   // Agent profile fields — null = auto (heuristic); non-null = manual (declared)
   system_prompt:               string | null
@@ -173,6 +174,31 @@ export async function updateToolManifest(
   await apiClient
     .put(`v1/security/agents/${agentId}/alert-config`, {
       json: { tool_manifest },
+    })
+    .json()
+}
+
+export async function updatePrivilegeScope(
+  agentId: string,
+  privilege_scope: string[]
+): Promise<void> {
+  await apiClient
+    .put(`v1/security/agents/${agentId}/alert-config`, {
+      json: { privilege_scope },
+    })
+    .json()
+}
+
+// Sends tool_manifest + privilege_scope in one request to avoid race conditions
+// when both change together (add-with-privilege or remove-tool).
+export async function updateToolScope(
+  agentId: string,
+  tool_manifest: string[],
+  privilege_scope: string[],
+): Promise<void> {
+  await apiClient
+    .put(`v1/security/agents/${agentId}/alert-config`, {
+      json: { tool_manifest, privilege_scope },
     })
     .json()
 }

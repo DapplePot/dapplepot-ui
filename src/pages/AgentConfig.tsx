@@ -6,7 +6,7 @@ import {
   useUpdateLlmCompositeThreshold, useUpdateAsiCompositeThreshold,
   useUpdateSignalThreshold,
   useUpdateToolManifest, useUpdateMaxToolCalls, useToolCallBaseline,
-  useUpdateAgentProfile,
+  useUpdateAgentProfile, useUpdatePrivilegeScope, useUpdateToolScope,
 } from '../hooks/useSecurity'
 import { useAgentLlmModels, useSetAgentLlmModels } from '../hooks/useAgentLlmModels'
 import { useLlmModels } from '../hooks/useLlmModels'
@@ -14,7 +14,7 @@ import { useAgentConnectedAgents, useSetAgentConnectedAgents } from '../hooks/us
 import { useAgents } from '../hooks/useAgents'
 import { useTools } from '../hooks/useTools'
 import type { OnlineAction } from '../types/security'
-import { ChevronDown, ChevronRight, Shield, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Globe, Package, Clock, Cpu, Bot, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Shield, ShieldCheck, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Globe, Package, Clock, Cpu, Bot, X } from 'lucide-react'
 import { useAuthStore } from '../stores/auth'
 import {
   SIGNAL_REGISTRY,
@@ -692,6 +692,7 @@ const SUBCHECK_HAS_HEURISTIC = new Set([
   'EA-02a',   // tool-name pattern heuristic
   'TME-03a',  // tool-name pattern heuristic
   'TME-01a',  // pattern-matching fallback when no schema declared
+  'IPA-01a',  // pattern-matching runs even without privilege_scope declared
   'ASCV-04a', // always fires on any install command regardless
   'EA-02b',   // statistical baseline (7-day mean + 1σ)
   'TME-01b',  // statistical baseline (7-day per-session avg × 3.0)
@@ -701,6 +702,7 @@ const SUBCHECK_HAS_HEURISTIC = new Set([
 const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
   'EA-01a':  'profile-tool-manifest',
   'TME-01a': 'profile-tool-manifest',
+  'IPA-01a': 'profile-tool-manifest',
   'EA-02b':  'profile-max-tool-calls',
   'TME-01b': 'profile-max-tool-calls',
   'SPL-01a': 'profile-system-prompt', 'SPL-01b': 'profile-system-prompt',
@@ -721,6 +723,7 @@ const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
 const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
   'EA-01a':  'tool_manifest',
   'TME-01a': 'tool_manifest',
+  'IPA-01a': 'tool_manifest',
   'EA-02b':  'max_tool_calls_per_session',
   'TME-01b': 'max_tool_calls_per_session',
   'SPL-01a': 'system_prompt',    'SPL-01b': 'system_prompt',
@@ -740,6 +743,7 @@ const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
 const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'EA-01a':  'no tool manifest declared — EA-01a is blind, any tool name is permitted',
   'TME-01a': 'no schema declared — pattern-matching fallback active (shell chain / base64 / code injection / XSS)',
+  'IPA-01a': 'no tools declared — pattern-matching active on all tool names and payloads, privilege escalation flagged with no per-tool exceptions',
   'EA-02b':  'statistical detection active — uses 7-day rolling mean + 1σ to flag anomalies',
   'TME-01b': 'no cap set — statistical baseline active, fires when session exceeds 3× the 7-day per-session average (≥5 sessions required)',
   'SPL-01a': 'no system prompt declared — verbatim match disabled',
@@ -823,6 +827,16 @@ function SubCheckRow({
     (toolInventory ?? []).some(t => t.name === n && t.schema != null && Object.keys(t.schema).length > 0)
   )
   const tme01aWithoutSchema = tme01aManifest.filter(n => !tme01aWithSchema.includes(n))
+
+  // IPA-01a: split manifest tools into privilege-capable vs not
+  const ipa01aManifest: string[] = check.subCheckId === 'IPA-01a' && Array.isArray(profileValue)
+    ? profileValue as string[]
+    : []
+  const ipa01aPrivScope: string[] = check.subCheckId === 'IPA-01a' && alertConfig
+    ? (alertConfig.privilege_scope ?? [])
+    : []
+  const ipa01aPrivileged    = ipa01aManifest.filter(n => ipa01aPrivScope.includes(n))
+  const ipa01aNotPrivileged = ipa01aManifest.filter(n => !ipa01aPrivScope.includes(n))
   // Empty array counts as "not configured" (tool_manifest = [] means no manifest set)
   const isManualProfile = profileValue !== null && profileValue !== undefined
     && !(Array.isArray(profileValue) && profileValue.length === 0)
@@ -931,7 +945,37 @@ function SubCheckRow({
         <tr className="bg-violet-50/40 border-b border-slate-100 dark:bg-violet-900/10 dark:border-zinc-800">
           <td colSpan={8} className="px-6 py-2 space-y-2">
             {hasProfileField && (
-              check.subCheckId === 'TME-01a' && tme01aManifest.length > 0 ? (
+              check.subCheckId === 'IPA-01a' && ipa01aManifest.length > 0 ? (
+                <div className="space-y-1">
+                  {ipa01aPrivileged.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
+                        manual
+                      </span>
+                      <ShieldCheck className="h-3 w-3 shrink-0 text-amber-500 dark:text-amber-400" />
+                      <span className="text-[10px] text-slate-600 dark:text-zinc-400 font-mono">
+                        {ipa01aPrivileged.join(', ')}
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                        — privilege-capable, IPA-01a skips
+                      </span>
+                    </div>
+                  )}
+                  {ipa01aNotPrivileged.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-slate-200 bg-white text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                        auto
+                      </span>
+                      <span className="text-[10px] text-slate-600 dark:text-zinc-400 font-mono">
+                        {ipa01aNotPrivileged.join(', ')}
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                        — not privilege-capable, IPA-01a flags privilege ops
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : check.subCheckId === 'TME-01a' && tme01aManifest.length > 0 ? (
                 <div className="space-y-1">
                   {tme01aWithSchema.length > 0 && (
                     <div className="flex items-center gap-2">
@@ -1318,6 +1362,7 @@ const SUBCHECK_SIGNAL: Record<string, string> = {
   'UBC-05a': 'OW-LLM10',
   'EA-04a':  'OW-LLM06',
   'IAC-05a': 'OW-ASI07',
+  'IPA-01a': 'OW-ASI03',
 }
 
 
@@ -1645,14 +1690,19 @@ const ANCHOR_SECTION: Record<string, 'identity' | 'toolScope' | 'network' | 'sch
 function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAdmin: boolean; scrollTo?: string }) {
   const { data: alertConfig } = useAlertConfig(agentId)
   const { data: baseline }    = useToolCallBaseline(agentId)
-  const updateManifest  = useUpdateToolManifest(agentId)
-  const updateMaxCalls  = useUpdateMaxToolCalls(agentId)
-  const updateProfile   = useUpdateAgentProfile(agentId)
+  const updateManifest       = useUpdateToolManifest(agentId)
+  const updatePrivilegeScope = useUpdatePrivilegeScope(agentId)
+  const updateToolScope      = useUpdateToolScope(agentId)
+  const updateMaxCalls       = useUpdateMaxToolCalls(agentId)
+  const updateProfile        = useUpdateAgentProfile(agentId)
 
-  const [maxCallsDraft, setMaxCallsDraft] = useState('')
-  const [addValue, setAddValue]          = useState('')
+  const [maxCallsDraft,    setMaxCallsDraft]    = useState('')
+  const [addValue,         setAddValue]         = useState('')
+  const [pendingAdd,       setPendingAdd]        = useState<string | null>(null)
+  const [pendingPrivilege, setPendingPrivilege]  = useState(false)
 
-  const manifest: string[] = Array.isArray(alertConfig?.tool_manifest) ? alertConfig!.tool_manifest : []
+  const manifest: string[]      = Array.isArray(alertConfig?.tool_manifest)   ? alertConfig!.tool_manifest   : []
+  const privilegeScope: string[] = Array.isArray(alertConfig?.privilege_scope) ? alertConfig!.privilege_scope : []
 
   const { data: toolInventory } = useTools()
   const availableTools = (toolInventory ?? []).filter(t => !manifest.includes(t.name))
@@ -1666,10 +1716,32 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
     manifestSchemaCount === manifest.length ? 'manual' :
     'manual/auto'
 
-  function addFromInventory(name: string) {
+  function addFromInventory(name: string, isPrivileged: boolean) {
     setAddValue('')
+    setPendingAdd(null)
+    setPendingPrivilege(false)
     if (!name || manifest.includes(name)) return
-    updateManifest.mutate([...manifest, name])
+    // Single combined request — avoids race where manifest refetch overwrites
+    // the privilege_scope optimistic update before it reaches the server.
+    updateToolScope.mutate({
+      tool_manifest:   [...manifest, name],
+      privilege_scope: isPrivileged ? [...privilegeScope, name] : privilegeScope,
+    })
+  }
+
+  function togglePrivilege(name: string) {
+    const next = privilegeScope.includes(name)
+      ? privilegeScope.filter(x => x !== name)
+      : [...privilegeScope, name]
+    updatePrivilegeScope.mutate(next)
+  }
+
+  function removeTool(name: string) {
+    // Combined to keep manifest and privilege_scope consistent in one write.
+    updateToolScope.mutate({
+      tool_manifest:   manifest.filter(x => x !== name),
+      privilege_scope: privilegeScope.filter(x => x !== name),
+    })
   }
 
   function commitMaxCalls() {
@@ -1831,9 +1903,9 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
         <ProfileRow
           id="profile-tool-manifest"
           label="Tool manifest"
-          subChecks={['EA-01a', 'TME-01a']}
-          tooltip="Declare which tool names this agent is allowed to call, then define their parameter schemas in Inventory → Tools. EA-01a (online) blocks any unlisted tool name in real time. TME-01a (online) validates each tool_start input against its declared schema — fires when the input carries undeclared parameters."
-          status={manifest.length > 0 ? 'manual' : 'blind'}
+          subChecks={['EA-01a', 'TME-01a', 'IPA-01a']}
+          tooltip="Declare which tool names this agent is allowed to call, then define their parameter schemas in Inventory → Tools. EA-01a (online) blocks any unlisted tool name in real time. TME-01a (online) validates each tool_start input against its declared schema — fires when the input carries undeclared parameters. IPA-01a (post-session) detects privilege escalation in tool names and payloads — mark each tool as Privilege-capable (🔒) to suppress false positives for tools whose role requires privilege operations."
+          status={manifest.length > 0 ? 'manual' : 'auto'}
           statusNode={
             <div className="ml-auto flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -1854,69 +1926,121 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
                   {tme01aStatus}
                 </span>
               </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] font-mono text-slate-400 dark:text-zinc-500">IPA-01a</span>
+                <span className={`rounded border px-1.5 py-0.5 text-[9px] font-medium ${
+                  privilegeScope.length > 0 ? PROFILE_STATUS_STYLE.manual : PROFILE_STATUS_STYLE.auto
+                }`}>
+                  {privilegeScope.length > 0 ? 'manual' : 'auto'}
+                </span>
+              </div>
             </div>
           }
-          autoDesc="No tool manifest declared — EA-01a is blind and TME-01a falls back to pattern matching (shell chain / base64 / code injection / XSS)."
-          manualDesc={`${manifest.length} tool${manifest.length === 1 ? '' : 's'} in manifest — EA-01a blocks unlisted tool calls in real time. TME-01a uses schema validation for tools with declared parameters; pattern-matching for the rest.`}
-          how="EA-01a: online check in the SDK — if a tool_start event names a tool not in this list, the call is blocked before any LLM sees it. TME-01a: if a parameter schema is defined for the tool in Inventory → Tools, the tool_input keys are checked against the declared schema properties; any undeclared key fires the check (deterministic, score 80). When no schema is declared, TME-01a falls back to scanning the serialised tool_input for shell-chaining characters, base64 blobs ≥ 40 chars, Python code injection, and XSS patterns (score 65)."
-          howPatterns={['shell chain: && | || ; $() `cmd`', 'base64 blob ≥ 40 chars', 'import os | import subprocess | __import__ | open(', '<script']}
+          autoDesc="No tools declared — EA-01a and TME-01a are blind. IPA-01a runs in auto mode: privilege escalation in tool names and payloads is flagged with no per-tool exceptions."
+          manualDesc={`${manifest.length} tool${manifest.length === 1 ? '' : 's'} in manifest${privilegeScope.length > 0 ? ` · ${privilegeScope.length} privilege-capable (🛡 admin icon)` : ' · none privilege-capable'}. EA-01a blocks unlisted calls in real time. TME-01a validates schemas. IPA-01a flags privilege operations from any tool not marked privilege-capable.`}
+          how="EA-01a: online check in the SDK — if a tool_start event names a tool not in this list, the call is blocked before any LLM sees it. TME-01a: if a parameter schema is defined for the tool in Inventory → Tools, the tool_input keys are checked against the declared schema properties; any undeclared key fires the check (deterministic, score 80). When no schema is declared, TME-01a falls back to scanning the serialised tool_input for shell-chaining characters, base64 blobs ≥ 40 chars, Python code injection, and XSS patterns (score 65). IPA-01a (post-session): checks tool names against privilege-escalation keywords and scans tool_input payloads for embedded privilege ops (SQL GRANT, IAM AssumeRole / AttachPolicy, GCP setIamPolicy, K8s ClusterRoleBinding). Tools marked Privilege-capable (🔒) are skipped — use this for agents whose role legitimately requires these operations."
+          howPatterns={[
+            'name: admin · sudo · su · impersonate · elevate · assume_role · switch_user · become · run_as · escalate · grant_access · set_permissions',
+            'payload: GRANT … ON · ALTER ROLE · CREATE ROLE · AssumeRole · AttachRolePolicy · setIamPolicy · cluster-admin · ClusterRoleBinding',
+          ]}
           onReset={() => updateManifest.mutate([])}
         >
-          <div className="flex flex-wrap items-center gap-2">
-            {manifest.map(name => {
-              const toolSchema = (toolInventory ?? []).find(t => t.name === name)?.schema
-              const paramCount = toolSchema ? Object.keys(toolSchema).length : 0
-              return (
-              <span
-                key={name}
-                className="flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400"
-              >
-                <span className="font-mono">{name}</span>
-                {paramCount > 0 && (
-                  <span className="text-violet-400 dark:text-violet-600">· {paramCount} param{paramCount !== 1 ? 's' : ''}</span>
-                )}
-                {isAdmin && (
-                  <button
-                    onClick={() => updateManifest.mutate(manifest.filter(x => x !== name))}
-                    className="ml-0.5 text-violet-400 hover:text-violet-700 dark:text-violet-600 dark:hover:text-violet-400"
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {manifest.map(name => {
+                const toolSchema = (toolInventory ?? []).find(t => t.name === name)?.schema
+                const paramCount = toolSchema ? Object.keys(toolSchema).length : 0
+                const isPrivileged = privilegeScope.includes(name)
+                return (
+                  <span
+                    key={name}
+                    className="flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400"
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </span>
-              )
-            })}
+                    <span className="font-mono">{name}</span>
+                    {paramCount > 0 && (
+                      <span className="text-violet-400 dark:text-violet-600">· {paramCount} param{paramCount !== 1 ? 's' : ''}</span>
+                    )}
+                    {isAdmin && isPrivileged && (
+                      <button
+                        onClick={() => togglePrivilege(name)}
+                        title="Privilege-capable — click to revoke"
+                        className="ml-0.5 text-amber-500 hover:text-amber-700 transition-colors dark:text-amber-400 dark:hover:text-amber-300"
+                      >
+                        <ShieldCheck className="h-3 w-3" />
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        onClick={() => removeTool(name)}
+                        className="ml-0.5 text-violet-400 hover:text-violet-700 dark:text-violet-600 dark:hover:text-violet-400"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </span>
+                )
+              })}
 
-            {isAdmin && (
-              <select
-                value={addValue}
-                disabled={availableTools.length === 0}
-                onChange={e => {
-                  const val = e.target.value
-                  setAddValue(val)
-                  if (val) addFromInventory(val)
-                }}
-                className="rounded-full border border-dashed border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-500 outline-none hover:border-violet-400 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-violet-600"
-              >
-                {availableTools.length === 0 ? (
-                  <option value="">
-                    {(toolInventory?.length ?? 0) === 0 ? 'No tools in inventory' : 'All tools added'}
-                  </option>
-                ) : (
-                  <>
-                    <option value="">+ Add tool</option>
-                    {availableTools.map(t => (
-                      <option key={t.toolId} value={t.name}>
-                        {t.name}{t.category ? ` (${t.category})` : ''}
-                      </option>
-                    ))}
-                  </>
-                )}
-              </select>
-            )}
+              {isAdmin && !pendingAdd && (
+                <select
+                  value={addValue}
+                  disabled={availableTools.length === 0}
+                  onChange={e => {
+                    const val = e.target.value
+                    setAddValue(val)
+                    if (val) { setPendingAdd(val); setPendingPrivilege(false) }
+                  }}
+                  className="rounded-full border border-dashed border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-500 outline-none hover:border-violet-400 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-violet-600"
+                >
+                  {availableTools.length === 0 ? (
+                    <option value="">
+                      {(toolInventory?.length ?? 0) === 0 ? 'No tools in inventory' : 'All tools added'}
+                    </option>
+                  ) : (
+                    <>
+                      <option value="">+ Add tool</option>
+                      {availableTools.map(t => (
+                        <option key={t.toolId} value={t.name}>
+                          {t.name}{t.category ? ` (${t.category})` : ''}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+              )}
 
-            {manifest.length === 0 && !isAdmin && (
-              <span className="text-xs text-slate-400 dark:text-zinc-500">No tools in manifest.</span>
+              {manifest.length === 0 && !isAdmin && (
+                <span className="text-xs text-slate-400 dark:text-zinc-500">No tools in manifest.</span>
+              )}
+            </div>
+
+            {/* Pending-add confirmation row — shown after selecting a tool from the dropdown */}
+            {isAdmin && pendingAdd && (
+              <div className="flex items-center gap-3 rounded-lg border border-violet-200 bg-violet-50/60 px-3 py-2 dark:border-violet-800 dark:bg-violet-900/10">
+                <span className="font-mono text-xs font-medium text-violet-700 dark:text-violet-400">{pendingAdd}</span>
+                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={pendingPrivilege}
+                    onChange={e => setPendingPrivilege(e.target.checked)}
+                    className="h-3.5 w-3.5 rounded border-slate-300 accent-amber-500"
+                  />
+                  <span className="text-xs text-slate-600 dark:text-zinc-400">Privilege-capable</span>
+                  <Tooltip text="Mark this tool as authorized to perform privilege-level operations for this agent — IAM role assumption, SQL DDL (GRANT / CREATE ROLE), Kubernetes RBAC, and similar. IPA-01a will not flag calls from this tool. Only tick this if the agent's role genuinely requires it." />
+                </label>
+                <button
+                  onClick={() => addFromInventory(pendingAdd, pendingPrivilege)}
+                  className="ml-auto rounded-full bg-violet-600 px-3 py-0.5 text-xs font-medium text-white hover:bg-violet-700 dark:bg-violet-700 dark:hover:bg-violet-600"
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => { setPendingAdd(null); setPendingPrivilege(false); setAddValue('') }}
+                  className="text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
             )}
           </div>
         </ProfileRow>
