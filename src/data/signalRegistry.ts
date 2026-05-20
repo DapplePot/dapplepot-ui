@@ -603,9 +603,27 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     number: 4,
     description: 'MCP server endpoint/TLS/schema anomalies, poisoned descriptors, packages outside approved SBOM, and unknown package installs.',
     subChecks: [
-      { subCheckId: 'ASCV-01a', label: 'MCP server endpoint URL changed', phase: 'post_session', score: 85, severity: 'high', confidenceTier: 'medium', excluded: false },
-      { subCheckId: 'ASCV-01b', label: 'MCP server TLS cert anomaly', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false },
-      { subCheckId: 'ASCV-01c', label: 'MCP tool schema changed without version bump', phase: 'post_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false },
+      {
+        subCheckId: 'ASCV-01a', label: 'MCP server endpoint URL changed', phase: 'post_session', score: 85, severity: 'high', confidenceTier: 'medium', excluded: false,
+        matches: [
+          'tool_input field: mcp_server_url — present inside tool_input and does not prefix-match any URL declared in the agent\'s MCP endpoints list',
+          'requires declaration: check is blind (returns no finding) when no MCP endpoints are configured in the agent profile',
+        ],
+      },
+      {
+        subCheckId: 'ASCV-01b', label: 'MCP server TLS cert anomaly', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false,
+        matches: [
+          'tool_error event: error_message (or error) matches ssl · tls · certificate · x509 · handshake · verify failed · unknown ca · untrusted · self-signed · cert expired — TLS hard failure; only fires when tool_input.mcp_server_url prefix-matches a declared endpoint',
+          'tool_start event: tool_input contains verify · ssl_verify · tls_verify · verify_ssl · tls_skip_verify · insecure_skip_verify · check_hostname · disable_ssl set to false/0/skip/disable alongside mcp_server_url on a declared endpoint — TLS verification explicitly bypassed',
+        ],
+      },
+      {
+        subCheckId: 'ASCV-01c', label: 'MCP tool schema changed without version bump', phase: 'cross_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false,
+        matches: [
+          'cross-session: llm_start payload["tools"] — each tool\'s name + description + input_schema (or inputSchema) SHA-256 hashed (sorted keys) and compared against baseline in mcp_tool_schema_baselines per (tenant, agent, tool_name)',
+          'fires when schema hash changed AND no version bump detected — version checked via tool.version field first, then version-like token (v1, 2.0, etc.) extracted from description; if version changed alongside schema the tool is suppressed as a declared update',
+        ],
+      },
       {
         subCheckId: 'ASCV-02a', label: 'MCP descriptor poisoning', phase: 'both', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false,

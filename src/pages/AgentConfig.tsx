@@ -13,6 +13,7 @@ import { useLlmModels } from '../hooks/useLlmModels'
 import { useAgentConnectedAgents, useSetAgentConnectedAgents } from '../hooks/useAgentConnectedAgents'
 import { useAgents } from '../hooks/useAgents'
 import { useTools } from '../hooks/useTools'
+import { useMcpServers } from '../hooks/useMcpServers'
 import type { OnlineAction } from '../types/security'
 import { ChevronDown, ChevronRight, Shield, ShieldCheck, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Globe, Package, Clock, Cpu, Bot, X } from 'lucide-react'
 import { useAuthStore } from '../stores/auth'
@@ -715,7 +716,7 @@ const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
   'EA-04a':  'profile-connected-llms',
   'IAC-05a': 'profile-connected-agents',
   'RA-01b':  'profile-operating-hours',
-  'ASCV-01a': 'profile-mcp-endpoints', 'ASCV-01b': 'profile-mcp-endpoints', 'ASCV-01c': 'profile-mcp-endpoints',
+  'ASCV-01a': 'profile-mcp-endpoints', 'ASCV-01b': 'profile-mcp-endpoints',
   'ASCV-02b': 'profile-sbom', 'ASCV-04a': 'profile-sbom',
 }
 
@@ -736,7 +737,7 @@ const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
   'EA-04a':  'connected_llms',
   'IAC-05a': 'connected_agents',
   'RA-01b':  'operating_hours',
-  'ASCV-01a': 'mcp_endpoints', 'ASCV-01b': 'mcp_endpoints', 'ASCV-01c': 'mcp_endpoints',
+  'ASCV-01a': 'mcp_endpoints', 'ASCV-01b': 'mcp_endpoints',
   'ASCV-02b': 'sbom_allowlist', 'ASCV-04a': 'sbom_allowlist',
 }
 
@@ -760,9 +761,8 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'RA-01b':  'no schedule declared — check disabled',
   'ASCV-01a': 'no MCP endpoints declared — check disabled',
   'ASCV-01b': 'no MCP endpoints declared — check disabled',
-  'ASCV-01c': 'no MCP endpoints declared — check disabled',
   'ASCV-02b': 'no SBOM declared — unknown-package check disabled',
-  'ASCV-04a': 'heuristic: flags pip/npm/yarn/gem/cargo install commands',
+  'ASCV-04a': 'no SBOM declared — fires on every pip/npm/yarn/gem/cargo install (heuristic mode)',
 }
 
 // Per-subcheck manual description formatters. Used instead of the raw profile
@@ -1319,6 +1319,69 @@ function InlineTagInput({ onAdd, placeholder }: { onAdd: (t: string) => void; pl
   )
 }
 
+function McpServerPicker({ selected, onChange }: {
+  selected: string[]
+  onChange: (urls: string[]) => void
+}) {
+  const { data: servers = [] } = useMcpServers()
+  const [addValue, setAddValue] = useState('')
+  const available = servers.filter(s => !selected.includes(s.url))
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {selected.map(url => {
+        const server = servers.find(s => s.url === url)
+        return (
+          <span
+            key={url}
+            className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+          >
+            {server?.name ?? url}
+            <button
+              onClick={() => onChange(selected.filter(u => u !== url))}
+              className="ml-0.5 text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        )
+      })}
+
+      {available.length > 0 && (
+        <select
+          value={addValue}
+          onChange={e => {
+            const val = e.target.value
+            setAddValue(val)
+            if (val) { onChange([...selected, val]); setAddValue('') }
+          }}
+          className="rounded-full border border-dashed border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-500 outline-none hover:border-violet-400 hover:text-violet-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-violet-600"
+        >
+          <option value="">+ Add server</option>
+          {available.map(s => (
+            <option key={s.mcpServerId} value={s.url}>{s.name}</option>
+          ))}
+        </select>
+      )}
+
+      {servers.length === 0 && (
+        <span className="text-xs text-slate-400 dark:text-zinc-500">
+          No MCP servers registered —{' '}
+          <Link to="/inventory" className="text-violet-500 hover:underline dark:text-violet-400">add in Inventory</Link>.
+        </span>
+      )}
+
+      {servers.length > 0 && available.length === 0 && selected.length > 0 && (
+        <span className="text-xs text-slate-400 dark:text-zinc-500">All registered servers declared.</span>
+      )}
+
+      {selected.length === 0 && servers.length > 0 && (
+        <span className="text-xs text-slate-400 dark:text-zinc-500">No servers declared.</span>
+      )}
+    </div>
+  )
+}
+
 // ── Layout helpers ────────────────────────────────────────────────────────────
 
 function ProfileSection({ title, icon, children, open, onToggle }: {
@@ -1356,7 +1419,7 @@ const SUBCHECK_SIGNAL: Record<string, string> = {
   'EA-03a':  'OW-LLM06', 'EA-03b':  'OW-LLM06',
   'RA-01b':  'OW-ASI10',
   'ASCV-01a': 'OW-ASI04', 'ASCV-01b': 'OW-ASI04', 'ASCV-01c': 'OW-ASI04',
-  'ASCV-02b': 'OW-ASI04', 'ASCV-04a': 'OW-ASI04',
+  'ASCV-02a': 'OW-ASI04', 'ASCV-02b': 'OW-ASI04', 'ASCV-04a': 'OW-ASI04',
   'UBC-01a': 'OW-LLM10', 'UBC-01b': 'OW-LLM10',
   'UBC-02a': 'OW-LLM10',
   'UBC-05a': 'OW-LLM10',
@@ -2243,11 +2306,11 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
           id="profile-sbom"
           label="Approved packages (SBOM)"
           subChecks={['ASCV-02b', 'ASCV-04a']}
-          tooltip="List the package names this agent is allowed to install. ASCV-04a fires on any install command. ASCV-02b additionally fires when the package is not on your declared SBOM."
+          tooltip="List the package names this agent is allowed to install. Both ASCV-04a and ASCV-02b skip approved packages — only installs outside this list fire."
           status={alertConfig?.sbom_allowlist != null ? 'manual' : 'auto'}
-          autoDesc="No SBOM declared — ASCV-04a fires on every package install command; ASCV-02b (unknown package check) is blind without a declared allowlist."
-          manualDesc={`${sbom.length} approved package${sbom.length === 1 ? '' : 's'} declared — ASCV-02b active for unlisted packages; ASCV-04a still fires on all installs.`}
-          how="We scan tool_start event inputs for install commands. Any match fires ASCV-04a unconditionally. ASCV-02b additionally fires when the installed package is NOT in your declared SBOM."
+          autoDesc="No SBOM declared — ASCV-04a fires on every package install command (heuristic mode); ASCV-02b is blind without a declared allowlist."
+          manualDesc={`${sbom.length} approved package${sbom.length === 1 ? '' : 's'} declared — installs of approved packages are skipped; ASCV-04a and ASCV-02b fire only for unlisted packages.`}
+          how="We scan tool_start event inputs for install commands and extract the package name. If a SBOM is declared, approved packages are skipped. Any unlisted package fires ASCV-04a online and ASCV-02b post-session."
           howPatterns={['pip install', 'npm install', 'yarn add', 'gem install', 'cargo install']}
           onReset={() => updateProfile.mutate({ sbom_allowlist: null })}
         >
@@ -2270,27 +2333,19 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
         <ProfileRow
           id="profile-mcp-endpoints"
           label="Declared MCP server endpoints"
-          subChecks={['ASCV-01a', 'ASCV-01b', 'ASCV-01c']}
-          tooltip="Register the MCP server URLs this agent is authorised to connect to. Without a declaration, ASCV-01a, ASCV-01b, and ASCV-01c cannot fire."
+          subChecks={['ASCV-01a', 'ASCV-01b']}
+          tooltip="Select MCP servers this agent is authorised to connect to. Without a declaration, ASCV-01a and ASCV-01b cannot fire."
           status={alertConfig?.mcp_endpoints != null ? 'manual' : 'blind'}
-          autoDesc="No MCP endpoints declared — ASCV-01a, ASCV-01b, and ASCV-01c are blind."
-          manualDesc={`${mcpEndpoints.length} endpoint${mcpEndpoints.length === 1 ? '' : 's'} registered — ASCV-01a URL anomaly, ASCV-01b TLS change, and ASCV-01c schema change detection are active.`}
-          how="ASCV-01a fires when a tool call targets an MCP server URL not on the declared list. ASCV-01b fires when the TLS certificate fingerprint changes. ASCV-01c fires when the tool schema changes without a version bump."
+          autoDesc="No MCP endpoints declared — ASCV-01a and ASCV-01b are blind."
+          manualDesc={`${mcpEndpoints.length} server${mcpEndpoints.length === 1 ? '' : 's'} declared — ASCV-01a URL anomaly and ASCV-01b TLS cert anomaly detection are active.`}
+          how="ASCV-01a fires when a tool call targets an MCP server URL not on this list. ASCV-01b fires when a TLS error occurs or TLS verification is disabled on a declared endpoint."
           onReset={() => updateProfile.mutate({ mcp_endpoints: null })}
         >
           {isAdmin && (
-            <>
-              <TagList
-                tags={mcpEndpoints}
-                onRemove={t => updateProfile.mutate({ mcp_endpoints: mcpEndpoints.filter(x => x !== t) })}
-                readOnly={false}
-                colorClass={mcpColor}
-              />
-              <InlineTagInput
-                onAdd={t => { if (!mcpEndpoints.includes(t)) updateProfile.mutate({ mcp_endpoints: [...mcpEndpoints, t] }) }}
-                placeholder="e.g. https://mcp.internal/tools …"
-              />
-            </>
+            <McpServerPicker
+              selected={mcpEndpoints}
+              onChange={urls => updateProfile.mutate({ mcp_endpoints: urls.length > 0 ? urls : null })}
+            />
           )}
         </ProfileRow>
       </ProfileSection>

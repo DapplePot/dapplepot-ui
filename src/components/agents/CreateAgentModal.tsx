@@ -8,14 +8,16 @@ interface CreateAgentModalProps {
 
 export function CreateAgentModal({ onClose }: CreateAgentModalProps) {
   const create = useCreateAgent()
-  const [name,           setName]           = useState('')
-  const [latestVersion,  setLatestVersion]  = useState('')
+  const [name,          setName]          = useState('')
+  const [description,   setDescription]   = useState('')
+  const [latestVersion, setLatestVersion] = useState('')
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     create.mutate(
       {
-        name: name.trim(),
+        name:        name.trim(),
+        description: description.trim() || null,
         ...(latestVersion.trim() ? { latestVersion: latestVersion.trim() } : {}),
       },
       { onSuccess: onClose },
@@ -38,7 +40,7 @@ export function CreateAgentModal({ onClose }: CreateAgentModalProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">
-              Agent Name <span className="text-red-500">*</span>
+              Agent name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -53,7 +55,21 @@ export function CreateAgentModal({ onClose }: CreateAgentModalProps) {
 
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">
-              Latest Version
+              Description
+              <span className="ml-1 font-normal text-slate-400 dark:text-zinc-500">(optional)</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              placeholder="What does this agent do?"
+              className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">
+              Latest version
               <span className="ml-1 font-normal text-slate-400 dark:text-zinc-500">(optional)</span>
             </label>
             <input
