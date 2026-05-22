@@ -21,6 +21,7 @@ const _emptyAlertConfig = (): securityApi.AgentAlertConfig => ({
   sbom_allowlist: null,
   mcp_endpoints: null,
   connected_llms: null,
+  connected_agents: null,
 })
 
 // Tenant-level security overview — refreshes every 2 minutes
