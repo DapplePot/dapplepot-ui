@@ -3,10 +3,12 @@ import type { AlertSummary } from '@dapplepot/types/alert'
 import type { OwSignalStatus } from '@dapplepot/types/security'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
-import { useUpdateAlertStatus, useAlertDetail } from '../../hooks/useAlerts'
+import { useAlertDeliveries } from '../../hooks/useAlertDeliveries'
+import DeliveryStatusList from '../detection/DeliveryStatusList'
 import { formatAgo } from '../../utils/format'
 import { Link2, ShieldAlert, TrendingDown, TrendingUp, Minus, X } from 'lucide-react'
 import { useAgents } from '../../hooks/useAgents'
+import { useAlertDetail, useUpdateAlertStatus } from '../../hooks/useAlerts'
 
 interface AlertDrawerProps {
   alert: AlertSummary
@@ -307,6 +309,7 @@ function OnlineDetectionsDetail({ payload }: { payload: Record<string, unknown> 
 export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
   const updateStatus = useUpdateAlertStatus()
   const { data: detail } = useAlertDetail(alert.alertId)
+  const { data: deliveryData, isLoading: deliveriesLoading } = useAlertDeliveries(alert.alertId)
   const { data: agentsData } = useAgents()
   const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
 
@@ -326,6 +329,8 @@ export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
     { label: 'Triggered',  value: formatAgo(alert.triggeredAt) },
     { label: 'Resolved',   value: alert.resolvedAt ? formatAgo(alert.resolvedAt) : '—' },
   ]
+
+
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -348,6 +353,7 @@ export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
           </div>
         ))}
       </div>
+      {deliveryData && <DeliveryStatusList deliveries={deliveryData.deliveries} loading={deliveriesLoading} />}
 
       {isSecurityAlert && detail && (
         <SecurityDetail payload={detail.payload} />

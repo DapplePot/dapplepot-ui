@@ -1,4 +1,4 @@
-import type { AlertSummary, AlertDetail, AlertStats } from '@dapplepot/types/alert'
+import type { AlertSummary, AlertDetail, AlertStats, AlertDelivery } from '@dapplepot/types/alert'
 import type { Paginated, AlertListParams } from '@dapplepot/types/common'
 import { apiClient } from './client'
 
@@ -8,6 +8,10 @@ export async function getAlerts(
   return apiClient
     .get('v1/alerts', { searchParams: params as Record<string, string | number> })
     .json()
+}
+
+export async function getAlertDeliveries(alertId: string): Promise<{ deliveries: AlertDelivery[] }> {
+  return apiClient.get(`v1/alerts/${alertId}/deliveries`).json()
 }
 
 export async function getAlertDetail(alertId: string): Promise<AlertDetail> {

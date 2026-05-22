@@ -17,3 +17,7 @@ export async function updateChannel(
 ): Promise<DeliveryChannel> {
   return apiClient.put(`v1/channels/${channelId}`, { json: data }).json()
 }
+
+export async function deleteChannel(channelId: string): Promise<void> {
+  return apiClient.delete(`v1/channels/${channelId}`).json()
+}

@@ -37,3 +37,13 @@ export function useUpdateChannel() {
     },
   })
 }
+
+export function useDeleteChannel() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (channelId: string) => channelsApi.deleteChannel(channelId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['channels'] })
+    },
+  })
+}

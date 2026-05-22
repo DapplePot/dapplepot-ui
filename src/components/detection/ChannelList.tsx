@@ -1,14 +1,19 @@
+import React, { useState } from 'react'
 import type { DeliveryChannel } from '@dapplepot/types/channel'
 import { Toggle } from '../ui/toggle'
 import { Badge } from '../ui/badge'
 import { Skeleton } from '../ui/skeleton'
 import { useUpdateChannel } from '../../hooks/useChannels'
-import { Webhook, MessageSquare, Bell } from 'lucide-react'
+import { Webhook, MessageSquare, Bell, Mail, Smartphone, Users, Settings } from 'lucide-react'
+import { ChannelFormModal } from './ChannelFormModal'
 
 const CHANNEL_ICONS: Record<string, React.ElementType> = {
   webhook:    Webhook,
   slack:      MessageSquare,
   pagerduty:  Bell,
+  msteams:    Users,
+  email:      Mail,
+  mobile:     Smartphone,
 }
 
 interface ChannelListProps {
@@ -17,6 +22,8 @@ interface ChannelListProps {
 
 export function ChannelList({ channels }: ChannelListProps) {
   const updateChannel = useUpdateChannel()
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingChannel, setEditingChannel] = useState<DeliveryChannel | null>(null)
 
   return (
     <div className="space-y-3">
@@ -47,6 +54,16 @@ export function ChannelList({ channels }: ChannelListProps) {
               }
               aria-label={`Toggle ${channel.name}`}
             />
+            <button
+              onClick={() => {
+                setEditingChannel(channel)
+                setIsModalOpen(true)
+              }}
+              className="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors"
+              aria-label={`Edit ${channel.name}`}
+            >
+              <Settings className="h-4 w-4" />
+            </button>
           </div>
         )
       })}
@@ -58,12 +75,28 @@ export function ChannelList({ channels }: ChannelListProps) {
         </p>
       </div>
 
-      <button className="text-sm text-violet-600 hover:underline dark:text-violet-400">
+      <button 
+        className="text-sm text-violet-600 hover:underline dark:text-violet-400"
+        onClick={() => {
+          setEditingChannel(null)
+          setIsModalOpen(true)
+        }}
+      >
         + Add channel
       </button>
 
       {channels.length === 0 && (
         <p className="text-center text-sm text-slate-400 py-4 dark:text-zinc-500">No channels configured</p>
+      )}
+
+      {isModalOpen && (
+        <ChannelFormModal 
+          onClose={() => {
+            setIsModalOpen(false)
+            setEditingChannel(null)
+          }} 
+          initialData={editingChannel || undefined}
+        />
       )}
     </div>
   )
