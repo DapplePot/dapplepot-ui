@@ -542,15 +542,57 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     number: 3,
     description: 'Agent impersonates other agents or users, reuses cached credentials, requests scopes beyond its role, or delegates with full permissions.',
     subChecks: [
-      { subCheckId: 'IPA-01a', label: 'Agent requests scope beyond role definition', phase: 'post_session', score: 80, severity: 'high', confidenceTier: 'high', excluded: false },
-      { subCheckId: 'IPA-01b', label: 'Agent uses credentials of another agent', phase: 'post_session', score: 95, severity: 'critical', confidenceTier: 'high', excluded: false },
-      { subCheckId: 'IPA-01c', label: 'Agent impersonates human identity', phase: 'post_session', score: 95, severity: 'critical', confidenceTier: 'high', excluded: false },
-      { subCheckId: 'IPA-02a', label: 'Delegation with full permissions', phase: 'post_session', score: 80, severity: 'high', confidenceTier: 'high', excluded: false },
-      { subCheckId: 'IPA-02b', label: 'Credential cached in shared memory namespace', phase: 'post_session', score: 85, severity: 'high', confidenceTier: 'high', excluded: false },
+      {
+        subCheckId: 'IPA-01a', label: 'Agent requests scope beyond role definition', phase: 'post_session', score: 80, severity: 'high', confidenceTier: 'high', excluded: false,
+        matches: [
+          'tool name: admin · sudo · su · impersonate · elevate · assume_role · switch_user · become · run_as · escalate · grant_access · set_permissions',
+          'payload: GRANT … ON · ALTER ROLE · CREATE ROLE · AssumeRole · AttachRolePolicy · setIamPolicy · set*iam · create*access-key · cluster-admin · ClusterRoleBinding · sp_addrolemember',
+        ],
+      },
+      {
+        subCheckId: 'IPA-01b', label: 'Agent uses credentials of another agent', phase: 'post_session', score: 95, severity: 'critical', confidenceTier: 'high', excluded: false,
+        matches: [
+          'payload (agent attribution): source_agent · credential_owner · issued_to · agent_ref · owned_by · credential_source — field present alongside a credential in any tool call',
+          'payload (delegation forwarding): delegation tool (delegate · dispatch · invoke_agent · call_agent · forward) passes a credential to a named target agent (agent_id · target · target_agent · destination · agent · handler) differing from the session agent',
+        ],
+      },
+      {
+        subCheckId: 'IPA-01c', label: 'Agent impersonates human identity', phase: 'post_session', score: 95, severity: 'critical', confidenceTier: 'high', excluded: false,
+        matches: [
+          'payload (identity claim): "I\'m not an AI" · "I am a human" · "I\'m a real person" · "as a colleague" · "as a team member" · "This is [First Last]" · "My name is [First]"',
+          'tool name + payload (sender field): send_email · send_message · post_message · post_comment · reply_to · create_ticket · submit_form · slack_message · chat_send · dm_user · notify_user · compose_email — with human "First Last" name in from · sender · author · reporter · submitted_by · created_by · on_behalf_of · signed_by',
+        ],
+      },
+      {
+        subCheckId: 'IPA-02a', label: 'Delegation with full permissions', phase: 'post_session', score: 80, severity: 'high', confidenceTier: 'high', excluded: false,
+        matches: [
+          'tool name: delegate · dispatch · invoke_agent · call_agent · forward',
+          'payload: * (wildcard) · admin · all permissions · all permission · full access — in any field of the serialised tool_input',
+        ],
+      },
+      {
+        subCheckId: 'IPA-02b', label: 'Credential cached in shared memory namespace', phase: 'post_session', score: 85, severity: 'high', confidenceTier: 'high', excluded: false,
+        matches: [
+          'tool name + payload: memory_write · kv_set · cache_set · shared_store · redis_set · set_context · save_context · store_memory · write_memory · put_memory · write_shared · set_shared · shared_write · context_store — with a credential in tool_input and no agent_id / session_id scoping in the key',
+          'payload (shared namespace field): any tool where namespace · key · path · scope · bucket · collection contains shared · global · common · public · cross_agent · multi_agent · org_wide · team_wide · broadcast alongside a credential',
+        ],
+      },
       { subCheckId: 'IPA-03a', label: 'Cached credential reuse', phase: 'post_session', score: 85, severity: 'critical', confidenceTier: 'high', excluded: false },
-      { subCheckId: 'IPA-03b', label: 'Agent presents as different agent', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false },
+      {
+        subCheckId: 'IPA-03b', label: 'Agent presents as different agent', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false,
+        matches: [
+          'payload (identity field): agent_id · agent_name · from_agent · caller_agent · x_agent_id — field present in tool_input with a value that differs from the session agent_id',
+          'payload (assertion field): sender_agent · acting_as · identity · impersonate_agent · presenting_as · agent_identity — field value contains an agent/bot/service/system/pipeline marker and differs from the session agent_id',
+        ],
+      },
       { subCheckId: 'IPA-04a', label: 'Stale authorization in long session', phase: 'post_session', score: 65, severity: 'medium', confidenceTier: 'medium', excluded: false },
-      { subCheckId: 'IPA-05a', label: 'Identity sharing across users', phase: 'cross_session', score: 75, severity: 'high', confidenceTier: 'high', excluded: false },
+      {
+        subCheckId: 'IPA-05a', label: 'Identity sharing across users', phase: 'cross_session', score: 75, severity: 'high', confidenceTier: 'high', excluded: false,
+        matches: [
+          'cross-session: same credential hash (MD5 of keyword=value match) appears in tool_start events from a different user_context_id for the same agent within the last 7 days',
+          'credential pattern: password · token · secret · api_key · ssh_key · bearer — followed by := and a non-whitespace value',
+        ],
+      },
     ],
   },
 
@@ -561,9 +603,27 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     number: 4,
     description: 'MCP server endpoint/TLS/schema anomalies, poisoned descriptors, packages outside approved SBOM, and unknown package installs.',
     subChecks: [
-      { subCheckId: 'ASCV-01a', label: 'MCP server endpoint URL changed', phase: 'post_session', score: 85, severity: 'high', confidenceTier: 'medium', excluded: false },
-      { subCheckId: 'ASCV-01b', label: 'MCP server TLS cert anomaly', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false },
-      { subCheckId: 'ASCV-01c', label: 'MCP tool schema changed without version bump', phase: 'post_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false },
+      {
+        subCheckId: 'ASCV-01a', label: 'MCP server endpoint URL changed', phase: 'post_session', score: 85, severity: 'high', confidenceTier: 'medium', excluded: false,
+        matches: [
+          'tool_input field: mcp_server_url — present inside tool_input and does not prefix-match any URL declared in the agent\'s MCP endpoints list',
+          'requires declaration: check is blind (returns no finding) when no MCP endpoints are configured in the agent profile',
+        ],
+      },
+      {
+        subCheckId: 'ASCV-01b', label: 'MCP server TLS cert anomaly', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false,
+        matches: [
+          'tool_error event: error_message (or error) matches ssl · tls · certificate · x509 · handshake · verify failed · unknown ca · untrusted · self-signed · cert expired — TLS hard failure; only fires when tool_input.mcp_server_url prefix-matches a declared endpoint',
+          'tool_start event: tool_input contains verify · ssl_verify · tls_verify · verify_ssl · tls_skip_verify · insecure_skip_verify · check_hostname · disable_ssl set to false/0/skip/disable alongside mcp_server_url on a declared endpoint — TLS verification explicitly bypassed',
+        ],
+      },
+      {
+        subCheckId: 'ASCV-01c', label: 'MCP tool schema changed without version bump', phase: 'cross_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false,
+        matches: [
+          'cross-session: llm_start payload["tools"] — each tool\'s name + description + input_schema (or inputSchema) SHA-256 hashed (sorted keys) and compared against baseline in mcp_tool_schema_baselines per (tenant, agent, tool_name)',
+          'fires when schema hash changed AND no version bump detected — version checked via tool.version field first, then version-like token (v1, 2.0, etc.) extracted from description; if version changed alongside schema the tool is suppressed as a declared update',
+        ],
+      },
       {
         subCheckId: 'ASCV-02a', label: 'MCP descriptor poisoning', phase: 'both', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false,

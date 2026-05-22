@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getTools, createTool, updateToolSchema } from '../api/tools'
-import type { CreateToolRequest } from '../api/tools'
+import { getTools, createTool, updateTool, updateToolSchema, deleteTool } from '../api/tools'
+import type { CreateToolRequest, UpdateToolRequest } from '../api/tools'
 
 export function useTools() {
   return useQuery({
@@ -14,6 +14,22 @@ export function useCreateTool() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateToolRequest) => createTool(body),
+    onSuccess:  () => void qc.invalidateQueries({ queryKey: ['tools'] }),
+  })
+}
+
+export function useUpdateTool(toolId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: UpdateToolRequest) => updateTool(toolId, body),
+    onSuccess:  () => void qc.invalidateQueries({ queryKey: ['tools'] }),
+  })
+}
+
+export function useDeleteTool() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (toolId: string) => deleteTool(toolId),
     onSuccess:  () => void qc.invalidateQueries({ queryKey: ['tools'] }),
   })
 }

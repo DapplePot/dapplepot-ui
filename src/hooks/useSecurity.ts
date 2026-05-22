@@ -9,6 +9,7 @@ const _emptyAlertConfig = (): securityApi.AgentAlertConfig => ({
   asi_composite_threshold: null,
   signal_thresholds: {},
   tool_manifest: [],
+  privilege_scope: [],
   max_tool_calls_per_session: null,
   system_prompt: null,
   environment: null,
@@ -236,6 +237,58 @@ export function useToggleSubcheckOnline(agentId: string) {
           ...old,
           [subCheckId]: { online_detection, action },
         }),
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      queryClient.setQueryData(key, ctx?.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key })
+    },
+  })
+}
+
+// Mutation: update privilege scope (subset of manifest authorized for privilege ops)
+export function useUpdatePrivilegeScope(agentId: string) {
+  const queryClient = useQueryClient()
+  const key = ['security', 'agent', agentId, 'alert-config']
+  return useMutation({
+    mutationFn: (privilege_scope: string[]) =>
+      securityApi.updatePrivilegeScope(agentId, privilege_scope),
+    onMutate: async (privilege_scope) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const prev = queryClient.getQueryData<securityApi.AgentAlertConfig>(key)
+      queryClient.setQueryData(key, (old: securityApi.AgentAlertConfig | undefined) =>
+        old ? { ...old, privilege_scope } : { ..._emptyAlertConfig(), privilege_scope }
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      queryClient.setQueryData(key, ctx?.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key })
+    },
+  })
+}
+
+// Mutation: update tool_manifest + privilege_scope atomically in one request.
+// Use this whenever both change together (add-with-privilege, remove-tool) to
+// prevent the race where mutation-1's onSettled refetch overwrites mutation-2's
+// optimistic update before it reaches the server.
+export function useUpdateToolScope(agentId: string) {
+  const queryClient = useQueryClient()
+  const key = ['security', 'agent', agentId, 'alert-config']
+  return useMutation({
+    mutationFn: ({ tool_manifest, privilege_scope }: { tool_manifest: string[]; privilege_scope: string[] }) =>
+      securityApi.updateToolScope(agentId, tool_manifest, privilege_scope),
+    onMutate: async ({ tool_manifest, privilege_scope }) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const prev = queryClient.getQueryData<securityApi.AgentAlertConfig>(key)
+      queryClient.setQueryData(key, (old: securityApi.AgentAlertConfig | undefined) =>
+        old ? { ...old, tool_manifest, privilege_scope }
+            : { ..._emptyAlertConfig(), tool_manifest, privilege_scope }
       )
       return { prev }
     },

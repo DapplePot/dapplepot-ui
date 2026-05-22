@@ -3,13 +3,15 @@ import { useSearch } from '@tanstack/react-router'
 import { AgentTable } from '../components/agents/AgentTable'
 import { LlmTable } from '../components/inventory/LlmTable'
 import { ToolTable } from '../components/inventory/ToolTable'
+import { McpServerTable } from '../components/inventory/McpServerTable'
 
-type Tab = 'agents' | 'llms' | 'tools'
+type Tab = 'agents' | 'llms' | 'tools' | 'mcp-servers'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'agents', label: 'Agents' },
-  { id: 'llms',   label: 'LLMs'   },
-  { id: 'tools',  label: 'Tools'  },
+  { id: 'agents',      label: 'Agents'      },
+  { id: 'llms',        label: 'LLMs'        },
+  { id: 'tools',       label: 'Tools'       },
+  { id: 'mcp-servers', label: 'MCP Servers' },
 ]
 
 export function Inventory() {
@@ -38,9 +40,10 @@ export function Inventory() {
         ))}
       </div>
 
-      {tab === 'agents' && <AgentTable />}
-      {tab === 'llms'   && <LlmTable />}
-      {tab === 'tools'  && <ToolTable />}
+      {tab === 'agents'      && <AgentTable />}
+      {tab === 'llms'        && <LlmTable />}
+      {tab === 'tools'       && <ToolTable />}
+      {tab === 'mcp-servers' && <McpServerTable />}
     </div>
   )
 }
