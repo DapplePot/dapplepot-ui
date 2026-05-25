@@ -9,16 +9,17 @@ import type { ChannelType, DeliveryChannel } from '@dapplepot/types/channel'
 interface ChannelFormModalProps {
   onClose: () => void
   initialData?: DeliveryChannel
+  initialChannelType?: ChannelType
 }
 
-export function ChannelFormModal({ onClose, initialData }: ChannelFormModalProps) {
+export function ChannelFormModal({ onClose, initialData, initialChannelType }: ChannelFormModalProps) {
   const createChannel = useCreateChannel()
   const updateChannel = useUpdateChannel()
   const deleteChannel = useDeleteChannel()
   
   const isEditing = !!initialData
   const [name, setName] = useState(initialData?.name || '')
-  const [channelType, setChannelType] = useState<ChannelType>(initialData?.channelType || 'slack')
+  const [channelType, setChannelType] = useState<ChannelType>(initialData?.channelType || initialChannelType || 'slack')
   const [config, setConfig] = useState<Record<string, string>>((initialData?.config as unknown as Record<string, string>) || {})
 
   const handleConfigChange = (key: string, value: string) => {
@@ -101,10 +102,7 @@ export function ChannelFormModal({ onClose, initialData }: ChannelFormModalProps
             >
               <option value="slack">Slack</option>
               <option value="msteams">Microsoft Teams</option>
-              <option value="email">Email</option>
-              <option value="mobile">SMS (Mobile)</option>
               <option value="webhook">Custom Webhook</option>
-              <option value="pagerduty">PagerDuty</option>
             </Select>
           </div>
 
