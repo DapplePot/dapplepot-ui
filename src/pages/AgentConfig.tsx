@@ -1818,9 +1818,10 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
   const [workingDirDraft,   setWorkingDirDraft]   = useState('')
   const [writeNSDraft,      setWriteNSDraft]      = useState('')
 
-  const [activeDays, setActiveDays] = useState<string[]>(['Mon','Tue','Wed','Thu','Fri'])
-  const [hoursFrom,  setHoursFrom]  = useState('09:00')
-  const [hoursTo,    setHoursTo]    = useState('18:00')
+  const [activeDays,    setActiveDays]    = useState<string[]>([])
+  const [hoursFrom,     setHoursFrom]     = useState('09:00')
+  const [hoursTo,       setHoursTo]       = useState('18:00')
+  const [daysEdited,    setDaysEdited]    = useState(false)
 
   useEffect(() => {
     if (!alertConfig) return
@@ -1832,6 +1833,7 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
       setHoursFrom(alertConfig.operating_hours.from)
       setHoursTo(alertConfig.operating_hours.to)
     }
+    setDaysEdited(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alertConfig?.system_prompt, alertConfig?.working_directory,
       alertConfig?.write_namespace, alertConfig?.operating_hours])
@@ -2269,11 +2271,12 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
               <div className="flex flex-wrap gap-1.5">
                 {DAYS.map(day => (
                   <button key={day} type="button"
-                    onClick={() => setActiveDays(
-                      activeDays.includes(day) ? activeDays.filter(d => d !== day) : [...activeDays, day]
-                    )}
+                    onClick={() => {
+                      setDaysEdited(true)
+                      setActiveDays(activeDays.includes(day) ? activeDays.filter(d => d !== day) : [...activeDays, day])
+                    }}
                     className={`rounded border px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer hover:opacity-80 ${
-                      activeDays.includes(day)
+                      (alertConfig?.operating_hours != null || daysEdited) && activeDays.includes(day)
                         ? 'border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400'
                         : 'border-slate-200 bg-white text-slate-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500'
                     }`}
