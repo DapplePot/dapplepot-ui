@@ -35,14 +35,8 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
       finalConfig = { url: config.url, secret: config.secret }
     } else if (channelType === 'slack') {
       finalConfig = { webhookUrl: config.webhookUrl, channel: config.channel }
-    } else if (channelType === 'pagerduty') {
-      finalConfig = { integrationKey: config.integrationKey, severity: config.severity || 'error' }
     } else if (channelType === 'msteams') {
       finalConfig = { webhookUrl: config.webhookUrl }
-    } else if (channelType === 'email') {
-      finalConfig = { emailAddress: config.emailAddress }
-    } else if (channelType === 'mobile') {
-      finalConfig = { phoneNumber: config.phoneNumber }
     }
 
     if (isEditing && initialData) {
@@ -127,20 +121,6 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
               </div>
             )}
 
-            {channelType === 'email' && (
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Email Address</label>
-                <Input required type="email" value={config.emailAddress || ''} onChange={(e) => handleConfigChange('emailAddress', e.target.value)} placeholder="security@company.com" />
-              </div>
-            )}
-
-            {channelType === 'mobile' && (
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Phone Number (SMS)</label>
-                <Input required type="tel" value={config.phoneNumber || ''} onChange={(e) => handleConfigChange('phoneNumber', e.target.value)} placeholder="+1234567890" />
-              </div>
-            )}
-
             {channelType === 'webhook' && (
               <>
                 <div className="space-y-1.5">
@@ -150,24 +130,6 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Secret (optional)</label>
                   <Input type="password" value={config.secret || ''} onChange={(e) => handleConfigChange('secret', e.target.value)} placeholder="Signature secret" />
-                </div>
-              </>
-            )}
-
-            {channelType === 'pagerduty' && (
-              <>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Integration Key</label>
-                  <Input required value={config.integrationKey || ''} onChange={(e) => handleConfigChange('integrationKey', e.target.value)} placeholder="Events API v2 Routing Key" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Severity</label>
-                  <Select value={config.severity || 'error'} onChange={(e) => handleConfigChange('severity', e.target.value)}>
-                    <option value="critical">Critical</option>
-                    <option value="error">Error</option>
-                    <option value="warning">Warning</option>
-                    <option value="info">Info</option>
-                  </Select>
                 </div>
               </>
             )}

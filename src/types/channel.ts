@@ -1,4 +1,4 @@
-export type ChannelType = 'webhook' | 'slack' | 'pagerduty' | 'msteams' | 'email' | 'mobile'
+export type ChannelType = 'webhook' | 'slack' | 'msteams'
 
 export interface WebhookConfig {
   url: string
@@ -15,20 +15,7 @@ export interface MsteamsConfig {
   webhookUrl: string
 }
 
-export interface EmailConfig {
-  emailAddress: string
-}
-
-export interface MobileConfig {
-  phoneNumber: string
-}
-
-export interface PagerdutyConfig {
-  integrationKey: string
-  severity?: 'critical' | 'error' | 'warning' | 'info'
-}
-
-export type ChannelConfig = WebhookConfig | SlackConfig | PagerdutyConfig | MsteamsConfig | EmailConfig | MobileConfig
+export type ChannelConfig = WebhookConfig | SlackConfig | MsteamsConfig
 
 export interface DeliveryChannel {
   channelId: string
