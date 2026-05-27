@@ -108,12 +108,13 @@ export interface AgentAlertConfig {
   mcp_endpoints:               string[] | null
   connected_llms:              string[] | null  // null = no models declared (EA-04a blind)
   connected_agents:            string[] | null  // null = no agents declared (IAC-05a blind)
+  token_budget_usd:            number | null    // null = no budget cap (UBC-02b blind)
 }
 
 export type AgentProfilePatch = Partial<Pick<AgentAlertConfig,
   | 'system_prompt' | 'environment' | 'irreversible_tools' | 'network_allowlist'
   | 'working_directory' | 'write_namespace' | 'operating_hours' | 'sbom_allowlist'
-  | 'mcp_endpoints'
+  | 'mcp_endpoints' | 'token_budget_usd'
 >>
 
 export const PLATFORM_COMPOSITE_DEFAULT = 60

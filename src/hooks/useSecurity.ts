@@ -22,6 +22,7 @@ const _emptyAlertConfig = (): securityApi.AgentAlertConfig => ({
   mcp_endpoints: null,
   connected_llms: null,
   connected_agents: null,
+  token_budget_usd: null,
 })
 
 // Tenant-level security overview — refreshes every 2 minutes
@@ -365,6 +366,31 @@ export function useUpdateAgentProfile(agentId: string) {
       const prev = queryClient.getQueryData<securityApi.AgentAlertConfig>(key)
       queryClient.setQueryData(key, (old: securityApi.AgentAlertConfig | undefined) =>
         old ? { ...old, ...patch } : { ..._emptyAlertConfig(), ...patch }
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      queryClient.setQueryData(key, ctx?.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key })
+    },
+  })
+}
+
+// Mutation: update token budget cap in USD (null = remove override, UBC-02b becomes blind)
+export function useUpdateTokenBudget(agentId: string) {
+  const queryClient = useQueryClient()
+  const key = ['security', 'agent', agentId, 'alert-config']
+  return useMutation({
+    mutationFn: (token_budget_usd: number | null) =>
+      securityApi.updateAgentProfile(agentId, { token_budget_usd }),
+    onMutate: async (token_budget_usd) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const prev = queryClient.getQueryData<securityApi.AgentAlertConfig>(key)
+      queryClient.setQueryData(key, (old: securityApi.AgentAlertConfig | undefined) =>
+        old ? { ...old, token_budget_usd }
+            : { ..._emptyAlertConfig(), token_budget_usd }
       )
       return { prev }
     },

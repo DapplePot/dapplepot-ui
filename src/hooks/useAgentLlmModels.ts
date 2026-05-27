@@ -15,6 +15,7 @@ export function useAgentLlmModels(agentId: string) {
     queryKey: ['agent-llm-models', agentId],
     queryFn:  () => getAgentLlmModels(agentId),
     staleTime: 30_000,
+    enabled:  !!agentId,
   })
 }
 

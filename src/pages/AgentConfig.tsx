@@ -7,6 +7,7 @@ import {
   useUpdateSignalThreshold,
   useUpdateToolManifest, useUpdateMaxToolCalls, useToolCallBaseline,
   useUpdateAgentProfile, useUpdatePrivilegeScope, useUpdateToolScope,
+  useUpdateTokenBudget,
 } from '../hooks/useSecurity'
 import { useAgentLlmModels, useSetAgentLlmModels } from '../hooks/useAgentLlmModels'
 import { useLlmModels } from '../hooks/useLlmModels'
@@ -713,6 +714,8 @@ const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
   'EA-02a':  'profile-irreversible-tools', 'TME-03a': 'profile-irreversible-tools',
   'EA-03a':  'profile-working-directory',
   'EA-03b':  'profile-network-allowlist',
+  'UBC-01b': 'profile-connected-llms',
+  'UBC-02b': 'profile-token-budget',
   'EA-04a':  'profile-connected-llms',
   'IAC-05a': 'profile-connected-agents',
   'RA-01b':  'profile-operating-hours',
@@ -734,6 +737,8 @@ const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
   'EA-02a':  'irreversible_tools', 'TME-03a': 'irreversible_tools',
   'EA-03a':  'working_directory',
   'EA-03b':  'network_allowlist',
+  'UBC-01b': 'connected_llms',
+  'UBC-02b': 'token_budget_usd',
   'EA-04a':  'connected_llms',
   'IAC-05a': 'connected_agents',
   'RA-01b':  'operating_hours',
@@ -756,6 +761,8 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'TME-03a': 'no tool list declared — name-pattern heuristic active',
   'EA-03a':  'no working directory declared — check disabled',
   'EA-03b':  'no host allowlist declared — check disabled',
+  'UBC-01b': 'no models declared — context window check disabled; connect models with declared context window sizes under Connected LLMs in Agent Profile',
+  'UBC-02b': 'no token budget set — UBC-02b is blind; set a USD budget cap under Token Budget in Agent Profile to fire when session cost exceeds it',
   'EA-04a':  'no models declared — check disabled; map models under Connected LLMs in Agent Config',
   'IAC-05a': 'no connected agents declared — IAC-05a is blind; declare permitted sub-agents under Connected Agents in Agent Profile',
   'RA-01b':  'no schedule declared — check disabled',
@@ -768,6 +775,11 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
 // Per-subcheck manual description formatters. Used instead of the raw profile
 // value when the configured limit needs context to be meaningful.
 const SUBCHECK_MANUAL_DESC: Partial<Record<string, (value: unknown) => string>> = {
+  'UBC-01b': (v) => {
+    const count = Array.isArray(v) ? v.length : 0
+    return `${count} model${count !== 1 ? 's' : ''} connected — fires when input tokens ≥ 85% of declared context window. Still blind for models used in a session that are not declared here.`
+  },
+  'UBC-02b': (v) => `budget cap $${Number(v).toFixed(2)} USD — fires when session token cost exceeds this limit. Cost of LLMs not connected to this agent will not be counted.`,
   'TME-01b': (v) => `cap set to ${v} — fires when session count exceeds 3 × ${v} = ${Number(v) * 3} calls`,
   'TME-03b': (v) => v === 'production'
     ? 'production — TME-03b suppressed, this agent is authorised to target production endpoints and no findings will be generated'
@@ -1421,7 +1433,7 @@ const SUBCHECK_SIGNAL: Record<string, string> = {
   'ASCV-01a': 'OW-ASI04', 'ASCV-01b': 'OW-ASI04', 'ASCV-01c': 'OW-ASI04',
   'ASCV-02a': 'OW-ASI04', 'ASCV-02b': 'OW-ASI04', 'ASCV-04a': 'OW-ASI04',
   'UBC-01a': 'OW-LLM10', 'UBC-01b': 'OW-LLM10',
-  'UBC-02a': 'OW-LLM10',
+  'UBC-02a': 'OW-LLM10', 'UBC-02b': 'OW-LLM10',
   'UBC-05a': 'OW-LLM10',
   'EA-04a':  'OW-LLM06',
   'IAC-05a': 'OW-ASI07',
@@ -1516,12 +1528,24 @@ function ProfileRow({ label, subChecks, tooltip, id, status, statusNode, autoDes
 
 // ── Connected LLMs section ────────────────────────────────────────────────────
 
-function ConnectedLlmsSection({ agentId, isAdmin }: { agentId: string; isAdmin: boolean }) {
+function ConnectedLlmsSection({ agentId, isAdmin, scrollTo }: { agentId: string; isAdmin: boolean; scrollTo?: string }) {
   const { data: mapped = [], isLoading } = useAgentLlmModels(agentId)
   const { data: allModels = [] }         = useLlmModels()
   const setModels                        = useSetAgentLlmModels(agentId)
+  const { data: alertConfig }            = useAlertConfig(agentId)
+  const updateTokenBudget                = useUpdateTokenBudget(agentId)
   const [open, setOpen]                  = useState(false)
   const [addValue, setAddValue]          = useState('')
+  const [budgetDraft, setBudgetDraft]    = useState('')
+
+  useEffect(() => {
+    if (scrollTo === 'profile-token-budget') {
+      setOpen(true)
+      setTimeout(() => {
+        document.getElementById('profile-token-budget')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 120)
+    }
+  }, [scrollTo])
 
   const mappedIds = new Set(mapped.map(m => m.modelId))
   const available = allModels.filter(m => !mappedIds.has(m.modelId))
@@ -1612,6 +1636,46 @@ function ConnectedLlmsSection({ agentId, isAdmin }: { agentId: string; isAdmin: 
             {mapped.length === 0 && !isAdmin && (
               <span className="text-xs text-slate-400 dark:text-zinc-500">No models connected.</span>
             )}
+          </div>
+        )}
+      </ProfileRow>
+
+      <ProfileRow
+        id="profile-token-budget"
+        label="Token budget cap"
+        subChecks={['UBC-02b']}
+        tooltip="Set a per-session USD spend limit. UBC-02b fires when total token cost for a session exceeds this cap. Requires Connected LLMs to have input/output cost rates set in Inventory."
+        status={alertConfig?.token_budget_usd != null ? 'manual' : 'blind'}
+        autoDesc="No budget cap set — UBC-02b is blind. Set a USD limit to detect sessions that exceed expected token cost."
+        manualDesc={alertConfig?.token_budget_usd != null ? `Budget cap $${alertConfig.token_budget_usd.toFixed(2)} USD — UBC-02b fires when session token cost exceeds this limit. Cost of LLMs not connected to this agent will not be counted.` : ''}
+        how="UBC-02b multiplies each model's input and output token counts by the per-1k rates declared in Inventory → LLM Models, sums across all LLM calls in the session, and fires when the total exceeds this cap. Without cost rates for a model, those tokens contribute $0 to the total — so Connected LLMs with declared pricing are required for full coverage."
+        onReset={isAdmin ? () => updateTokenBudget.mutate(null) : undefined}
+      >
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-400 dark:text-zinc-500">$</span>
+            <input
+              type="number"
+              min={0.01}
+              step={0.01}
+              value={budgetDraft}
+              onChange={e => setBudgetDraft(e.target.value)}
+              onBlur={() => {
+                const n = parseFloat(budgetDraft)
+                if (!isNaN(n) && n > 0) { updateTokenBudget.mutate(n); setBudgetDraft('') }
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const n = parseFloat(budgetDraft)
+                  if (!isNaN(n) && n > 0) { updateTokenBudget.mutate(n); setBudgetDraft('') }
+                }
+              }}
+              placeholder={alertConfig?.token_budget_usd != null
+                ? String(alertConfig.token_budget_usd.toFixed(2))
+                : 'e.g. 0.50'}
+              className="w-40 rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 placeholder-slate-400 focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder-zinc-500"
+            />
+            <span className="text-[11px] text-slate-400 dark:text-zinc-500">USD per session</span>
           </div>
         )}
       </ProfileRow>
@@ -1893,7 +1957,7 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
       )}
 
       {/* ════════ SECTION 0a — Connected LLMs ════════ */}
-      <ConnectedLlmsSection agentId={agentId} isAdmin={isAdmin} />
+      <ConnectedLlmsSection agentId={agentId} isAdmin={isAdmin} scrollTo={scrollTo} />
 
       {/* ════════ SECTION 0b — Connected Agents ════════ */}
       <ConnectedAgentsSection agentId={agentId} isAdmin={isAdmin} scrollTo={scrollTo} />

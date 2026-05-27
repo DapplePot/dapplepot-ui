@@ -460,9 +460,9 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     description: 'Token count, cost, or request-rate attacks. Includes context-window stuffing, denial-of-wallet, and cross-session probe patterns.',
     subChecks: [
       { subCheckId: 'UBC-01a', label: 'Single session token count > 4σ baseline', phase: 'post_session', score: 55, severity: 'medium', confidenceTier: 'medium', excluded: false },
-      { subCheckId: 'UBC-01b', label: 'Context window stuffing attack', phase: 'post_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false },
+      { subCheckId: 'UBC-01b', label: 'Context window stuffing attack', phase: 'post_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false, matches: ['input_tokens / context_window_tokens ≥ 0.85'] },
       { subCheckId: 'UBC-02a', label: 'Input size anomaly', phase: 'post_session', score: 50, severity: 'medium', confidenceTier: 'medium', excluded: false },
-      { subCheckId: 'UBC-02b', label: 'Session token cost > budget cap', phase: 'post_session', score: 80, severity: 'high', confidenceTier: 'high', excluded: false },
+      { subCheckId: 'UBC-02b', label: 'Session token cost > budget cap', phase: 'post_session', score: 80, severity: 'high', confidenceTier: 'high', excluded: false, matches: ['session_cost_usd > token_budget_usd'] },
       { subCheckId: 'UBC-03a', label: 'Request rate spike per user', phase: 'cross_session', score: 55, severity: 'medium', confidenceTier: 'medium', excluded: false },
       { subCheckId: 'UBC-04a', label: 'Cohort probe pattern detected', phase: 'post_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false },
       { subCheckId: 'UBC-05a', label: 'Cost spike (Denial of Wallet)', phase: 'cross_session', score: 60, severity: 'high', confidenceTier: 'medium', excluded: false },

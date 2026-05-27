@@ -26,7 +26,6 @@ export function SessionInfoTab({ session }: SessionInfoTabProps) {
     { label: 'Version',       value: session.agentVersion },
     { label: 'Environment',   value: session.environment },
     { label: 'Deployment',    value: session.deploymentId },
-    { label: 'User context',  value: session.userContextId },
     { label: 'Started',       value: session.startedAt ? formatAgo(session.startedAt) : '—' },
     { label: 'Ended',         value: session.endedAt ? formatAgo(session.endedAt) : '—' },
     { label: 'Duration',      value: session.durationMs != null ? formatDuration(session.durationMs) : '—' },

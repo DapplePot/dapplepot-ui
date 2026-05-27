@@ -28,7 +28,7 @@ export function TraceLayout({
   return (
     <div className="flex h-full flex-col gap-3">
       <TraceHeader session={session} alertCount={alerts.length} />
-      <MetricStrip session={session} />
+      <MetricStrip session={session} events={events} />
 
       <div className="flex flex-1 gap-4 overflow-hidden">
         <div className="flex w-3/5 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
