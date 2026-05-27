@@ -16,7 +16,7 @@ import { useAgents } from '../hooks/useAgents'
 import { useTools } from '../hooks/useTools'
 import { useMcpServers } from '../hooks/useMcpServers'
 import type { OnlineAction } from '../types/security'
-import { ChevronDown, ChevronRight, Shield, ShieldCheck, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Globe, Package, Clock, Cpu, Bot, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Shield, ShieldCheck, ShieldOff, Settings, Zap, HelpCircle, Copy, Check, Lock, Unlock, Globe, Package, Clock, Cpu, Bot, X } from 'lucide-react'
 import { useAuthStore } from '../stores/auth'
 import {
   SIGNAL_REGISTRY,
@@ -692,6 +692,7 @@ const SUBCHECK_HAS_HEURISTIC = new Set([
   'TME-03b',  // URL pattern detects prod endpoints (assumes staging when undeclared)
   'EA-01c',   // read-intent vs write-tool heuristic
   'EA-02a',   // tool-name pattern heuristic
+  'MIS-03a',  // HIGH_STAKES_TOOL_PATTERNS heuristic when no approval policy declared
   'TME-03a',  // tool-name pattern heuristic
   'TME-01a',  // pattern-matching fallback when no schema declared
   'IPA-01a',  // pattern-matching runs even without privilege_scope declared
@@ -711,6 +712,7 @@ const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
   'EA-02c':  'profile-system-prompt',
   'TME-03b': 'profile-environment',
   'EA-01c':  'profile-write-namespace',
+  'MIS-03a': 'profile-tool-manifest',
   'EA-02a':  'profile-irreversible-tools', 'TME-03a': 'profile-irreversible-tools',
   'EA-03a':  'profile-working-directory',
   'EA-03b':  'profile-network-allowlist',
@@ -734,6 +736,7 @@ const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
   'EA-02c':  'system_prompt',
   'TME-03b': 'environment',
   'EA-01c':  'write_namespace',
+  'MIS-03a': 'tool_approval_policy',
   'EA-02a':  'irreversible_tools', 'TME-03a': 'irreversible_tools',
   'EA-03a':  'working_directory',
   'EA-03b':  'network_allowlist',
@@ -757,6 +760,7 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'EA-02c':  'no system prompt declared — modification diff disabled',
   'TME-03b': 'no environment declared — treated as non-production, TME-03b active post-session',
   'EA-01c':  'no write namespace declared — read-intent heuristic active',
+  'MIS-03a': 'no approval policy declared — HIGH_STAKES_TOOL_PATTERNS heuristic active (payment · charge · transfer · purchase · buy · send_email · send_message · notify · deploy · publish). Any unlisted tool that runs without a node_start(human_review | hitl | approval_gate | checkpoint | …) gate fires this check.',
   'EA-02a':  'no tool list declared — name-pattern heuristic active',
   'TME-03a': 'no tool list declared — name-pattern heuristic active',
   'EA-03a':  'no working directory declared — check disabled',
@@ -775,6 +779,11 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
 // Per-subcheck manual description formatters. Used instead of the raw profile
 // value when the configured limit needs context to be meaningful.
 const SUBCHECK_MANUAL_DESC: Partial<Record<string, (value: unknown) => string>> = {
+  'MIS-03a': (v) => {
+    const policy = (v && typeof v === 'object' && !Array.isArray(v)) ? v as Record<string, string> : {}
+    const count = Object.keys(policy).length
+    return `${count} tool${count !== 1 ? 's' : ''} with explicit policy · any tool not in manifest → needs approval`
+  },
   'UBC-01b': (v) => {
     const count = Array.isArray(v) ? v.length : 0
     return `${count} model${count !== 1 ? 's' : ''} connected — fires when input tokens ≥ 85% of declared context window. Still blind for models used in a session that are not declared here.`
@@ -849,9 +858,18 @@ function SubCheckRow({
     : []
   const ipa01aPrivileged    = ipa01aManifest.filter(n => ipa01aPrivScope.includes(n))
   const ipa01aNotPrivileged = ipa01aManifest.filter(n => !ipa01aPrivScope.includes(n))
-  // Empty array counts as "not configured" (tool_manifest = [] means no manifest set)
+
+  // MIS-03a: split tool_approval_policy into needs_approval and always_allow
+  const mis03aPolicy: Record<string, string> =
+    check.subCheckId === 'MIS-03a' && profileValue && typeof profileValue === 'object' && !Array.isArray(profileValue)
+      ? profileValue as Record<string, string>
+      : {}
+  const mis03aHasPolicy = Object.keys(mis03aPolicy).length > 0
+
+  // Empty array or empty object counts as "not configured"
   const isManualProfile = profileValue !== null && profileValue !== undefined
     && !(Array.isArray(profileValue) && profileValue.length === 0)
+    && !(typeof profileValue === 'object' && !Array.isArray(profileValue) && Object.keys(profileValue as object).length === 0)
   const showPatternsBtn = !check.excluded && (!!hasMatches || hasProfileField)
 
   const effectivePhase: DetectionPhase =
@@ -957,7 +975,44 @@ function SubCheckRow({
         <tr className="bg-violet-50/40 border-b border-slate-100 dark:bg-violet-900/10 dark:border-zinc-800">
           <td colSpan={8} className="px-6 py-2 space-y-2">
             {hasProfileField && (
-              check.subCheckId === 'IPA-01a' && ipa01aManifest.length > 0 ? (
+              check.subCheckId === 'MIS-03a' ? (
+                <div className="space-y-1">
+                  {mis03aHasPolicy && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
+                        manual
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center gap-1">
+                        — see tool manifest ·
+                        <Unlock className="h-3 w-3 text-emerald-500 dark:text-emerald-400" />
+                        always allow ·
+                        <Lock className="h-3 w-3 text-amber-500 dark:text-amber-400" />
+                        needs approval
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-slate-200 bg-white text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                      auto
+                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                      {mis03aHasPolicy
+                        ? 'any tool not in manifest → MIS-03a requires a gate before it can run'
+                        : 'no policy declared — HIGH_STAKES_TOOL_PATTERNS heuristic active (payment · transfer · deploy · …)'}
+                    </span>
+                    {!mis03aHasPolicy && onGoToProfile && (
+                      <button
+                        type="button"
+                        onClick={() => onGoToProfile('profile-tool-manifest')}
+                        className="ml-auto shrink-0 inline-flex items-center gap-1 rounded border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-50 hover:border-violet-400 transition-colors dark:border-violet-800 dark:bg-zinc-800 dark:text-violet-400 dark:hover:bg-violet-900/30"
+                      >
+                        Set in Agent Profile
+                        <ChevronRight className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : check.subCheckId === 'IPA-01a' && ipa01aManifest.length > 0 ? (
                 <div className="space-y-1">
                   {ipa01aPrivileged.length > 0 && (
                     <div className="flex items-center gap-2">
@@ -1438,6 +1493,7 @@ const SUBCHECK_SIGNAL: Record<string, string> = {
   'EA-04a':  'OW-LLM06',
   'IAC-05a': 'OW-ASI07',
   'IPA-01a': 'OW-ASI03',
+  'MIS-03a': 'OW-LLM09',
 }
 
 
@@ -1827,9 +1883,14 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
   const [addValue,         setAddValue]         = useState('')
   const [pendingAdd,       setPendingAdd]        = useState<string | null>(null)
   const [pendingPrivilege, setPendingPrivilege]  = useState(false)
+  const [pendingApproval,  setPendingApproval]   = useState<'always_allow' | 'needs_approval'>('needs_approval')
 
-  const manifest: string[]      = Array.isArray(alertConfig?.tool_manifest)   ? alertConfig!.tool_manifest   : []
+  const manifest: string[]       = Array.isArray(alertConfig?.tool_manifest)   ? alertConfig!.tool_manifest   : []
   const privilegeScope: string[] = Array.isArray(alertConfig?.privilege_scope) ? alertConfig!.privilege_scope : []
+  const approvalPolicy: Record<string, 'always_allow' | 'needs_approval'> =
+    (alertConfig?.tool_approval_policy && typeof alertConfig.tool_approval_policy === 'object')
+      ? alertConfig.tool_approval_policy
+      : {}
 
   const { data: toolInventory } = useTools()
   const availableTools = (toolInventory ?? []).filter(t => !manifest.includes(t.name))
@@ -1843,16 +1904,26 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
     manifestSchemaCount === manifest.length ? 'manual' :
     'manual/auto'
 
-  function addFromInventory(name: string, isPrivileged: boolean) {
+  function addFromInventory(name: string, isPrivileged: boolean, approval: 'always_allow' | 'needs_approval') {
     setAddValue('')
     setPendingAdd(null)
     setPendingPrivilege(false)
+    setPendingApproval('needs_approval')
     if (!name || manifest.includes(name)) return
-    // Single combined request — avoids race where manifest refetch overwrites
-    // the privilege_scope optimistic update before it reaches the server.
     updateToolScope.mutate({
-      tool_manifest:   [...manifest, name],
-      privilege_scope: isPrivileged ? [...privilegeScope, name] : privilegeScope,
+      tool_manifest:        [...manifest, name],
+      privilege_scope:      isPrivileged ? [...privilegeScope, name] : privilegeScope,
+      tool_approval_policy: { ...approvalPolicy, [name]: approval },
+    })
+  }
+
+  function toggleApproval(name: string) {
+    const current = approvalPolicy[name] ?? 'needs_approval'
+    const next = current === 'always_allow' ? 'needs_approval' : 'always_allow'
+    updateToolScope.mutate({
+      tool_manifest:        manifest,
+      privilege_scope:      privilegeScope,
+      tool_approval_policy: { ...approvalPolicy, [name]: next },
     })
   }
 
@@ -1864,10 +1935,11 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
   }
 
   function removeTool(name: string) {
-    // Combined to keep manifest and privilege_scope consistent in one write.
+    const { [name]: _dropped, ...restPolicy } = approvalPolicy
     updateToolScope.mutate({
-      tool_manifest:   manifest.filter(x => x !== name),
-      privilege_scope: privilegeScope.filter(x => x !== name),
+      tool_manifest:        manifest.filter(x => x !== name),
+      privilege_scope:      privilegeScope.filter(x => x !== name),
+      tool_approval_policy: Object.keys(restPolicy).length > 0 ? restPolicy : null,
     })
   }
 
@@ -2032,8 +2104,8 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
         <ProfileRow
           id="profile-tool-manifest"
           label="Tool manifest"
-          subChecks={['EA-01a', 'TME-01a', 'IPA-01a']}
-          tooltip="Declare which tool names this agent is allowed to call, then define their parameter schemas in Inventory → Tools. EA-01a (online) blocks any unlisted tool name in real time. TME-01a (online) validates each tool_start input against its declared schema — fires when the input carries undeclared parameters. IPA-01a (post-session) detects privilege escalation in tool names and payloads — mark each tool as Privilege-capable (🔒) to suppress false positives for tools whose role requires privilege operations."
+          subChecks={['EA-01a', 'TME-01a', 'IPA-01a', 'MIS-03a']}
+          tooltip="Declare which tools this agent is allowed to call and set a per-tool approval policy. EA-01a (online) blocks any unlisted tool in real time. TME-01a (online) validates tool inputs against declared schemas. IPA-01a (post-session) detects privilege escalation — mark tools as Privilege-capable (🔒) to suppress false positives. MIS-03a (post-session) fires when a high-stakes tool runs without a human approval gate — set each tool to Always allow (no gate needed) or Needs approval (gate required). Any tool not in this manifest is treated as needs approval if it runs."
           status={manifest.length > 0 ? 'manual' : 'auto'}
           statusNode={
             <div className="ml-auto flex items-center gap-2">
@@ -2063,11 +2135,23 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
                   {privilegeScope.length > 0 ? 'manual' : 'auto'}
                 </span>
               </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] font-mono text-slate-400 dark:text-zinc-500">MIS-03a</span>
+                <span className={`rounded border px-1.5 py-0.5 text-[9px] font-medium ${
+                  Object.keys(approvalPolicy).length > 0 ? PROFILE_STATUS_STYLE.manual : PROFILE_STATUS_STYLE.auto
+                }`}>
+                  {Object.keys(approvalPolicy).length > 0 ? 'manual' : 'auto'}
+                </span>
+              </div>
             </div>
           }
-          autoDesc="No tools declared — EA-01a and TME-01a are blind. IPA-01a runs in auto mode: privilege escalation in tool names and payloads is flagged with no per-tool exceptions."
-          manualDesc={`${manifest.length} tool${manifest.length === 1 ? '' : 's'} in manifest${privilegeScope.length > 0 ? ` · ${privilegeScope.length} privilege-capable (🛡 admin icon)` : ' · none privilege-capable'}. EA-01a blocks unlisted calls in real time. TME-01a validates schemas. IPA-01a flags privilege operations from any tool not marked privilege-capable.`}
-          how="EA-01a: online check in the SDK — if a tool_start event names a tool not in this list, the call is blocked before any LLM sees it. TME-01a: if a parameter schema is defined for the tool in Inventory → Tools, the tool_input keys are checked against the declared schema properties; any undeclared key fires the check (deterministic, score 80). When no schema is declared, TME-01a falls back to scanning the serialised tool_input for shell-chaining characters, base64 blobs ≥ 40 chars, Python code injection, and XSS patterns (score 65). IPA-01a (post-session): checks tool names against privilege-escalation keywords and scans tool_input payloads for embedded privilege ops (SQL GRANT, IAM AssumeRole / AttachPolicy, GCP setIamPolicy, K8s ClusterRoleBinding). Tools marked Privilege-capable (🔒) are skipped — use this for agents whose role legitimately requires these operations."
+          autoDesc="No tools declared — EA-01a and TME-01a are blind. IPA-01a runs in auto mode. MIS-03a uses HIGH_STAKES_TOOL_PATTERNS heuristic (payment · transfer · deploy · …) — any matching tool without a gate fires."
+          manualDesc={(() => {
+            const gated   = Object.values(approvalPolicy).filter(v => v === 'needs_approval').length
+            const allowed = Object.values(approvalPolicy).filter(v => v === 'always_allow').length
+            return `${manifest.length} tool${manifest.length === 1 ? '' : 's'} in manifest${privilegeScope.length > 0 ? ` · ${privilegeScope.length} privilege-capable` : ''} · MIS-03a: ${gated} need approval, ${allowed} always allow. Any tool not in manifest → needs approval.`
+          })()}
+          how="EA-01a: online check — tool_start with a name not in this list is blocked before any LLM sees it. TME-01a: if a schema is declared in Inventory → Tools, tool_input keys are validated against it (score 80); without a schema, pattern-matching fallback is used (score 65). IPA-01a (post-session): privilege escalation in tool names and payloads — tools marked Privilege-capable are skipped. MIS-03a (post-session): for each tool marked 'Needs approval', checks that a node_start with a HITL gate name (human_review · hitl · approval_gate · checkpoint · …) appeared between the preceding LLM turn and this tool call. Tools marked 'Always allow' are exempt. Any tool not in the manifest is treated as needing approval."
           howPatterns={[
             'name: admin · sudo · su · impersonate · elevate · assume_role · switch_user · become · run_as · escalate · grant_access · set_permissions',
             'payload: GRANT … ON · ALTER ROLE · CREATE ROLE · AssumeRole · AttachRolePolicy · setIamPolicy · cluster-admin · ClusterRoleBinding',
@@ -2077,9 +2161,10 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
               {manifest.map(name => {
-                const toolSchema = (toolInventory ?? []).find(t => t.name === name)?.schema
-                const paramCount = toolSchema ? Object.keys(toolSchema).length : 0
+                const toolSchema   = (toolInventory ?? []).find(t => t.name === name)?.schema
+                const paramCount   = toolSchema ? Object.keys(toolSchema).length : 0
                 const isPrivileged = privilegeScope.includes(name)
+                const ap           = approvalPolicy[name] ?? 'needs_approval'
                 return (
                   <span
                     key={name}
@@ -2089,19 +2174,58 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
                     {paramCount > 0 && (
                       <span className="text-violet-400 dark:text-violet-600">· {paramCount} param{paramCount !== 1 ? 's' : ''}</span>
                     )}
-                    {isAdmin && isPrivileged && (
+                    {/* Approval policy icon — click to toggle (admin), hover for meaning */}
+                    {isAdmin ? (
+                      <button
+                        onClick={() => toggleApproval(name)}
+                        title={ap === 'always_allow' ? 'Always allow — no gate required' : 'Needs approval — HITL gate required before each call'}
+                        className={`rounded p-px transition-colors ${
+                          ap === 'always_allow'
+                            ? 'text-emerald-500 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300'
+                            : 'text-amber-500 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300'
+                        }`}
+                      >
+                        {ap === 'always_allow'
+                          ? <Unlock className="h-3 w-3" />
+                          : <Lock className="h-3 w-3" />
+                        }
+                      </button>
+                    ) : (
+                      <span
+                        title={ap === 'always_allow' ? 'Always allow — no gate required' : 'Needs approval — HITL gate required before each call'}
+                        className={ap === 'always_allow' ? 'text-emerald-500 dark:text-emerald-400' : 'text-amber-500 dark:text-amber-400'}
+                      >
+                        {ap === 'always_allow'
+                          ? <Unlock className="h-3 w-3" />
+                          : <Lock className="h-3 w-3" />
+                        }
+                      </span>
+                    )}
+                    {/* Privilege icon — always shown, yellow when on, gray when off */}
+                    {isAdmin ? (
                       <button
                         onClick={() => togglePrivilege(name)}
-                        title="Privilege-capable — click to revoke"
-                        className="ml-0.5 text-amber-500 hover:text-amber-700 transition-colors dark:text-amber-400 dark:hover:text-amber-300"
+                        title={isPrivileged ? 'Privilege-capable — click to revoke' : 'Not privilege-capable — click to mark as privilege-capable'}
+                        className={`rounded p-px transition-colors ${
+                          isPrivileged
+                            ? 'text-amber-500 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300'
+                            : 'text-slate-300 hover:text-slate-500 dark:text-zinc-600 dark:hover:text-zinc-400'
+                        }`}
                       >
                         <ShieldCheck className="h-3 w-3" />
                       </button>
+                    ) : (
+                      <span
+                        title={isPrivileged ? 'Privilege-capable' : 'Not privilege-capable'}
+                        className={isPrivileged ? 'text-amber-500 dark:text-amber-400' : 'text-slate-300 dark:text-zinc-600'}
+                      >
+                        <ShieldCheck className="h-3 w-3" />
+                      </span>
                     )}
                     {isAdmin && (
                       <button
                         onClick={() => removeTool(name)}
-                        className="ml-0.5 text-violet-400 hover:text-violet-700 dark:text-violet-600 dark:hover:text-violet-400"
+                        className="text-violet-400 hover:text-violet-700 dark:text-violet-600 dark:hover:text-violet-400"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -2145,8 +2269,30 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
 
             {/* Pending-add confirmation row — shown after selecting a tool from the dropdown */}
             {isAdmin && pendingAdd && (
-              <div className="flex items-center gap-3 rounded-lg border border-violet-200 bg-violet-50/60 px-3 py-2 dark:border-violet-800 dark:bg-violet-900/10">
+              <div className="flex flex-wrap items-center gap-3 rounded-lg border border-violet-200 bg-violet-50/60 px-3 py-2 dark:border-violet-800 dark:bg-violet-900/10">
                 <span className="font-mono text-xs font-medium text-violet-700 dark:text-violet-400">{pendingAdd}</span>
+                {/* Approval policy — MIS-03a */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-500 dark:text-zinc-400">Approval</span>
+                  {(['always_allow', 'needs_approval'] as const).map(policy => (
+                    <button
+                      key={policy}
+                      type="button"
+                      onClick={() => setPendingApproval(policy)}
+                      className={`rounded border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                        pendingApproval === policy
+                          ? policy === 'always_allow'
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+                            : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-500'
+                          : 'border-slate-200 bg-white text-slate-400 hover:border-slate-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500 dark:hover:border-zinc-600'
+                      }`}
+                    >
+                      {policy === 'always_allow' ? 'Always allow' : 'Needs approval'}
+                    </button>
+                  ))}
+                  <Tooltip text="Always allow: this tool runs without requiring a human-approval gate — MIS-03a will not fire for it. Needs approval: MIS-03a fires if a node_start(human_review · hitl · approval_gate · checkpoint) gate is absent before this tool call." />
+                </div>
+                {/* Privilege-capable — IPA-01a */}
                 <label className="flex items-center gap-1.5 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -2154,17 +2300,17 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
                     onChange={e => setPendingPrivilege(e.target.checked)}
                     className="h-3.5 w-3.5 rounded border-slate-300 accent-amber-500"
                   />
-                  <span className="text-xs text-slate-600 dark:text-zinc-400">Privilege-capable</span>
+                  <span className="text-[10px] text-slate-600 dark:text-zinc-400">Privilege-capable</span>
                   <Tooltip text="Mark this tool as authorized to perform privilege-level operations for this agent — IAM role assumption, SQL DDL (GRANT / CREATE ROLE), Kubernetes RBAC, and similar. IPA-01a will not flag calls from this tool. Only tick this if the agent's role genuinely requires it." />
                 </label>
                 <button
-                  onClick={() => addFromInventory(pendingAdd, pendingPrivilege)}
+                  onClick={() => addFromInventory(pendingAdd, pendingPrivilege, pendingApproval)}
                   className="ml-auto rounded-full bg-violet-600 px-3 py-0.5 text-xs font-medium text-white hover:bg-violet-700 dark:bg-violet-700 dark:hover:bg-violet-600"
                 >
                   Add
                 </button>
                 <button
-                  onClick={() => { setPendingAdd(null); setPendingPrivilege(false); setAddValue('') }}
+                  onClick={() => { setPendingAdd(null); setPendingPrivilege(false); setPendingApproval('needs_approval'); setAddValue('') }}
                   className="text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                 >
                   <X className="h-3.5 w-3.5" />

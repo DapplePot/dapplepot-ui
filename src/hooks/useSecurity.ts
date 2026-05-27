@@ -10,6 +10,7 @@ const _emptyAlertConfig = (): securityApi.AgentAlertConfig => ({
   signal_thresholds: {},
   tool_manifest: [],
   privilege_scope: [],
+  tool_approval_policy: null,
   max_tool_calls_per_session: null,
   system_prompt: null,
   environment: null,
@@ -275,22 +276,26 @@ export function useUpdatePrivilegeScope(agentId: string) {
   })
 }
 
-// Mutation: update tool_manifest + privilege_scope atomically in one request.
-// Use this whenever both change together (add-with-privilege, remove-tool) to
-// prevent the race where mutation-1's onSettled refetch overwrites mutation-2's
-// optimistic update before it reaches the server.
+// Mutation: update tool_manifest + privilege_scope + tool_approval_policy atomically.
+// Use this whenever any of these fields change together to prevent race conditions
+// where mutation-1's onSettled refetch overwrites mutation-2's optimistic update.
 export function useUpdateToolScope(agentId: string) {
   const queryClient = useQueryClient()
   const key = ['security', 'agent', agentId, 'alert-config']
   return useMutation({
-    mutationFn: ({ tool_manifest, privilege_scope }: { tool_manifest: string[]; privilege_scope: string[] }) =>
-      securityApi.updateToolScope(agentId, tool_manifest, privilege_scope),
-    onMutate: async ({ tool_manifest, privilege_scope }) => {
+    mutationFn: ({
+      tool_manifest, privilege_scope, tool_approval_policy,
+    }: {
+      tool_manifest: string[]
+      privilege_scope: string[]
+      tool_approval_policy: Record<string, 'always_allow' | 'needs_approval'> | null
+    }) => securityApi.updateToolScope(agentId, tool_manifest, privilege_scope, tool_approval_policy),
+    onMutate: async ({ tool_manifest, privilege_scope, tool_approval_policy }) => {
       await queryClient.cancelQueries({ queryKey: key })
       const prev = queryClient.getQueryData<securityApi.AgentAlertConfig>(key)
       queryClient.setQueryData(key, (old: securityApi.AgentAlertConfig | undefined) =>
-        old ? { ...old, tool_manifest, privilege_scope }
-            : { ..._emptyAlertConfig(), tool_manifest, privilege_scope }
+        old ? { ...old, tool_manifest, privilege_scope, tool_approval_policy }
+            : { ..._emptyAlertConfig(), tool_manifest, privilege_scope, tool_approval_policy }
       )
       return { prev }
     },
