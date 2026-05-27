@@ -765,7 +765,7 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'TME-03b': 'no environment declared — treated as non-production, TME-03b active post-session',
   'EA-01c':  'no write namespace declared — read-intent heuristic active',
   'MIS-03a': 'no approval policy declared — HIGH_STAKES_TOOL_PATTERNS heuristic active (payment · charge · transfer · purchase · buy · send_email · send_message · notify · deploy · publish). Any unlisted tool that runs without a node_start(human_review | hitl | approval_gate | checkpoint | …) gate fires this check.',
-  'EA-02a':  'no tool list declared — name-pattern heuristic active',
+  'EA-02a':  'no approval policy declared — HIGH_STAKES_TOOL_PATTERNS heuristic active (payment · charge · transfer · purchase · deploy · publish …). Set tool approval policy in Tool Manifest to use it as the primary irreversibility source.',
   'TME-03a': 'no tool list declared — name-pattern heuristic active',
   'EA-03a':  'no working directory declared — check disabled',
   'EA-03b':  'no host allowlist declared — check disabled',
@@ -798,6 +798,10 @@ const SUBCHECK_MANUAL_DESC: Partial<Record<string, (value: unknown) => string>> 
     ? 'production — TME-03b suppressed, this agent is authorised to target production endpoints and no findings will be generated'
     : 'staging — TME-03b active post-session, fires if any tool call URL matches production domain prefixes (prod., production., live.) or versioned API path patterns',
   'SPL-03a': () => 'LCS(system_prompt, tool_input payload) ≥ 60 chars — fires when log tool payload contains a verbatim segment of the declared system prompt',
+  'EA-02c': (v) => {
+    const len = typeof v === 'string' ? v.length : 0
+    return `SequenceMatcher(declared_system_prompt, llm_start system message) < 0.75 — fires when any system-role message in an LLM call differs from the declared system prompt by more than 25% (declared system prompt: ${len} chars)`
+  },
 }
 
 function _formatProfileValue(value: unknown): string {
@@ -870,6 +874,18 @@ function SubCheckRow({
       ? profileValue as Record<string, string>
       : {}
   const mis03aHasPolicy = Object.keys(mis03aPolicy).length > 0
+
+  // EA-02a: reads tool_approval_policy (primary) and irreversible_tools (secondary)
+  const ea02aPolicy: Record<string, string> =
+    check.subCheckId === 'EA-02a' && alertConfig?.tool_approval_policy &&
+    typeof alertConfig.tool_approval_policy === 'object' && !Array.isArray(alertConfig.tool_approval_policy)
+      ? alertConfig.tool_approval_policy as Record<string, string>
+      : {}
+  const ea02aHasPolicy = Object.keys(ea02aPolicy).length > 0
+  const ea02aIrreversible: string[] =
+    check.subCheckId === 'EA-02a' && Array.isArray(alertConfig?.irreversible_tools)
+      ? alertConfig!.irreversible_tools as string[]
+      : []
 
   // Empty array or empty object counts as "not configured"
   const isManualProfile = profileValue !== null && profileValue !== undefined
@@ -1072,6 +1088,60 @@ function SubCheckRow({
                       </span>
                     </div>
                   )}
+                </div>
+              ) : check.subCheckId === 'EA-02a' ? (
+                <div className="space-y-1">
+                  {(ea02aHasPolicy || ea02aIrreversible.length > 0) && (
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
+                          manual
+                        </span>
+                        {ea02aHasPolicy && (
+                          <span className="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center gap-1">
+                            — tool manifest ·
+                            <Lock className="h-3 w-3 text-amber-500 dark:text-amber-400" />
+                            needs approval → irreversible
+                          </span>
+                        )}
+                        {ea02aIrreversible.length > 0 && (
+                          <span className="text-[10px] text-slate-600 dark:text-zinc-400 font-mono">
+                            {ea02aHasPolicy ? '· ' : '— '}{ea02aIrreversible.join(', ')} (irreversible_tools)
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 dark:text-zinc-500 pl-1">
+                        fires when two consecutive tool_start events hit an irreversible tool with no llm_start (user confirmation turn) in between
+                      </p>
+                    </div>
+                  )}
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded border px-2 py-0.5 text-[10px] font-medium font-mono border-slate-200 bg-white text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                        auto
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                        {ea02aHasPolicy
+                          ? 'any tool not in manifest → treated as needs approval'
+                          : 'no approval policy — HIGH_STAKES_TOOL_PATTERNS heuristic (payment · charge · transfer · deploy · publish …)'}
+                      </span>
+                      {!ea02aHasPolicy && onGoToProfile && (
+                        <button
+                          type="button"
+                          onClick={() => onGoToProfile('profile-tool-manifest')}
+                          className="ml-auto shrink-0 inline-flex items-center gap-1 rounded border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-50 hover:border-violet-400 transition-colors dark:border-violet-800 dark:bg-zinc-800 dark:text-violet-400 dark:hover:bg-violet-900/30"
+                        >
+                          Set in Agent Profile
+                          <ChevronRight className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-400 dark:text-zinc-500 pl-1">
+                      {ea02aHasPolicy
+                        ? 'checks every tool_start for the irreversibility verdict — if the preceding relevant event was also a tool_start with no llm_start gate between, EA-02a fires'
+                        : 'tool name matched against pattern — if irreversible AND the preceding event was a tool_start with no llm_start gate between, EA-02a fires'}
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
@@ -2109,8 +2179,8 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
         <ProfileRow
           id="profile-tool-manifest"
           label="Tool manifest"
-          subChecks={['EA-01a', 'TME-01a', 'IPA-01a', 'MIS-03a']}
-          tooltip="Declare which tools this agent is allowed to call and set a per-tool approval policy. EA-01a (online) blocks any unlisted tool in real time. TME-01a (online) validates tool inputs against declared schemas. IPA-01a (post-session) detects privilege escalation — mark tools as Privilege-capable (🔒) to suppress false positives. MIS-03a (post-session) fires when a high-stakes tool runs without a human approval gate — set each tool to Always allow (no gate needed) or Needs approval (gate required). Any tool not in this manifest is treated as needs approval if it runs."
+          subChecks={['EA-01a', 'TME-01a', 'IPA-01a', 'MIS-03a', 'EA-02a']}
+          tooltip="Declare which tools this agent is allowed to call and set a per-tool approval policy. EA-01a (online) blocks any unlisted tool in real time. TME-01a (online) validates tool inputs against declared schemas. IPA-01a (post-session) detects privilege escalation — mark tools as Privilege-capable (🔒) to suppress false positives. MIS-03a (post-session) fires when a high-stakes tool runs without a human approval gate — set each tool to Always allow (no gate needed) or Needs approval (gate required). EA-02a (post-session) uses the approval policy as its primary irreversibility source — tools marked Needs approval are treated as irreversible and fire if chained directly after another tool with no confirm gate. Any tool not in this manifest is treated as needs approval if it runs."
           status={manifest.length > 0 ? 'manual' : 'auto'}
           statusNode={
             <div className="ml-auto flex items-center gap-2">
@@ -2148,15 +2218,23 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
                   {Object.keys(approvalPolicy).length > 0 ? 'manual' : 'auto'}
                 </span>
               </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] font-mono text-slate-400 dark:text-zinc-500">EA-02a</span>
+                <span className={`rounded border px-1.5 py-0.5 text-[9px] font-medium ${
+                  Object.keys(approvalPolicy).length > 0 ? PROFILE_STATUS_STYLE.manual : PROFILE_STATUS_STYLE.auto
+                }`}>
+                  {Object.keys(approvalPolicy).length > 0 ? 'manual' : 'auto'}
+                </span>
+              </div>
             </div>
           }
-          autoDesc="No tools declared — EA-01a and TME-01a are blind. IPA-01a runs in auto mode. MIS-03a uses HIGH_STAKES_TOOL_PATTERNS heuristic (payment · transfer · deploy · …) — any matching tool without a gate fires."
+          autoDesc="No tools declared — EA-01a and TME-01a are blind. IPA-01a and EA-02a run in auto mode using name-pattern heuristics. MIS-03a uses HIGH_STAKES_TOOL_PATTERNS (payment · transfer · deploy · …) — any matching tool without a gate fires."
           manualDesc={(() => {
             const gated   = Object.values(approvalPolicy).filter(v => v === 'needs_approval').length
             const allowed = Object.values(approvalPolicy).filter(v => v === 'always_allow').length
-            return `${manifest.length} tool${manifest.length === 1 ? '' : 's'} in manifest${privilegeScope.length > 0 ? ` · ${privilegeScope.length} privilege-capable` : ''} · MIS-03a: ${gated} need approval, ${allowed} always allow. Any tool not in manifest → needs approval.`
+            return `${manifest.length} tool${manifest.length === 1 ? '' : 's'} in manifest${privilegeScope.length > 0 ? ` · ${privilegeScope.length} privilege-capable` : ''} · MIS-03a: ${gated} need approval, ${allowed} always allow · EA-02a: ${gated} tool${gated !== 1 ? 's' : ''} marked needs approval → treated as irreversible, fires if chained without confirm gate. Any tool not in manifest → needs approval.`
           })()}
-          how="EA-01a: online check — tool_start with a name not in this list is blocked before any LLM sees it. TME-01a: if a schema is declared in Inventory → Tools, tool_input keys are validated against it (score 80); without a schema, pattern-matching fallback is used (score 65). IPA-01a (post-session): privilege escalation in tool names and payloads — tools marked Privilege-capable are skipped. MIS-03a (post-session): for each tool marked 'Needs approval', checks that a node_start with a HITL gate name (human_review · hitl · approval_gate · checkpoint · …) appeared between the preceding LLM turn and this tool call. Tools marked 'Always allow' are exempt. Any tool not in the manifest is treated as needing approval."
+          how="EA-01a: online check — tool_start with a name not in this list is blocked before any LLM sees it. TME-01a: if a schema is declared in Inventory → Tools, tool_input keys are validated against it (score 80); without a schema, pattern-matching fallback is used (score 65). IPA-01a (post-session): privilege escalation in tool names and payloads — tools marked Privilege-capable are skipped. MIS-03a (post-session): for each tool marked 'Needs approval', checks that a node_start with a HITL gate name (human_review · hitl · approval_gate · checkpoint · …) appeared between the preceding LLM turn and this tool call. Tools marked 'Always allow' are exempt. EA-02a (post-session): uses the approval policy as its primary irreversibility source — tools marked 'Needs approval' are treated as irreversible; if one is called directly after another tool call with no confirm gate in between, EA-02a fires. Any tool not in the manifest is treated as needing approval."
           howPatterns={[
             'name: admin · sudo · su · impersonate · elevate · assume_role · switch_user · become · run_as · escalate · grant_access · set_permissions',
             'payload: GRANT … ON · ALTER ROLE · CREATE ROLE · AssumeRole · AttachRolePolicy · setIamPolicy · cluster-admin · ClusterRoleBinding',

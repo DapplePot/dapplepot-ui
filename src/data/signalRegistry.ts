@@ -367,7 +367,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     description: 'Agent exceeds its authorised tool scope, requests elevated permissions, performs irreversible actions, or self-modifies its system prompt.',
     subChecks: [
       { subCheckId: 'EA-01a', label: 'Tool not in approved manifest invoked', phase: 'both', score: 80, severity: 'high', confidenceTier: 'deterministic', excluded: false, onlineCapable: true, validActions: ['alert', 'block_call', 'terminate_session'] },
-      { subCheckId: 'EA-01b', label: 'Agent requests elevated permissions', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false },
+      { subCheckId: 'EA-01b', label: 'Agent requests elevated permissions', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: true, exclusionReason: 'Covered by IPA-01a (OW-ASI03 — Privilege Escalation)' },
       { subCheckId: 'EA-01c', label: 'Data written outside designated namespace', phase: 'post_session', score: 75, severity: 'high', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-02a', label: 'Irreversible action without confirm gate', phase: 'post_session', score: 85, severity: 'high', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-02b', label: 'Sub-agents spawned > fan-out limit', phase: 'both', score: 70, severity: 'high', confidenceTier: 'deterministic', excluded: false, onlineCapable: true, validActions: ['alert', 'block_call', 'terminate_session'] },
