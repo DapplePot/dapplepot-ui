@@ -417,17 +417,13 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         severity: 'medium', confidenceTier: 'high', excluded: true,
         exclusionReason: 'Requires embedding distance logged in tool_end payload',
       },
+      { subCheckId: 'VEW-01b', label: 'Repeated near-duplicate RAG queries', phase: 'post_session', score: 75, severity: 'high', confidenceTier: 'medium', excluded: false },
+      { subCheckId: 'VEW-02a', label: 'Unauthorised write to vector namespace', phase: 'post_session', score: 92, severity: 'critical', confidenceTier: 'high', excluded: false },
       {
-        subCheckId: 'VEW-01b', label: 'Repeated near-duplicate RAG queries', phase: 'excluded', score: 75,
-        severity: 'high', confidenceTier: 'medium', excluded: true,
-        exclusionReason: 'Pre-runtime; requires offline vector DB monitoring',
+        subCheckId: 'VEW-02b', label: 'Record count or centroid drift anomaly', phase: 'excluded', score: 70,
+        severity: 'high', confidenceTier: 'high', excluded: true,
+        exclusionReason: 'Scorer implementation pending',
       },
-      {
-        subCheckId: 'VEW-02a', label: 'Unauthorised write to vector namespace', phase: 'excluded', score: 92,
-        severity: 'critical', confidenceTier: 'high', excluded: true,
-        exclusionReason: 'Pre-runtime; requires offline retrieval audit',
-      },
-      { subCheckId: 'VEW-02b', label: 'Record count or centroid drift anomaly', phase: 'post_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false },
       {
         subCheckId: 'VEW-03a', label: 'Embedding model at query ≠ ingest model', phase: 'post_session', score: 88,
         severity: 'high', confidenceTier: 'high', excluded: true,
