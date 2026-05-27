@@ -699,6 +699,7 @@ const SUBCHECK_HAS_HEURISTIC = new Set([
   'ASCV-04a', // always fires on any install command regardless
   'EA-02b',   // statistical baseline (7-day mean + 1σ)
   'TME-01b',  // statistical baseline (7-day per-session avg × 3.0)
+  'SPL-03a',  // heuristic phrase detection active even without system prompt declared
 ])
 
 // Maps each subcheck to the Agent Profile section anchor it configures.
@@ -709,6 +710,7 @@ const SUBCHECK_PROFILE_ANCHOR: Partial<Record<string, string>> = {
   'EA-02b':  'profile-max-tool-calls',
   'TME-01b': 'profile-max-tool-calls',
   'SPL-01a': 'profile-system-prompt', 'SPL-01b': 'profile-system-prompt',
+  'SPL-03a': 'profile-system-prompt',
   'EA-02c':  'profile-system-prompt',
   'TME-03b': 'profile-environment',
   'EA-01c':  'profile-write-namespace',
@@ -733,6 +735,7 @@ const SUBCHECK_PROFILE_FIELD: Partial<Record<string, string>> = {
   'EA-02b':  'max_tool_calls_per_session',
   'TME-01b': 'max_tool_calls_per_session',
   'SPL-01a': 'system_prompt',    'SPL-01b': 'system_prompt',
+  'SPL-03a': 'system_prompt',
   'EA-02c':  'system_prompt',
   'TME-03b': 'environment',
   'EA-01c':  'write_namespace',
@@ -757,6 +760,7 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'TME-01b': 'no cap set — statistical baseline active, fires when session exceeds 3× the 7-day per-session average (≥5 sessions required)',
   'SPL-01a': 'no system prompt declared — verbatim match disabled',
   'SPL-01b': 'no system prompt declared — probe comparison disabled',
+  'SPL-03a': 'heuristic phrase detection active ("you are a … agent", "your primary objective is", "do not reveal") — declare system prompt to enable LCS match (≥ 60 chars)',
   'EA-02c':  'no system prompt declared — modification diff disabled',
   'TME-03b': 'no environment declared — treated as non-production, TME-03b active post-session',
   'EA-01c':  'no write namespace declared — read-intent heuristic active',
@@ -793,6 +797,7 @@ const SUBCHECK_MANUAL_DESC: Partial<Record<string, (value: unknown) => string>> 
   'TME-03b': (v) => v === 'production'
     ? 'production — TME-03b suppressed, this agent is authorised to target production endpoints and no findings will be generated'
     : 'staging — TME-03b active post-session, fires if any tool call URL matches production domain prefixes (prod., production., live.) or versioned API path patterns',
+  'SPL-03a': () => 'LCS(system_prompt, tool_input payload) ≥ 60 chars — fires when log tool payload contains a verbatim segment of the declared system prompt',
 }
 
 function _formatProfileValue(value: unknown): string {
@@ -1478,7 +1483,7 @@ function ProfileSection({ title, icon, children, open, onToggle }: {
 
 // Lookup: subcheck ID → parent OWASP signal ID (for badge display in Agent Profile)
 const SUBCHECK_SIGNAL: Record<string, string> = {
-  'SPL-01a': 'OW-LLM07', 'SPL-01b': 'OW-LLM07',
+  'SPL-01a': 'OW-LLM07', 'SPL-01b': 'OW-LLM07', 'SPL-03a': 'OW-LLM07',
   'EA-02c':  'OW-LLM06',
   'TME-01a': 'OW-ASI02', 'TME-01b': 'OW-ASI02', 'TME-03b': 'OW-ASI02', 'TME-03a': 'OW-ASI02',
   'EA-01a':  'OW-LLM06', 'EA-01b':  'OW-LLM06', 'EA-01c': 'OW-LLM06',
@@ -2040,12 +2045,12 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
         <ProfileRow
           id="profile-system-prompt"
           label="System prompt"
-          subChecks={['SPL-01a', 'SPL-01b', 'EA-02c']}
-          tooltip="Paste the agent's exact system prompt. Without it SPL-01a, SPL-01b, and EA-02c cannot run."
+          subChecks={['SPL-01a', 'SPL-01b', 'SPL-03a', 'EA-02c']}
+          tooltip="Paste the agent's exact system prompt. Without it SPL-01a, SPL-01b, SPL-03a (LCS path), and EA-02c cannot run."
           status={alertConfig?.system_prompt != null ? 'manual' : 'blind'}
-          autoDesc="No system prompt declared — SPL-01a, SPL-01b, and EA-02c are blind. These checks cannot run without it."
-          manualDesc={`System prompt declared (${alertConfig?.system_prompt?.length ?? 0} chars) — SPL-01a verbatim match, SPL-01b probe detection, and EA-02c self-modification diff are active.`}
-          how="SPL-01a uses SequenceMatcher to detect verbatim segments of the declared prompt in LLM output. SPL-01b checks if the agent confirms its instructions when probed. EA-02c diffs the declared prompt against subsequent system messages to detect self-modification."
+          autoDesc="No system prompt declared — SPL-01a, SPL-01b, and EA-02c are blind. SPL-03a falls back to heuristic phrase detection only."
+          manualDesc={`System prompt declared (${alertConfig?.system_prompt?.length ?? 0} chars) — SPL-01a verbatim match, SPL-01b probe detection, SPL-03a log content LCS match, and EA-02c self-modification diff are active.`}
+          how="SPL-01a uses SequenceMatcher to detect verbatim segments of the declared prompt in LLM output. SPL-01b checks if the agent confirms its instructions when probed. SPL-03a checks if any log-writing tool call (write_log, log_event, audit_log, etc.) contains ≥ 60 chars of the declared prompt in its payload — blind to the exact match without a declared prompt, falls back to heuristic phrase detection. EA-02c diffs the declared prompt against subsequent system messages to detect self-modification."
           onReset={() => { updateProfile.mutate({ system_prompt: null }); setSystemPromptDraft('') }}
         >
           {isAdmin && (
