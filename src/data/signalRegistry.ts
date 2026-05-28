@@ -335,11 +335,6 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         matches: ['LLM output similarity ≥ 0.6 to downstream tool param (LCS ratio)'],
       },
       {
-        subCheckId: 'IOH-02b', label: 'No schema validation on tool input', phase: 'online', score: 55,
-        severity: 'medium', confidenceTier: 'high', excluded: false,
-        matches: ['tool_start event missing schema validation metadata'],
-      },
-      {
         subCheckId: 'IOH-03a', label: 'Email template injection in output', phase: 'both', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: [
@@ -351,6 +346,12 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       {
         subCheckId: 'IOH-03b', label: 'Sub-agent receives broken structured output', phase: 'post_session', score: 65,
         severity: 'medium', confidenceTier: 'high', excluded: false,
+        matches: [
+          'sub-agent tool_end returns null or empty output',
+          'sub-agent output has error status (status: error/failed, success: false)',
+          'sub-agent returns error string (traceback, exception, timeout, connection refused)',
+          'sub-agent output contains only error keys with no result/output/response key',
+        ],
       },
       {
         subCheckId: 'IOH-04a', label: 'Insecure code pattern in generated output', phase: 'post_session', score: 70,

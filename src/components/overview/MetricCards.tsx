@@ -58,8 +58,11 @@ export function MetricCards({ overview, liveSessions, trends = [] }: MetricCards
           <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">{card.label}</p>
           <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-zinc-100">{card.value}</p>
           <p className="mt-0.5 text-xs text-slate-400 dark:text-zinc-500">{card.sub}</p>
-          <div className="mt-3 -mx-1">
-            <Sparkline data={card.trend} color={card.color} id={card.id} height={28} />
+          <div className="mt-3">
+            <span className="text-[10px] text-slate-400 dark:text-zinc-500">7d</span>
+            <div className="-mx-1">
+              <Sparkline data={card.trend} color={card.color} id={card.id} height={28} />
+            </div>
           </div>
         </div>
       ))}

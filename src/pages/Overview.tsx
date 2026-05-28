@@ -19,7 +19,7 @@ function ErrorCard({ message }: { message: string }) {
 export function Overview() {
   const role = useAuthStore((s) => s.user?.role)
   const overview = useOverview('24h')
-  const trends = useTrends('24h')
+  const trends = useTrends('7d')
   const liveSessions = useLiveSessions()
   const alerts = useAlerts({ limit: 4, sort: 'triggered_at:desc' })
 

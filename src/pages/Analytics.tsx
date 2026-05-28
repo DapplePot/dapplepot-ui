@@ -57,7 +57,7 @@ export function Analytics() {
 
   function fmtDuration(ms: number) {
     if (!ms) return '—'
-    if (ms < 1000)  return `${ms}ms`
+    if (ms < 1000)  return `${ms.toFixed(3)}ms`
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
     const m = Math.floor(ms / 60000)
     const s = Math.round((ms % 60000) / 1000)
@@ -97,8 +97,11 @@ export function Analytics() {
             <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
               <p className="text-xs text-slate-500 dark:text-zinc-400">{m.label}</p>
               <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-zinc-100">{m.value}</p>
-              <div className="mt-3 -mx-1">
-                <Sparkline data={m.trend} color={m.color} id={m.id} height={28} />
+              <div className="mt-3">
+                <span className="text-[10px] text-slate-400 dark:text-zinc-500">{window}</span>
+                <div className="-mx-1">
+                  <Sparkline data={m.trend} color={m.color} id={m.id} height={28} />
+                </div>
               </div>
             </div>
           ))}
@@ -144,7 +147,14 @@ export function Analytics() {
         <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">Cost attribution</h2>
         {cost.isLoading ? <CostTableSkeleton /> :
          cost.isError   ? <ErrorMsg message={cost.error.message} /> :
-         <CostTable data={cost.data ?? []} />}
+         <CostTable
+           data={cost.data ?? []}
+           agentMap={Object.fromEntries(
+             (agentSessions.data ?? [])
+               .filter((a) => a.agentName)
+               .map((a) => [a.agentId, a.agentName!])
+           )}
+         />}
       </div>
     </div>
   )

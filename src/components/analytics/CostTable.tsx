@@ -1,26 +1,15 @@
-import { useNavigate } from '@tanstack/react-router'
 import type { CostPoint } from '@dapplepot/types/analytics'
-import { useSessionFilters } from '../../stores/sessionFilters'
 import { formatTokens, formatCost } from '../../utils/format'
 import { Skeleton } from '../ui/skeleton'
-import { useAgents } from '../../hooks/useAgents'
 
 interface CostTableProps {
   data: CostPoint[]
+  agentMap?: Record<string, string>
 }
 
-export function CostTable({ data }: CostTableProps) {
-  const navigate = useNavigate()
-  const setAgentId = useSessionFilters((s) => s.setAgentId)
-  const { data: agentsData } = useAgents()
-  const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
+export function CostTable({ data, agentMap = {} }: CostTableProps) {
 
   const total = data.reduce((sum, d) => sum + d.estimatedCostUsd, 0)
-
-  const handleRowClick = (agentId: string) => {
-    setAgentId(agentId)
-    void navigate({ to: '/sessions' })
-  }
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
@@ -39,8 +28,6 @@ export function CostTable({ data }: CostTableProps) {
             return (
               <tr
                 key={row.agentId}
-                onClick={() => handleRowClick(row.agentId)}
-                className="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800/50"
               >
                 <td className="px-4 py-3 text-xs text-slate-700 dark:text-zinc-300">{agentMap[row.agentId] ?? row.agentId}</td>
                 <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-zinc-400">

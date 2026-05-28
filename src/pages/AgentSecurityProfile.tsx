@@ -93,8 +93,11 @@ function ScoreCard({ label, score, band, tooltip, history }: { label: string; sc
         {band}
       </span>
       {history && (
-        <div className="mt-3 -mx-1">
-          <Sparkline data={history} color={BAND_LINE_COLOR[band]} id={label} />
+        <div className="mt-3">
+          <span className="text-[10px] text-slate-400 dark:text-zinc-500">24h</span>
+          <div className="-mx-1">
+            <Sparkline data={history} color={BAND_LINE_COLOR[band]} id={label} height={28} />
+          </div>
         </div>
       )}
     </div>
@@ -134,8 +137,11 @@ function TrustCard({ score, history }: { score: number; history: number[] }) {
       <span className={`mt-2 inline-block self-start rounded border px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
         {badge.label}
       </span>
-      <div className="mt-3 -mx-1">
-        <Sparkline data={history} color={trustLineColor(rounded)} id="trust" />
+      <div className="mt-3">
+        <span className="text-[10px] text-slate-400 dark:text-zinc-500">24h</span>
+        <div className="-mx-1">
+          <Sparkline data={history} color={trustLineColor(rounded)} id="trust" height={28} />
+        </div>
       </div>
     </div>
   )
