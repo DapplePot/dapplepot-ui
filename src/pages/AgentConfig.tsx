@@ -2717,19 +2717,6 @@ export function AgentConfig() {
         <ConfigAgentIdRow agentId={agentId} />
       </div>
 
-      {/* ── System-default notice ── */}
-      <div className="flex items-start gap-3 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 dark:border-violet-800 dark:bg-violet-900/20">
-        <Shield className="mt-0.5 h-4 w-4 shrink-0 text-violet-500 dark:text-violet-400" />
-        <div className="text-xs text-violet-700 dark:text-violet-300 leading-relaxed">
-          <span className="font-semibold">All checks are post-session by default.</span>
-          {' '}Sub-checks marked with a{' '}
-          <Zap className="inline h-3 w-3 text-violet-500" />{' '}
-          icon have an online (real-time) implementation in the langgraph-sdk. Toggle them on to detect
-          threats the moment they occur instead of waiting for session end. Post-session scoring still
-          runs — it will skip any sub-checks already handled online and merge results into the final score.
-        </div>
-      </div>
-
       {/* ── Summary strip ── */}
       <div className="grid grid-cols-4 gap-3">
         {(

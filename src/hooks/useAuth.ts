@@ -8,6 +8,7 @@ import {
   acceptInvite,
 } from '../api/auth'
 import { useAuthStore } from '../stores/auth'
+import { scheduleProactiveRefresh } from '../api/client'
 import type {
   LoginRequest,
   LogoutRequest,
@@ -23,7 +24,8 @@ export function useLogin() {
   return useMutation({
     mutationFn: (body: LoginRequest) => login(body),
     onSuccess: (data) => {
-      setTokens(data.accessToken, data.refreshToken, data.user)
+      setTokens(data.accessToken, data.refreshToken, data.user, data.expiresIn)
+      scheduleProactiveRefresh(data.expiresIn)
       void router.navigate({ to: '/' })
     },
   })
@@ -64,7 +66,8 @@ export function useAcceptInvite() {
   return useMutation({
     mutationFn: (body: AcceptInviteRequest) => acceptInvite(body),
     onSuccess: (data) => {
-      setTokens(data.accessToken, data.refreshToken, data.user)
+      setTokens(data.accessToken, data.refreshToken, data.user, data.expiresIn)
+      scheduleProactiveRefresh(data.expiresIn)
       void router.navigate({ to: '/' })
     },
   })

@@ -18,6 +18,8 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
   const deleteChannel = useDeleteChannel()
   
   const isEditing = !!initialData
+  // Type is locked when editing an existing channel OR when opened from a specific connector card
+  const isTypeLocked = isEditing || !!initialChannelType
   const [name, setName] = useState(initialData?.name || '')
   const [channelType, setChannelType] = useState<ChannelType>(initialData?.channelType || initialChannelType || 'slack')
   const [config, setConfig] = useState<Record<string, string>>((initialData?.config as unknown as Record<string, string>) || {})
@@ -66,7 +68,12 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
       <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-zinc-800">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">
-            {isEditing ? 'Edit Channel' : 'Add Channel'}
+            {isEditing
+              ? `Edit ${channelType === 'msteams' ? 'Microsoft Teams' : channelType === 'slack' ? 'Slack' : 'Webhook'} Channel`
+              : isTypeLocked
+                ? `Configure ${channelType === 'msteams' ? 'Microsoft Teams' : channelType === 'slack' ? 'Slack' : 'Webhook'}`
+                : 'Add Channel'
+            }
           </h2>
           <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300">
             <X className="h-5 w-5" />
@@ -76,29 +83,34 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Name</label>
-            <Input 
-              required 
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
-              placeholder="e.g. Engineering Slack" 
+            <Input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={
+                channelType === 'msteams' ? 'e.g. Engineering Teams' :
+                channelType === 'webhook' ? 'e.g. Prod Alert Webhook' :
+                'e.g. Engineering Slack'
+              }
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Channel Type</label>
-            <Select 
-              value={channelType} 
-              disabled={isEditing}
-              onChange={(e) => {
-                setChannelType(e.target.value as ChannelType)
-                setConfig({})
-              }}
-            >
-              <option value="slack">Slack</option>
-              <option value="msteams">Microsoft Teams</option>
-              <option value="webhook">Custom Webhook</option>
-            </Select>
-          </div>
+          {!isTypeLocked && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Channel Type</label>
+              <Select
+                value={channelType}
+                onChange={(e) => {
+                  setChannelType(e.target.value as ChannelType)
+                  setConfig({})
+                }}
+              >
+                <option value="slack">Slack</option>
+                <option value="msteams">Microsoft Teams</option>
+                <option value="webhook">Custom Webhook</option>
+              </Select>
+            </div>
+          )}
 
           <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 space-y-4 dark:border-zinc-800 dark:bg-zinc-800/50">
             {channelType === 'slack' && (

@@ -100,27 +100,27 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         severity: 'critical', confidenceTier: 'high', excluded: false,
       },
       {
-        subCheckId: 'PI-02c', label: 'File / attachment payload injection', phase: 'online', score: 80,
+        subCheckId: 'PI-02c', label: 'File / attachment payload injection', phase: 'post_session', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: [
-          'directive patterns inside uploaded files / attachments',
-          'injection sequences in parsed document content',
+          'injection pattern in document/file source.data (text or base64-decoded)',
+          'injection pattern in text part alongside a document block (parsed file content)',
         ],
       },
       {
-        subCheckId: 'PI-03a', label: 'API response carries directives', phase: 'online', score: 88,
+        subCheckId: 'PI-03a', label: 'API response carries directives', phase: 'post_session', score: 88,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: [
-          'instruction-like fragments in API response bodies',
-          'role-override keywords in JSON / XML tool results',
+          'role-override or instruction pattern in HTTP/API tool_end response body',
+          'injection directive in JSON / XML returned by an api/http/fetch/request tool',
         ],
       },
       {
-        subCheckId: 'PI-03b', label: 'DB query result embeds prompt fragment', phase: 'online', score: 82,
+        subCheckId: 'PI-03b', label: 'DB query result embeds prompt fragment', phase: 'post_session', score: 82,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: [
-          'prompt-like text found inside database query results',
-          'injection keywords in row content returned to agent',
+          'role-override or instruction pattern in DB/SQL tool_end result rows',
+          'injection directive in column value returned by a sql/db/query tool',
         ],
       },
       {

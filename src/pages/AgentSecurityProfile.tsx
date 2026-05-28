@@ -3,7 +3,7 @@ import { useParams, Link } from '@tanstack/react-router'
 import { useAgentProfile } from '../hooks/useSecurity'
 import { Skeleton } from '../components/ui/skeleton'
 import { Sparkline } from '../components/ui/Sparkline'
-import { TrendingDown, TrendingUp, Minus, Settings, Copy, Check, HelpCircle } from 'lucide-react'
+import { Settings, Copy, Check, HelpCircle } from 'lucide-react'
 import type { RiskBand } from '../types/security'
 
 function AgentIdRow({ agentId }: { agentId: string }) {
@@ -251,19 +251,6 @@ export function AgentSecurityProfile() {
             <span className="text-xs text-violet-800 dark:text-violet-300">
               <span className="text-violet-500 dark:text-violet-400">Last scored</span>
               <span className="font-semibold ml-1">{fmt(data.lastScoredAt)}</span>
-            </span>
-          )}
-          {data.trustTrend && (
-            <span className="flex items-center gap-1 text-xs">
-              {data.trustTrend === 'improving'
-                ? <TrendingUp  className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                : data.trustTrend === 'degrading'
-                ? <TrendingDown className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
-                : <Minus       className="h-3.5 w-3.5 text-slate-400" />}
-              <span className={`font-semibold capitalize ${
-                data.trustTrend === 'improving' ? 'text-emerald-700 dark:text-emerald-400' :
-                data.trustTrend === 'degrading' ? 'text-red-600 dark:text-red-400'     : 'text-slate-500 dark:text-zinc-400'
-              }`}>{data.trustTrend} trust</span>
             </span>
           )}
         </div>
