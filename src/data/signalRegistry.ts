@@ -187,18 +187,19 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         severity: 'critical', confidenceTier: 'deterministic', excluded: false, onlineCapable: true,
         validActions: ['alert', 'sanitize', 'terminate_session'],  // fires on llm_end/tool_end — call already completed
         matches: [
-          'sk-[32+ chars]  (OpenAI API key)',
+          'sk-[a-zA-Z0-9]{32,}  (OpenAI / generic sk- key)',
           'ghp_[36 chars]  (GitHub personal token)',
           'AKIA[A-Z0-9]{16}  (AWS access key)',
           'Bearer [32+ chars]  (OAuth / API bearer)',
         ],
       },
       {
-        subCheckId: 'SID-01b', label: 'Secret in tool call params', phase: 'online', score: 95,
-        severity: 'critical', confidenceTier: 'high', excluded: false,
+        subCheckId: 'SID-01b', label: 'Secret in tool call params', phase: 'post_session', score: 95,
+        severity: 'critical', confidenceTier: 'deterministic', excluded: false,
         matches: [
-          'secret / password / api_key fields in tool call arguments',
-          'credential values passed as plain-text parameters',
+          'secret / password / api_key / auth_token / access_key fields in tool call arguments',
+          'sk-[a-zA-Z0-9]{32,} / ghp_[36] / AKIA[A-Z0-9]{16} / Bearer [32+] in tool input',
+          'URL-embedded credentials (user:pass@host) in connection strings',
         ],
       },
       {
@@ -245,7 +246,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         severity: 'medium', confidenceTier: 'high', excluded: false,
       },
       {
-        subCheckId: 'SID-04a', label: 'Output references data from different session', phase: 'post_session', score: 92,
+        subCheckId: 'SID-04a', label: 'Output references data from different session', phase: 'cross_session', score: 92,
         severity: 'critical', confidenceTier: 'high', excluded: false,
       },
       {
