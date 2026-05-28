@@ -78,12 +78,12 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'PI-01c', label: 'Encoded / obfuscated payload', phase: 'online', score: 75,
+        subCheckId: 'PI-01c', label: 'Encoded / obfuscated payload', phase: 'both', score: 75,
         severity: 'high', confidenceTier: 'high', excluded: false, onlineCapable: true,
         validActions: ['alert', 'sanitize', 'block_call', 'terminate_session'],
         matches: [
-          'base64-wrapped instruction payloads',
-          'URL-encoded injection sequences (%27, %3C…)',
+          'base64-decodable blob whose decoded text contains an injection phrase',
+          'hex-escaped sequence (\\xNN x4+) decoding to an injection phrase',
         ],
       },
       {
@@ -164,12 +164,11 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'PI-09a', label: 'Obfuscated / encoded injection', phase: 'both', score: 82,
+        subCheckId: 'PI-09a', label: 'Obfuscated / encoded injection', phase: 'post_session', score: 82,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: [
-          'base64-decodable content containing injection phrases',
-          'hex / ROT13 encoded payloads',
-          'unicode homoglyph substitution (е→e, о→o …)',
+          'ROT13-encoded injection phrase (entire message ROT13\'d)',
+          'unicode homoglyph substitution normalised to injection phrase (NFKC)',
         ],
       },
     ],
