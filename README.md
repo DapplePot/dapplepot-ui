@@ -34,9 +34,10 @@ The Vite dev server proxies `/v1/*` → `http://localhost:3000` automatically.
 | `/analytics` | Analytics | Token usage, error rates, latency, cost over time |
 | `/detection` | Detection | Alert feed + rules + notification channels |
 | `/security` | Security | Risk distribution, OWASP signal frequency, high-risk sessions |
-| `/agents` | Agents | Agent registry + create modal |
-| `/agents/:id` | AgentSecurityProfile | LLM/ASI scores, trust score, signal breakdown |
-| `/agents/:id/config` | AgentConfig | Sub-check online toggles + alert thresholds |
+| `/inventory` | Inventory | Agent, LLM, tool, and MCP server registry (four tabs) |
+| `/inventory/agents/:agentId` | AgentSecurityProfile | LLM/ASI scores, trust score, signal breakdown |
+| `/inventory/agents/:agentId/config` | AgentConfig | Sub-check online toggles + alert thresholds |
+| `/audit` | Audit | Monthly audit archives — list, seal, download (admin only) |
 | `/settings` | Settings | Profile, SDK keys, user management (admin only) |
 | `/tenants` | Tenants | Superadmin only |
 | `/onboard-client` | OnboardClient | Two-step onboarding wizard (superadmin only) |
@@ -47,7 +48,7 @@ The Vite dev server proxies `/v1/*` → `http://localhost:3000` automatically.
 All API data lives in TanStack Query with `staleTime` tuned to match API cache TTLs. Finalised sessions use `staleTime: Infinity` (immutable). The SSE live-session feed updates the query cache directly via `queryClient.setQueryData` — no polling.
 
 ### UI State (Zustand)
-Three stores: `auth.ts` (tokens + user, localStorage), `sessionFilters.ts` (filter state persists on back-nav), `ui.ts` (sidebar collapse, active tabs).
+Six stores: `auth.ts` (tokens + user, localStorage), `sessionFilters.ts` (filter state persists on back-nav), `alertFilters.ts` (alert feed filters), `traceFilters.ts` (session trace filters), `ui.ts` (sidebar collapse, active tabs), `theme.ts` (dark/light mode).
 
 ### Auth Flow
 Short-lived JWT access tokens (15m) + rotatable refresh tokens (7d). The `ky` client auto-refreshes on 401 with deduplication — N concurrent failures share one refresh call, GET/HEAD requests are retried, POST requests are not (body consumed).
