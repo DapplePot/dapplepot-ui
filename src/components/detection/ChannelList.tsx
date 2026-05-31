@@ -4,7 +4,7 @@ import { Toggle } from '../ui/toggle'
 import { Badge } from '../ui/badge'
 import { Skeleton } from '../ui/skeleton'
 import { useUpdateChannel } from '../../hooks/useChannels'
-import { Webhook, MessageSquare, Bell, Mail, Smartphone, Users, Settings, Plus } from 'lucide-react'
+import { Webhook, MessageSquare, Bell, Users, Settings, Plus } from 'lucide-react'
 import { ChannelFormModal } from './ChannelFormModal'
 
 const CONNECTOR_TYPES: Array<{ type: ChannelType; name: string; icon: React.ElementType; description: string }> = [

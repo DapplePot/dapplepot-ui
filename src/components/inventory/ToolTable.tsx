@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Plus, X, Braces, Server, Pencil, Trash2 } from 'lucide-react'
-import { useTools, useCreateTool, useUpdateTool, useDeleteTool, useUpdateToolSchema } from '../../hooks/useTools'
+import { useTools, useCreateTool, useUpdateTool, useDeleteTool } from '../../hooks/useTools'
 import { useMcpServers } from '../../hooks/useMcpServers'
 import { useMe } from '../../hooks/useUsers'
 import type { Tool } from '../../api/tools'

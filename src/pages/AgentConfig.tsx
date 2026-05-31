@@ -2072,10 +2072,8 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
     }, 120)
   }, [scrollTo])
 
-  const tagColor  = 'border-violet-200 bg-white text-violet-700 dark:border-violet-800 dark:bg-zinc-800 dark:text-violet-400'
   const hostColor = 'border-blue-200 bg-white text-blue-700 dark:border-blue-800 dark:bg-zinc-800 dark:text-blue-400'
   const pkgColor  = 'border-teal-200 bg-white text-teal-700 dark:border-teal-800 dark:bg-zinc-800 dark:text-teal-400'
-  const mcpColor  = 'border-slate-200 bg-white text-slate-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
 
   return (
     <div className="space-y-4">
