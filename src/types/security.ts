@@ -75,7 +75,7 @@ export interface SignalRegistryEntry {
   framework:       string
   signalNumber:    number
   category:        string
-  detectionPhase:  'online' | 'post_session' | 'both' | 'cross_session' | 'excluded'
+  detectionPhase:  'online' | 'post_session' | 'cross_session' | 'excluded'
   checkScore:      number
   severity:        string
   confidenceTier:  ConfidenceTier

@@ -4,7 +4,7 @@
  * All entries here are system defaults; users cannot disable them.
  */
 
-export type DetectionPhase = 'online' | 'post_session' | 'cross_session' | 'both' | 'excluded'
+export type DetectionPhase = 'online' | 'post_session' | 'cross_session' | 'excluded'
 export type Severity = 'critical' | 'high' | 'medium' | 'low'
 export type ConfidenceTier = 'deterministic' | 'high' | 'medium' | 'low' | 'skeletal'
 export type Framework = 'LLM' | 'ASI'
@@ -20,7 +20,7 @@ export interface SubCheck {
   confidenceTier: ConfidenceTier
   excluded: boolean
   exclusionReason?: string
-  /** Human-readable descriptions of the detection patterns used (online/both phase only) */
+  /** Human-readable descriptions of the detection patterns used (online phase only) */
   matches?: string[]
   /**
    * Whether the SDK has an online implementation for this sub-check.
@@ -78,7 +78,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'PI-01c', label: 'Encoded / obfuscated payload', phase: 'both', score: 75,
+        subCheckId: 'PI-01c', label: 'Encoded / obfuscated payload', phase: 'online', score: 75,
         severity: 'high', confidenceTier: 'high', excluded: false, onlineCapable: true,
         validActions: ['alert', 'sanitize', 'block_call', 'terminate_session'],
         matches: [
@@ -132,7 +132,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         severity: 'critical', confidenceTier: 'high', excluded: false,
       },
       {
-        subCheckId: 'PI-05a', label: 'Code injection pattern in prompt', phase: 'both', score: 80,
+        subCheckId: 'PI-05a', label: 'Code injection pattern in prompt', phase: 'online', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false, onlineCapable: true,
         validActions: ['alert', 'sanitize', 'block_call', 'terminate_session'],
         matches: [
@@ -147,7 +147,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         severity: 'high', confidenceTier: 'high', excluded: false,
       },
       {
-        subCheckId: 'PI-07a', label: 'Multimodal content with injection signal', phase: 'both', score: 60,
+        subCheckId: 'PI-07a', label: 'Multimodal content with injection signal', phase: 'post_session', score: 60,
         severity: 'medium', confidenceTier: 'low', excluded: false,
         matches: [
           'image metadata / alt-text containing directive patterns',
@@ -155,7 +155,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'PI-08a', label: 'Adversarial suffix (high-entropy tail)', phase: 'both', score: 75,
+        subCheckId: 'PI-08a', label: 'Adversarial suffix (high-entropy tail)', phase: 'online', score: 75,
         severity: 'high', confidenceTier: 'medium', excluded: false, onlineCapable: true,
         validActions: ['alert', 'sanitize', 'block_call', 'terminate_session'],
         matches: [
@@ -220,7 +220,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'SID-02b', label: 'Financial identifiers in output', phase: 'online', score: 90,
+        subCheckId: 'SID-02b', label: 'Financial identifiers in output', phase: 'post_session', score: 90,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false,
         matches: [
           '4[0-9]{12,15}  (Visa card)',
@@ -229,7 +229,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'SID-02c', label: 'Health / biometric data in output', phase: 'online', score: 95,
+        subCheckId: 'SID-02c', label: 'Health / biometric data in output', phase: 'post_session', score: 95,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false,
         matches: [
           'XXX-XX-XXXX  (US Social Security Number)',
@@ -317,12 +317,12 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'IOH-01b', label: 'HTML / JS in output without escaping', phase: 'online', score: 85,
+        subCheckId: 'IOH-01b', label: 'HTML / JS in output without escaping', phase: 'post_session', score: 85,
         severity: 'high', confidenceTier: 'deterministic', excluded: false,
         matches: ['<script …>', 'onerror=', 'javascript:'],
       },
       {
-        subCheckId: 'IOH-01c', label: 'SQL fragment in output passed to DB', phase: 'online', score: 90,
+        subCheckId: 'IOH-01c', label: 'SQL fragment in output passed to DB', phase: 'post_session', score: 90,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false,
         matches: [
           'SELECT/INSERT/UPDATE/DELETE … FROM/INTO/TABLE/WHERE  (SQLi pattern)',
@@ -330,12 +330,12 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'IOH-02a', label: 'Raw LLM output as tool param', phase: 'online', score: 70,
+        subCheckId: 'IOH-02a', label: 'Raw LLM output as tool param', phase: 'post_session', score: 70,
         severity: 'high', confidenceTier: 'medium', excluded: false,
         matches: ['LLM output similarity ≥ 0.6 to downstream tool param (LCS ratio)'],
       },
       {
-        subCheckId: 'IOH-03a', label: 'Email template injection in output', phase: 'both', score: 80,
+        subCheckId: 'IOH-03a', label: 'Email template injection in output', phase: 'post_session', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: [
           '<script / javascript: in email body',
@@ -367,11 +367,11 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     number: 6,
     description: 'Agent exceeds its authorised tool scope, requests elevated permissions, performs irreversible actions, or self-modifies its system prompt.',
     subChecks: [
-      { subCheckId: 'EA-01a', label: 'Tool not in approved manifest invoked', phase: 'both', score: 80, severity: 'high', confidenceTier: 'deterministic', excluded: false, onlineCapable: true, validActions: ['alert', 'block_call', 'terminate_session'] },
+      { subCheckId: 'EA-01a', label: 'Tool not in approved manifest invoked', phase: 'online', score: 80, severity: 'high', confidenceTier: 'deterministic', excluded: false, onlineCapable: true, validActions: ['alert', 'block_call', 'terminate_session'] },
       { subCheckId: 'EA-01b', label: 'Agent requests elevated permissions', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: true, exclusionReason: 'Covered by IPA-01a (OW-ASI03 — Privilege Escalation)' },
       { subCheckId: 'EA-01c', label: 'Data written outside designated namespace', phase: 'post_session', score: 75, severity: 'high', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-02a', label: 'Irreversible action without confirm gate', phase: 'post_session', score: 85, severity: 'high', confidenceTier: 'high', excluded: false },
-      { subCheckId: 'EA-02b', label: 'Sub-agents spawned > fan-out limit', phase: 'both', score: 70, severity: 'high', confidenceTier: 'deterministic', excluded: false, onlineCapable: true, validActions: ['alert', 'block_call', 'terminate_session'] },
+      { subCheckId: 'EA-02b', label: 'Sub-agents spawned > fan-out limit', phase: 'online', score: 70, severity: 'high', confidenceTier: 'deterministic', excluded: false, onlineCapable: true, validActions: ['alert', 'block_call', 'terminate_session'] },
       { subCheckId: 'EA-02c', label: 'Agent self-modifies system prompt', phase: 'post_session', score: 98, severity: 'critical', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-03a', label: 'Reads outside working directory', phase: 'post_session', score: 65, severity: 'medium', confidenceTier: 'high', excluded: false },
       { subCheckId: 'EA-03b', label: 'Network call to host not in allowlist', phase: 'post_session', score: 75, severity: 'high', confidenceTier: 'high', excluded: false },
@@ -387,12 +387,12 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     description: 'Agent reveals its system prompt verbatim, confirms it on probe, leaks persona/role names, or forwards it in inter-agent messages.',
     subChecks: [
       {
-        subCheckId: 'SPL-01a', label: 'Verbatim system prompt segment in output', phase: 'online', score: 85,
+        subCheckId: 'SPL-01a', label: 'Verbatim system prompt segment in output', phase: 'post_session', score: 85,
         severity: 'high', confidenceTier: 'medium', excluded: false,
         matches: ['system prompt text similarity ≥ 0.85 to agent output (SequenceMatcher)'],
       },
       {
-        subCheckId: 'SPL-01b', label: 'Agent confirms system prompt on probe', phase: 'online', score: 70,
+        subCheckId: 'SPL-01b', label: 'Agent confirms system prompt on probe', phase: 'post_session', score: 70,
         severity: 'high', confidenceTier: 'medium', excluded: false,
         matches: [
           '"yes, my instructions are…" / "my system prompt says…"',
@@ -482,7 +482,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       { subCheckId: 'AGH-03a', label: 'Goal drift across turns', phase: 'post_session', score: 70, severity: 'medium', confidenceTier: 'medium', excluded: false },
       { subCheckId: 'AGH-03b', label: 'Sub-agent goal not in parent decomposition', phase: 'post_session', score: 70, severity: 'high', confidenceTier: 'high', excluded: false },
       {
-        subCheckId: 'AGH-04a', label: 'Document-sourced instruction injection', phase: 'both', score: 80,
+        subCheckId: 'AGH-04a', label: 'Document-sourced instruction injection', phase: 'post_session', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: [
           'instruction-like phrases in document / tool result content',
@@ -500,23 +500,23 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     description: 'Tool calls with out-of-schema parameters, frequency spikes, chaining to bypass restrictions, or targeting production endpoints from non-prod agents.',
     subChecks: [
       {
-        subCheckId: 'TME-01a', label: 'Tool called with out-of-schema params', phase: 'online', score: 65,
+        subCheckId: 'TME-01a', label: 'Tool called with out-of-schema params', phase: 'post_session', score: 65,
         severity: 'medium', confidenceTier: 'high', excluded: false,
       },
       {
-        subCheckId: 'TME-01b', label: 'Tool call frequency spike (> 3× baseline)', phase: 'online', score: 70,
+        subCheckId: 'TME-01b', label: 'Tool call frequency spike (> 3× baseline)', phase: 'post_session', score: 70,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: [],
       },
       {
-        subCheckId: 'TME-01c', label: 'Tool call sequence deviates from workflow', phase: 'online', score: 80,
+        subCheckId: 'TME-01c', label: 'Tool call sequence deviates from workflow', phase: 'post_session', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: ['tool invocation order deviates from defined LangGraph workflow'],
       },
       { subCheckId: 'TME-02a', label: 'Tool descriptor integrity anomaly', phase: 'post_session', score: 75, severity: 'high', confidenceTier: 'high', excluded: false },
       { subCheckId: 'TME-02b', label: 'Tool chaining to bypass restrictions', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false },
       {
-        subCheckId: 'TME-03a', label: 'Irreversible action without confirm', phase: 'online', score: 92,
+        subCheckId: 'TME-03a', label: 'Irreversible action without confirm', phase: 'post_session', score: 92,
         severity: 'critical', confidenceTier: 'high', excluded: false,
         matches: ['write/create/delete/remove/send/drop/truncate/exec tool names without confirm gate'],
       },
@@ -622,7 +622,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'ASCV-02a', label: 'MCP descriptor poisoning', phase: 'both', score: 80,
+        subCheckId: 'ASCV-02a', label: 'MCP descriptor poisoning', phase: 'post_session', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: ['instruction-like text / role-override sequences inside MCP tool descriptor'],
       },
@@ -630,7 +630,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       { subCheckId: 'ASCV-03a', label: 'MCP server impersonation', phase: 'post_session', score: 75, severity: 'high', confidenceTier: 'medium', excluded: false },
       { subCheckId: 'ASCV-03b', label: 'Third-party data source returns executable', phase: 'post_session', score: 90, severity: 'critical', confidenceTier: 'high', excluded: false },
       {
-        subCheckId: 'ASCV-04a', label: 'Unknown package install in tool execution', phase: 'both', score: 85,
+        subCheckId: 'ASCV-04a', label: 'Unknown package install in tool execution', phase: 'post_session', score: 85,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false,
         matches: [
           'pip install / npm install / apt-get with unrecognised package name',
@@ -649,27 +649,27 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     description: 'Shell injection, eval/exec with agent-generated strings, child process creation, container escape paths, and runaway execution loops.',
     subChecks: [
       {
-        subCheckId: 'RCE-01a', label: 'Agent writes & runs unapproved script', phase: 'online', score: 85,
+        subCheckId: 'RCE-01a', label: 'Agent writes & runs unapproved script', phase: 'post_session', score: 85,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: ['exec/execute/eval/shell/bash/sh/cmd/subprocess/os_command/run_command/system_call tool names'],
       },
       {
-        subCheckId: 'RCE-01b', label: 'eval() / exec() with agent-generated string', phase: 'online', score: 95,
+        subCheckId: 'RCE-01b', label: 'eval() / exec() with agent-generated string', phase: 'post_session', score: 95,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false,
         matches: ['eval() / exec() tool call with agent-generated string argument'],
       },
       {
-        subCheckId: 'RCE-01c', label: 'Agent code creates child processes', phase: 'online', score: 80,
+        subCheckId: 'RCE-01c', label: 'Agent code creates child processes', phase: 'post_session', score: 80,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: ['popen / spawn / subprocess / invoke_process in tool name or params'],
       },
       {
-        subCheckId: 'RCE-02a', label: 'Shell metacharacters in tool params', phase: 'online', score: 92,
+        subCheckId: 'RCE-02a', label: 'Shell metacharacters in tool params', phase: 'post_session', score: 92,
         severity: 'critical', confidenceTier: 'high', excluded: false,
         matches: ['&& || ; $() `` (shell chaining)', 'base64 blobs ≥ 40 chars in params'],
       },
       {
-        subCheckId: 'RCE-02b', label: 'OS command via string interpolation', phase: 'online', score: 90,
+        subCheckId: 'RCE-02b', label: 'OS command via string interpolation', phase: 'post_session', score: 90,
         severity: 'critical', confidenceTier: 'high', excluded: false,
         matches: [
           'import os / import subprocess in tool param strings',
@@ -678,25 +678,25 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'RCE-03a', label: 'Agent mounts host filesystem paths', phase: 'online', score: 98,
+        subCheckId: 'RCE-03a', label: 'Agent mounts host filesystem paths', phase: 'post_session', score: 98,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false,
         matches: ['/proc', '/sys', '/etc', '/host', '/var/run/docker', '/dev  (container escape paths)'],
       },
       {
-        subCheckId: 'RCE-03b', label: 'Agent calls Docker / K8s API', phase: 'online', score: 98,
+        subCheckId: 'RCE-03b', label: 'Agent calls Docker / K8s API', phase: 'post_session', score: 98,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false,
         matches: ['docker.sock', '/api/v1/pods', 'kubernetes.default  (K8s API endpoints)'],
       },
       { subCheckId: 'RCE-04a', label: 'Execution loop (runaway)', phase: 'post_session', score: 80, severity: 'high', confidenceTier: 'high', excluded: false },
       { subCheckId: 'RCE-05a', label: 'Backdoor pattern in generated code', phase: 'post_session', score: 85, severity: 'critical', confidenceTier: 'high', excluded: false },
       {
-        subCheckId: 'RCE-06a', label: 'Unsafe deserialization in tool args', phase: 'both', score: 90,
+        subCheckId: 'RCE-06a', label: 'Unsafe deserialization in tool args', phase: 'post_session', score: 90,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false,
         matches: ['pickle / marshal / yaml.load / eval deserialization patterns in tool arguments'],
       },
       { subCheckId: 'RCE-07a', label: 'Multi-tool chain exploitation', phase: 'post_session', score: 92, severity: 'critical', confidenceTier: 'high', excluded: false },
       {
-        subCheckId: 'RCE-08a', label: 'Lockfile manipulation in tool execution', phase: 'both', score: 75,
+        subCheckId: 'RCE-08a', label: 'Lockfile manipulation in tool execution', phase: 'post_session', score: 75,
         severity: 'high', confidenceTier: 'deterministic', excluded: false,
         matches: ['package-lock.json / yarn.lock / Pipfile.lock tampering in tool output'],
       },
@@ -711,7 +711,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
     description: 'Adversarial writes to shared memory, conversation history tampering, cross-session escalation, and cross-tenant retrieval anomalies.',
     subChecks: [
       {
-        subCheckId: 'MCP-01a', label: 'Injected content alters current plan', phase: 'online', score: 88,
+        subCheckId: 'MCP-01a', label: 'Injected content alters current plan', phase: 'post_session', score: 88,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: [
           '<memory> / <context> / <system_override> XML-like tags in context',
@@ -722,7 +722,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
         ],
       },
       {
-        subCheckId: 'MCP-01b', label: 'Conversation history hash mismatch', phase: 'online', score: 85,
+        subCheckId: 'MCP-01b', label: 'Conversation history hash mismatch', phase: 'post_session', score: 85,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: ['stored conversation history HMAC does not match recomputed hash'],
       },
@@ -730,7 +730,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       { subCheckId: 'MCP-02b', label: 'Memory record not written by this session', phase: 'post_session', score: 80, severity: 'high', confidenceTier: 'high', excluded: false },
       { subCheckId: 'MCP-02c', label: 'Memory record contains instruction text', phase: 'post_session', score: 88, severity: 'high', confidenceTier: 'high', excluded: false },
       {
-        subCheckId: 'MCP-03a', label: 'Poisoned content in memory write', phase: 'both', score: 75,
+        subCheckId: 'MCP-03a', label: 'Poisoned content in memory write', phase: 'post_session', score: 75,
         severity: 'high', confidenceTier: 'high', excluded: false,
         matches: ['adversarial instruction text detected inside memory-write tool payload'],
       },
@@ -825,7 +825,7 @@ export const SIGNAL_REGISTRY: SignalConfig[] = [
       { subCheckId: 'RA-02b', label: 'Agent resists shutdown / interruption', phase: 'post_session', score: 95, severity: 'critical', confidenceTier: 'high', excluded: false },
       { subCheckId: 'RA-03a', label: 'Self-approval in workflow', phase: 'post_session', score: 85, severity: 'critical', confidenceTier: 'high', excluded: false },
       {
-        subCheckId: 'RA-04a', label: 'Self-replication via provisioning tools', phase: 'both', score: 95,
+        subCheckId: 'RA-04a', label: 'Self-replication via provisioning tools', phase: 'post_session', score: 95,
         severity: 'critical', confidenceTier: 'deterministic', excluded: false,
         matches: [
           'create_agent / spawn_agent / register_service / clone_instance tool calls',

@@ -37,7 +37,6 @@ const PHASE_STYLE: Record<DetectionPhase, string> = {
   online:        'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800',
   post_session:  'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800',
   cross_session: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-300 dark:border-cyan-800',
-  both:          'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800',
   excluded:      'bg-slate-100 text-slate-400 border-slate-200 dark:bg-zinc-800 dark:text-zinc-500 dark:border-zinc-700',
 }
 
@@ -45,7 +44,6 @@ const PHASE_LABEL: Record<DetectionPhase, string> = {
   online:        'Online',
   post_session:  'Post-session',
   cross_session: 'Cross-session',
-  both:          'Online + Post',
   excluded:      'Excluded',
 }
 
