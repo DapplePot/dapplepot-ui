@@ -50,7 +50,7 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-slate-200 px-3 dark:border-zinc-700">
-        <img src="/dapplePotLogo.svg" alt="DapplePot" className="h-5 w-5 shrink-0 rounded invert dark:invert-0" />
+        <img src="/dapplePotLogo.png" alt="DapplePot" className="h-5 w-5 shrink-0 rounded invert dark:invert-0" />
         {!collapsed && (
           <span className="ml-2.5 truncate text-sm font-semibold text-slate-900 dark:text-zinc-100">
             DapplePot
