@@ -1,4 +1,4 @@
-import { useOverview, useTrends } from '../hooks/useAnalytics'
+﻿import { useOverview, useTrends } from '../hooks/useAnalytics'
 import { useAlerts } from '../hooks/useAlerts'
 import { useLiveSessions } from '../hooks/useControl'
 import { MetricCards, MetricCardsSkeleton } from '../components/overview/MetricCards'
@@ -10,7 +10,7 @@ import { useAuthStore } from '../stores/auth'
 
 function ErrorCard({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400">
+    <div className="rounded border border-red-100 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400">
       {message}
     </div>
   )
@@ -42,7 +42,7 @@ export function Overview() {
       )}
 
       <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="col-span-2 rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
           <div className="border-b border-slate-100 px-4 py-3 dark:border-zinc-800">
             <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">Live session feed</h2>
           </div>
@@ -54,7 +54,7 @@ export function Overview() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
             <div className="border-b border-slate-100 px-4 py-3 dark:border-zinc-800">
               <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">Recent alerts</h2>
             </div>
@@ -67,7 +67,7 @@ export function Overview() {
             )}
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
             <div className="border-b border-slate-100 px-4 py-3 dark:border-zinc-800">
               <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">Recent agents</h2>
             </div>

@@ -1,4 +1,4 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+﻿import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import type { AgentSessionCount } from '@dapplepot/types/analytics'
 import { Skeleton } from '../ui/skeleton'
 
@@ -13,7 +13,7 @@ function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null
   const d = payload[0]?.payload as AgentSessionCount & { pct: number }
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded border border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
       {d.agentName && <p className="text-xs font-medium text-slate-700 dark:text-zinc-200">{d.agentName}</p>}
       <p className="font-mono text-[10px] text-slate-400 dark:text-zinc-500">{d.agentId.slice(0, 8)}</p>
       <p className="mt-0.5 text-xs font-semibold text-slate-900 dark:text-zinc-100">

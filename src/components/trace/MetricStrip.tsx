@@ -1,4 +1,4 @@
-import type { SessionDetail, TraceEvent } from '@dapplepot/types/session'
+﻿import type { SessionDetail, TraceEvent } from '@dapplepot/types/session'
 import { formatDuration, formatTokens } from '../../utils/format'
 import { Skeleton } from '../ui/skeleton'
 import { useAgentLlmModels } from '../../hooks/useAgentLlmModels'
@@ -93,7 +93,7 @@ export function MetricStrip({ session, events }: MetricStripProps) {
   ]
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
       <div className="grid grid-cols-6 divide-x divide-slate-100 dark:divide-zinc-800">
         {metrics.map((m) => (
           <div key={m.label} className="px-4 py-3">
@@ -108,7 +108,7 @@ export function MetricStrip({ session, events }: MetricStripProps) {
 
 export function MetricStripSkeleton() {
   return (
-    <div className="grid grid-cols-6 divide-x divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="grid grid-cols-6 divide-x divide-slate-100 rounded border border-slate-200 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="px-4 py-3 space-y-1.5">
           <Skeleton className="h-3 w-16" />

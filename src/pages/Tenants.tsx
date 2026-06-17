@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useTenants } from '../hooks/useTenants'
 
 function formatDate(iso: string) {
@@ -29,13 +29,13 @@ export function Tenants() {
         placeholder="Search by tenant or admin…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-violet-400"
+        className="w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-violet-400"
       />
 
       {isLoading && (
         <div className="space-y-2">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-14 animate-pulse rounded-lg bg-slate-100 dark:bg-zinc-800" />
+            <div key={i} className="h-14 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
           ))}
         </div>
       )}
@@ -45,7 +45,7 @@ export function Tenants() {
       )}
 
       {!isLoading && !isError && (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="overflow-x-auto rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-zinc-700 dark:text-zinc-400">

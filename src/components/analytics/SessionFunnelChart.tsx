@@ -1,4 +1,4 @@
-import type { SessionFunnel } from '@dapplepot/types/analytics'
+﻿import type { SessionFunnel } from '@dapplepot/types/analytics'
 import { Skeleton } from '../ui/skeleton'
 
 interface SessionFunnelChartProps {
@@ -29,19 +29,19 @@ export function SessionFunnelChart({ data }: SessionFunnelChartProps) {
 
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         <div className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm bg-slate-300 dark:bg-zinc-600" />
+          <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded bg-slate-300 dark:bg-zinc-600" />
           <span className="text-xs text-slate-500 dark:text-zinc-400">Started</span>
           <span className="text-xs tabular-nums text-slate-400 dark:text-zinc-500">{data.totalStarted.toLocaleString()}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm" style={{ backgroundColor: '#1D9E75' }} />
+          <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded" style={{ backgroundColor: '#1D9E75' }} />
           <span className="text-xs text-slate-500 dark:text-zinc-400">Finalised</span>
           <span className="text-xs tabular-nums text-slate-400 dark:text-zinc-500">
             {data.finalised.toLocaleString()} ({finalisedPct.toFixed(0)}%)
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm" style={{ backgroundColor: '#ef4444' }} />
+          <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded" style={{ backgroundColor: '#ef4444' }} />
           <span className="text-xs text-slate-500 dark:text-zinc-400">Terminated</span>
           <span className="text-xs tabular-nums text-slate-400 dark:text-zinc-500">
             {data.terminated.toLocaleString()} ({terminatedPct.toFixed(0)}%)
@@ -49,7 +49,7 @@ export function SessionFunnelChart({ data }: SessionFunnelChartProps) {
         </div>
         {data.open > 0 && (
           <div className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm bg-violet-400 dark:bg-violet-600" />
+            <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded bg-violet-400 dark:bg-violet-600" />
             <span className="text-xs text-slate-500 dark:text-zinc-400">In progress</span>
             <span className="text-xs tabular-nums text-slate-400 dark:text-zinc-500">{data.open.toLocaleString()}</span>
           </div>

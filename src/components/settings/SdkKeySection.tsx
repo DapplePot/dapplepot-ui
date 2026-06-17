@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { useSdkKeys, useRevealSdkKey } from '../../hooks/useSdkKeys'
 import type { SdkKeySummary } from '../../types/sdkKey'
@@ -124,14 +124,14 @@ export function SdkKeySection({ isAdmin }: SdkKeySectionProps) {
 
   if (!keys?.length) {
     return (
-      <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500">
+      <p className="rounded border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500">
         No SDK keys found for this tenant.
       </p>
     )
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="overflow-x-auto rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
       <table className="w-full text-left">
         <thead>
           <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-zinc-700 dark:text-zinc-400">

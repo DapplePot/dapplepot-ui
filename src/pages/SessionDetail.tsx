@@ -1,4 +1,4 @@
-import { useParams } from '@tanstack/react-router'
+﻿import { useParams } from '@tanstack/react-router'
 import { useSessionDetail, useSessionTrace } from '../hooks/useSessions'
 import { useSessionAlerts } from '../hooks/useAlerts'
 import { useSessionActions } from '../hooks/useSecurity'
@@ -10,7 +10,7 @@ import type { TraceEvent } from '../types/session'
 
 function ErrorCard({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-red-700">
+    <div className="rounded border border-red-100 bg-red-50 p-4 text-sm text-red-700">
       {message}
     </div>
   )
@@ -31,7 +31,7 @@ export function SessionDetail() {
   if (sessionLoading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-20 w-full rounded-lg" />
+        <Skeleton className="h-20 w-full rounded" />
         <MetricStripSkeleton />
         <EventTimelineSkeleton />
       </div>
@@ -162,7 +162,7 @@ export function SessionDetail() {
     <div className="flex h-[calc(100vh-theme(spacing.14)-theme(spacing.6)*2)] flex-col">
       {traceLoading ? (
         <div className="space-y-3">
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
           <MetricStripSkeleton />
           <EventTimelineSkeleton />
         </div>

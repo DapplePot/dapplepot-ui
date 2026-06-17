@@ -1,4 +1,4 @@
-import type { RiskBand } from '@dapplepot/types/security'
+﻿import type { RiskBand } from '@dapplepot/types/security'
 import { Skeleton } from '../ui/skeleton'
 
 const BAND_CONFIG: Record<RiskBand, { label: string; color: string }> = {
@@ -58,7 +58,7 @@ export function SecurityBandChart({
           return (
             <div key={band} className="flex items-center gap-1.5">
               <span
-                className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm"
+                className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded"
                 style={{ backgroundColor: BAND_CONFIG[band].color }}
               />
               <span className="text-xs text-slate-600 dark:text-zinc-400">{BAND_CONFIG[band].label}</span>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import type { AlertSummary } from '@dapplepot/types/alert'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -34,7 +34,7 @@ export function AlertsTab({ alerts }: AlertsTabProps) {
         const isExpanded = expandedId === alert.alertId
         const isPending = updateStatus.isPending && updateStatus.variables?.alertId === alert.alertId
         return (
-          <div key={alert.alertId} className="rounded-lg border border-slate-200 dark:border-zinc-700">
+          <div key={alert.alertId} className="rounded border border-slate-200 dark:border-zinc-700">
             <button
               type="button"
               className="flex w-full items-start gap-2 p-3 text-left"

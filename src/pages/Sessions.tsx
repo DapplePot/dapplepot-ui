@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useSessionList } from '../hooks/useSessions'
 import { useAgents } from '../hooks/useAgents'
@@ -12,7 +12,7 @@ type SortDir = 'asc' | 'desc'
 
 function ErrorCard({ message, retry }: { message: string; retry: () => void }) {
   return (
-    <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-red-700 flex items-center justify-between dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400">
+    <div className="rounded border border-red-100 bg-red-50 p-4 text-sm text-red-700 flex items-center justify-between dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400">
       <span>{message}</span>
       <button onClick={retry} className="text-red-600 underline dark:text-red-400">Retry</button>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { SessionAction} from '../../types/security'
 
@@ -34,7 +34,7 @@ export function OnlineFindingsList({ findings, baseTime }: OnlineFindingsListPro
   }
 
   return (
-    <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="divide-y divide-slate-100 rounded border border-slate-200 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">
       {findings.map((f) => (
         <div key={f.id}>
           <div

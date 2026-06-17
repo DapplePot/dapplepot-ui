@@ -1,4 +1,4 @@
-import type { SessionDetail, TraceEvent } from '@dapplepot/types/session'
+﻿import type { SessionDetail, TraceEvent } from '@dapplepot/types/session'
 import type { AlertSummary } from '@dapplepot/types/alert'
 import { TraceHeader } from './TraceHeader'
 import { MetricStrip } from './MetricStrip'
@@ -31,11 +31,11 @@ export function TraceLayout({
       <MetricStrip session={session} events={events} />
 
       <div className="flex flex-1 gap-4 overflow-hidden">
-        <div className="flex w-3/5 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="flex w-3/5 flex-col overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
           <RightPanel session={session} alerts={alerts} />
         </div>
 
-        <div className="flex w-2/5 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="flex w-2/5 flex-col overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
           <div className="border-b border-slate-100 px-4 py-2.5 dark:border-zinc-800">
             <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">
               Event timeline

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import type { AlertSummary } from '@dapplepot/types/alert'
 import type { OwSignalStatus } from '@dapplepot/types/security'
 import { AlertDrawer } from './AlertDrawer'
@@ -134,7 +134,7 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
       </div>
 
       {/* Alert list */}
-      <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="divide-y divide-slate-100 rounded border border-slate-200 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">
         {alerts.length === 0 ? (
           <div className="py-12 text-center text-sm text-slate-400 dark:text-zinc-500">No alerts</div>
         ) : (
@@ -183,7 +183,7 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
 
 export function AlertFeedSkeleton() {
   return (
-    <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="divide-y divide-slate-100 rounded border border-slate-200 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-start gap-3 px-4 py-3">
           <Skeleton className="mt-1 h-2 w-2 rounded-full" />

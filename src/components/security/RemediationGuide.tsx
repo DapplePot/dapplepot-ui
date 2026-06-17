@@ -1,4 +1,4 @@
-import type { RemediationCard } from '../../types/security'
+﻿import type { RemediationCard } from '../../types/security'
 
 interface RemediationGuideProps {
   cards: RemediationCard[]
@@ -18,7 +18,7 @@ export function RemediationGuide({ cards }: RemediationGuideProps) {
       {cards.map((card, i) => (
         <div
           key={card.owaspSignalId}
-          className={`rounded-lg border bg-white p-5 dark:bg-zinc-900 ${
+          className={`rounded border bg-white p-5 dark:bg-zinc-900 ${
             i === 0 ? 'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20' : 'border-slate-200 dark:border-zinc-700'
           }`}
         >
@@ -36,7 +36,7 @@ export function RemediationGuide({ cards }: RemediationGuideProps) {
 
           <p className="mt-3 text-sm text-slate-600 dark:text-zinc-400">{card.description}</p>
 
-          <div className="mt-3 rounded-md bg-emerald-50 border border-emerald-100 p-3 dark:bg-emerald-900/10 dark:border-emerald-900/40">
+          <div className="mt-3 rounded bg-emerald-50 border border-emerald-100 p-3 dark:bg-emerald-900/10 dark:border-emerald-900/40">
             <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-2">Fix steps</p>
             <ol className="list-decimal list-inside space-y-1">
               {card.fixSteps.map((step, idx) => (
@@ -48,7 +48,7 @@ export function RemediationGuide({ cards }: RemediationGuideProps) {
           {card.sdkSnippet && (
             <div className="mt-3">
               <p className="mb-1 text-xs font-medium text-slate-500 dark:text-zinc-400">SDK config</p>
-              <pre className="rounded-md bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100 overflow-x-auto dark:bg-zinc-950">
+              <pre className="rounded bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100 overflow-x-auto dark:bg-zinc-950">
                 {card.sdkSnippet}
               </pre>
             </div>

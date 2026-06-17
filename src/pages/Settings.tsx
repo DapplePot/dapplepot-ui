@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { UserPlus, Building2, Copy, Check, User, KeyRound, Users, Palette, Sun, Moon, Monitor, type LucideIcon } from 'lucide-react'
 import { useMe } from '../hooks/useUsers'
 import { useTenant } from '../hooks/useTenants'
@@ -53,7 +53,7 @@ function CopyableId({ label, value }: { label: string; value: string }) {
   }
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-800">
+    <div className="flex items-center justify-between rounded border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-800">
       <div>
         <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-zinc-500">{label}</p>
         <p className="mt-0.5 font-mono text-xs text-slate-700 dark:text-zinc-300">{value}</p>
@@ -61,7 +61,7 @@ function CopyableId({ label, value }: { label: string; value: string }) {
       <button
         onClick={handleCopy}
         title={`Copy ${label}`}
-        className="ml-4 flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] text-slate-500 shadow-sm transition-colors hover:border-violet-300 hover:text-violet-600 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-400 dark:hover:border-violet-500 dark:hover:text-violet-400"
+        className="ml-4 flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2 py-1 text-[10px] text-slate-500 shadow-sm transition-colors hover:border-violet-300 hover:text-violet-600 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-400 dark:hover:border-violet-500 dark:hover:text-violet-400"
       >
         {copied
           ? <><Check className="h-3 w-3 text-emerald-500" /> Copied</>
@@ -96,7 +96,7 @@ function PreferencesSection() {
                 key={value}
                 onClick={() => setTheme(value)}
                 className={[
-                  'flex flex-1 flex-col items-center gap-2 rounded-xl border-2 px-4 py-5 text-sm transition-all',
+                  'flex flex-1 flex-col items-center gap-2 rounded border-2 px-4 py-5 text-sm transition-all',
                   isActive
                     ? 'border-violet-500 bg-violet-50 dark:border-violet-400 dark:bg-violet-950/40'
                     : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600 dark:hover:bg-zinc-750',
@@ -128,15 +128,15 @@ function TenantSection({ tenantId }: { tenantId: string }) {
   const { data: tenant, isLoading } = useTenant(tenantId)
 
   if (isLoading) {
-    return <div className="h-24 animate-pulse rounded-lg bg-slate-100 dark:bg-zinc-800" />
+    return <div className="h-24 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
   }
 
   if (!tenant) return null
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
       <div className="mb-3 flex items-center gap-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800">
           <Building2 className="h-3.5 w-3.5 text-slate-500 dark:text-zinc-400" />
         </div>
         <div>
@@ -164,7 +164,7 @@ export function Settings() {
     return (
       <div className="space-y-2 p-2">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100 dark:bg-zinc-800" />
+          <div key={i} className="h-10 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
         ))}
       </div>
     )
@@ -198,7 +198,7 @@ export function Settings() {
                 <li key={item.id}>
                   <button
                     onClick={() => setActiveSection(item.id)}
-                    className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors ${
+                    className={`flex w-full items-center gap-2.5 rounded px-2.5 py-2 text-sm transition-colors ${
                       isActive
                         ? 'bg-violet-50 font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300'
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
@@ -234,7 +234,7 @@ export function Settings() {
               <div className="mb-4 flex justify-end">
                 <button
                   onClick={() => setShowInvite(true)}
-                  className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-500"
+                  className="flex items-center gap-1.5 rounded bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-500"
                 >
                   <UserPlus className="h-4 w-4" />
                   Invite user

@@ -1,4 +1,4 @@
-import { useAuthStore } from '../stores/auth'
+﻿import { useAuthStore } from '../stores/auth'
 import { OnboardingWizard } from '../components/onboarding/OnboardingWizard'
 
 export function OnboardClient() {
@@ -21,7 +21,7 @@ export function OnboardClient() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="rounded border border-slate-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <OnboardingWizard />
       </div>
     </div>
