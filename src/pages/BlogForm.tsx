@@ -7,6 +7,7 @@ import {
   useUploadBlogAsset,
 } from '../hooks/useBlogs'
 import { ChevronLeft, Upload, Loader2, Image } from 'lucide-react'
+import { parseMarkdown } from '../utils/markdown'
 
 const AUTHOR_OPTIONS = ['Pushpendra Pal', 'Kshitiz Rana', 'Sayantan Gain']
 const TAG_OPTIONS = ['Research', 'Insights', 'Announcements', 'Product Updates']
@@ -362,7 +363,7 @@ export function BlogForm() {
             ) : (
               <div className="prose prose-slate dark:prose-invert max-w-none min-h-[360px] p-2 bg-slate-50/50 rounded-lg dark:bg-zinc-950/20 overflow-auto font-sans">
                 {contentMarkdown ? (
-                  <div className="whitespace-pre-wrap">{contentMarkdown}</div>
+                  <div dangerouslySetInnerHTML={{ __html: parseMarkdown(contentMarkdown) }} />
                 ) : (
                   <p className="text-slate-400 dark:text-zinc-500 italic">Nothing to preview yet.</p>
                 )}

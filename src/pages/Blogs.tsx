@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useBlogs, useDeleteBlog } from '../hooks/useBlogs'
-import { Edit2, Trash2, Plus, Search } from 'lucide-react'
+import { Edit2, Trash2, Plus, Search, Eye, X } from 'lucide-react'
+import { parseMarkdown } from '../utils/markdown'
+import type { BlogItem } from '../api/blogs'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -16,6 +18,7 @@ export function Blogs() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [tag, setTag] = useState('')
+  const [viewBlog, setViewBlog] = useState<BlogItem | null>(null)
 
   const { data, isLoading, isError } = useBlogs({
     page,
@@ -122,14 +125,18 @@ export function Blogs() {
                       <img
                         src={blog.bannerImageUrl}
                         alt=""
-                        className="h-10 w-16 object-cover rounded border border-slate-200 dark:border-zinc-700"
+                        className="h-10 w-16 object-cover rounded border border-slate-200 dark:border-zinc-700 cursor-pointer"
+                        onClick={() => setViewBlog(blog)}
                         onError={(e) => {
                           e.currentTarget.src = 'https://placehold.co/120x80?text=No+Image'
                         }}
                       />
                     </td>
-                    <td className="px-4 py-3 max-w-xs">
-                      <div className="text-sm font-semibold text-slate-900 dark:text-zinc-100 truncate">
+                    <td
+                      className="px-4 py-3 max-w-xs cursor-pointer group"
+                      onClick={() => setViewBlog(blog)}
+                    >
+                      <div className="text-sm font-semibold text-slate-900 dark:text-zinc-100 truncate group-hover:text-violet-600 dark:group-hover:text-violet-400">
                         {blog.title}
                       </div>
                       <div className="font-mono text-xs text-slate-400 dark:text-zinc-500 truncate">
@@ -161,6 +168,13 @@ export function Blogs() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setViewBlog(blog)}
+                          className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                          title="View"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
                         <button
                           onClick={() => navigate({ to: `/blogs/${blog.id}` })}
                           className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
@@ -213,6 +227,44 @@ export function Blogs() {
             </div>
           )}
         </>
+      )}
+
+      {/* View Blog Modal */}
+      {viewBlog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="flex flex-col w-full max-w-3xl max-h-[85vh] bg-white rounded-xl border border-slate-200 shadow-2xl dark:bg-zinc-900 dark:border-zinc-700 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-zinc-100">
+                  {viewBlog.title}
+                </h2>
+                <p className="text-xs font-mono text-slate-400 dark:text-zinc-500">
+                  {viewBlog.slug} | {viewBlog.tag} | {viewBlog.readTime}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewBlog(null)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {/* Modal Content */}
+            <div className="flex-1 p-6 overflow-y-auto space-y-6">
+              {viewBlog.bannerImageUrl && (
+                <img
+                  src={viewBlog.bannerImageUrl}
+                  alt=""
+                  className="w-full h-64 object-cover rounded-lg border border-slate-200 dark:border-zinc-700 mx-auto"
+                />
+              )}
+              <div className="prose prose-slate dark:prose-invert max-w-none font-sans">
+                <div dangerouslySetInnerHTML={{ __html: parseMarkdown(viewBlog.contentMarkdown) }} />
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
