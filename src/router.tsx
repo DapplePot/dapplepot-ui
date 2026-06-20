@@ -18,6 +18,8 @@ import { Login }          from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword }  from './pages/ResetPassword'
 import { AcceptInvite }   from './pages/AcceptInvite'
+import { Blogs }          from './pages/Blogs'
+import { BlogForm }       from './pages/BlogForm'
 import { useAuthStore }   from './stores/auth'
 
 function requireAuth() {
@@ -174,6 +176,27 @@ const auditRoute = createRoute({
   component: Audit,
 })
 
+const blogsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/blogs',
+  beforeLoad: requireAuth,
+  component: Blogs,
+})
+
+const blogNewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/blogs/new',
+  beforeLoad: requireAuth,
+  component: BlogForm,
+})
+
+const blogEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/blogs/$id',
+  beforeLoad: requireAuth,
+  component: BlogForm,
+})
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   forgotPasswordRoute,
@@ -194,6 +217,9 @@ const routeTree = rootRoute.addChildren([
   agentSecurityProfileRoute,
   agentConfigRoute,
   auditRoute,
+  blogsRoute,
+  blogNewRoute,
+  blogEditRoute,
 ])
 
 export const router = createRouter({ routeTree })
