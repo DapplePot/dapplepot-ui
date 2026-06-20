@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { CheckCircle2, Building2, UserCog } from 'lucide-react'
 import { TenantInfoStep, type TenantInfoData } from './TenantInfoStep'
 import { AdminAccountStep, type AdminAccountData } from './AdminAccountStep'
@@ -64,7 +64,7 @@ export function OnboardingWizard() {
           <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">The tenant and admin account have been created.</p>
         </div>
 
-        <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 text-left text-sm space-y-2 dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="w-full rounded border border-slate-200 bg-slate-50 p-4 text-left text-sm space-y-2 dark:border-zinc-700 dark:bg-zinc-800">
           <div className="flex justify-between">
             <span className="text-slate-500 dark:text-zinc-400">Tenant</span>
             <span className="font-medium text-slate-900 dark:text-zinc-100">{result.tenant.name}</span>
@@ -93,7 +93,7 @@ export function OnboardingWizard() {
 
         <button
           onClick={handleReset}
-          className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-500"
+          className="rounded bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-500"
         >
           Onboard another client
         </button>

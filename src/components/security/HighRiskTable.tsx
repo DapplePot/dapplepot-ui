@@ -1,4 +1,4 @@
-import { Badge } from '../ui/badge'
+﻿import { Badge } from '../ui/badge'
 import { useAgents } from '../../hooks/useAgents'
 
 interface HighRiskSession {
@@ -41,7 +41,7 @@ export function HighRiskTable({ sessions, onSelect }: HighRiskTableProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-100 dark:border-zinc-800">

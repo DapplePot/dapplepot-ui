@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import type { SessionSummary } from '@dapplepot/types/session'
 import {
   Table, TableHeader, TableBody, TableRow, TableHead,
@@ -34,7 +34,7 @@ export function SessionTable({ sessions, sort, sortDir, onSort, agentMap = {} }:
   const toggle = (id: string) => setExpandedId((prev) => (prev === id ? null : id))
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded border border-slate-200 bg-white overflow-hidden dark:border-zinc-700 dark:bg-zinc-900">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
@@ -77,7 +77,7 @@ export function SessionTable({ sessions, sort, sortDir, onSort, agentMap = {} }:
 
 export function SessionTableSkeleton() {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded border border-slate-200 bg-white overflow-hidden dark:border-zinc-700 dark:bg-zinc-900">
       <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
         <Skeleton className="h-4 w-32" />
       </div>

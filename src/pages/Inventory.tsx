@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useSearch } from '@tanstack/react-router'
 import { AgentTable } from '../components/agents/AgentTable'
 import { LlmTable } from '../components/inventory/LlmTable'
@@ -24,12 +24,12 @@ export function Inventory() {
         <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">Inventory</h1>
       </div>
 
-      <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 w-fit dark:border-zinc-700 dark:bg-zinc-800">
+      <div className="flex gap-1 rounded border border-slate-200 bg-slate-50 p-1 w-fit dark:border-zinc-700 dark:bg-zinc-800">
         {TABS.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+            className={`rounded px-4 py-1.5 text-sm font-medium transition-colors ${
               tab === t.id
                 ? 'bg-white text-slate-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100'
                 : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'

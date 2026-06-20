@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+﻿import { useState, type FormEvent } from 'react'
 
 export interface TenantInfoData {
   name:        string
@@ -33,7 +33,7 @@ export function TenantInfoStep({ initialData, onNext }: TenantInfoStepProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Acme Corp"
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+          className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
         />
         <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">Must be unique across all tenants.</p>
       </div>
@@ -50,7 +50,7 @@ export function TenantInfoStep({ initialData, onNext }: TenantInfoStepProps) {
             value={tokenBudget}
             onChange={(e) => setTokenBudget(e.target.value)}
             placeholder="Unlimited"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
           />
           <span className="shrink-0 text-xs text-slate-500 dark:text-zinc-400">tokens</span>
         </div>
@@ -71,7 +71,7 @@ export function TenantInfoStep({ initialData, onNext }: TenantInfoStepProps) {
             value={rateLimit}
             onChange={(e) => setRateLimit(e.target.value)}
             placeholder="Unlimited"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
           />
           <span className="shrink-0 text-xs text-slate-500 dark:text-zinc-400">req / min</span>
         </div>
@@ -83,7 +83,7 @@ export function TenantInfoStep({ initialData, onNext }: TenantInfoStepProps) {
       <div className="flex justify-end pt-2">
         <button
           type="submit"
-          className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-500"
+          className="rounded bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-500"
         >
           Next →
         </button>

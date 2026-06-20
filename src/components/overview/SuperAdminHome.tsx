@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+﻿import { Link } from '@tanstack/react-router'
 import { UserPlus } from 'lucide-react'
 
 export function SuperAdminHome() {
@@ -13,7 +13,7 @@ export function SuperAdminHome() {
       </p>
       <Link
         to="/onboard-client"
-        className="mt-6 flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
+        className="mt-6 flex items-center gap-2 rounded bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
       >
         <UserPlus className="h-4 w-4" />
         Onboard a client

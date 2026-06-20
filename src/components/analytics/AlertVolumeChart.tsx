@@ -1,4 +1,4 @@
-import {
+﻿import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import type { AlertStats } from '@dapplepot/types/alert'
@@ -24,7 +24,7 @@ interface AlertVolumeChartProps {
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded border border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
       <p className="mb-1 text-xs font-medium text-slate-700 dark:text-zinc-300">{label}</p>
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-2 text-xs">
@@ -104,7 +104,7 @@ export function AlertVolumeChart({ data }: AlertVolumeChartProps) {
           { color: '#1D9E75', label: 'Resolved'     },
         ].map(l => (
           <div key={l.label} className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 rounded-sm" style={{ backgroundColor: l.color }} />
+            <span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: l.color }} />
             <span className="text-xs text-slate-500 dark:text-zinc-400">{l.label}</span>
           </div>
         ))}
@@ -127,7 +127,7 @@ export function AlertVolumeSkeleton() {
       <div className="flex gap-2">
         {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-6 w-20 rounded-full" />)}
       </div>
-      <Skeleton className="h-[180px] w-full rounded-lg" />
+      <Skeleton className="h-[180px] w-full rounded" />
       <div className="flex gap-4 border-t border-slate-100 pt-2 dark:border-zinc-800">
         {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-3 w-16" />)}
       </div>

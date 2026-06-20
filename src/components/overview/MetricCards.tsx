@@ -1,4 +1,4 @@
-import type { OverviewMetrics } from '@dapplepot/types/analytics'
+﻿import type { OverviewMetrics } from '@dapplepot/types/analytics'
 import type { SessionSummary } from '@dapplepot/types/session'
 import type { TrendPoint } from '@dapplepot/types/analytics'
 import { Skeleton } from '../ui/skeleton'
@@ -54,7 +54,7 @@ export function MetricCards({ overview, liveSessions, trends = [] }: MetricCards
   return (
     <div className="grid grid-cols-4 gap-4">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
+        <div key={card.label} className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
           <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">{card.label}</p>
           <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-zinc-100">{card.value}</p>
           <p className="mt-0.5 text-xs text-slate-400 dark:text-zinc-500">{card.sub}</p>
@@ -74,7 +74,7 @@ export function MetricCardsSkeleton() {
   return (
     <div className="grid grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2 dark:border-zinc-700 dark:bg-zinc-900">
+        <div key={i} className="rounded border border-slate-200 bg-white p-4 space-y-2 dark:border-zinc-700 dark:bg-zinc-900">
           <Skeleton className="h-3 w-24" />
           <Skeleton className="h-7 w-16" />
           <Skeleton className="h-3 w-32" />

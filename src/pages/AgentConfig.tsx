@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+﻿import React, { useState, useRef, useEffect } from 'react'
 import { useParams, Link } from '@tanstack/react-router'
 import {
   useAgentProfile, useSubcheckConfig, useToggleSubcheckOnline,
@@ -37,7 +37,6 @@ const PHASE_STYLE: Record<DetectionPhase, string> = {
   online:        'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800',
   post_session:  'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800',
   cross_session: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-300 dark:border-cyan-800',
-  both:          'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800',
   excluded:      'bg-slate-100 text-slate-400 border-slate-200 dark:bg-zinc-800 dark:text-zinc-500 dark:border-zinc-700',
 }
 
@@ -45,7 +44,6 @@ const PHASE_LABEL: Record<DetectionPhase, string> = {
   online:        'Online',
   post_session:  'Post-session',
   cross_session: 'Cross-session',
-  both:          'Online + Post',
   excluded:      'Excluded',
 }
 
@@ -148,7 +146,7 @@ function Tooltip({ text }: { text: string }) {
         <HelpCircle className="h-3.5 w-3.5" />
       </button>
       {visible && (
-        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 w-64 rounded border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
           {text}
         </span>
       )}
@@ -199,7 +197,7 @@ function CompositeSlider({
   }
 
   return (
-    <div className="rounded-lg border border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-800/40">
+    <div className="rounded border border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-800/40">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <span className={`text-xs font-semibold ${accentColor === 'blue' ? 'text-blue-700 dark:text-blue-400' : 'text-purple-700 dark:text-purple-400'}`}>
@@ -249,7 +247,7 @@ function CompositeSlider({
           onChange={e => onDraftChange(Number(e.currentTarget.value))}
           onBlur={e => handleCommit(e.currentTarget.value)}
           onKeyDown={e => e.key === 'Enter' && handleCommit(e.currentTarget.value)}
-          className={`w-14 rounded-md border border-slate-200 px-2 py-1 text-center text-sm font-semibold text-slate-800 focus:outline-none focus:ring-1 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 ${focusRing}`}
+          className={`w-14 rounded border border-slate-200 px-2 py-1 text-center text-sm font-semibold text-slate-800 focus:outline-none focus:ring-1 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 ${focusRing}`}
         />
         <div className="relative">
           <button
@@ -262,7 +260,7 @@ function CompositeSlider({
             <ChevronDown className="h-3 w-3 opacity-70" />
           </button>
           {bandOpen && (
-            <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-lg border border-slate-200 bg-white shadow-lg py-1 dark:border-zinc-700 dark:bg-zinc-800">
+            <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded border border-slate-200 bg-white shadow-lg py-1 dark:border-zinc-700 dark:bg-zinc-800">
               {BANDS.map(b => (
                 <button
                   key={b}
@@ -303,15 +301,15 @@ function AlertThresholdsTab({ agentId }: { agentId: string }) {
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-24 rounded-lg bg-slate-100" />
-        <div className="h-64 rounded-lg bg-slate-100" />
+        <div className="h-24 rounded bg-slate-100" />
+        <div className="h-64 rounded bg-slate-100" />
       </div>
     )
   }
 
   if (isError || !alertConfig) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
+      <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
         Failed to load alert config. Make sure migrations 011 (dapplepot-api) and 018 (dapplepot-security)
         have been applied, then reload.
       </div>
@@ -361,10 +359,10 @@ function AlertThresholdsTab({ agentId }: { agentId: string }) {
   return (
     <div className="space-y-6">
       {/* ── Trust degradation alert ── */}
-      <div className="rounded-lg border border-slate-200 bg-white px-4 py-4 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="rounded border border-slate-200 bg-white px-4 py-4 dark:border-zinc-700 dark:bg-zinc-900">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-start gap-2">
-            <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800">
+            <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800">
               <Shield className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
@@ -382,7 +380,7 @@ function AlertThresholdsTab({ agentId }: { agentId: string }) {
             platform-wide · not configurable per-agent
           </span>
         </div>
-        <div className="flex items-center gap-2 text-xs rounded-md bg-slate-50 border border-slate-100 px-3 py-2 dark:bg-zinc-800 dark:border-zinc-700">
+        <div className="flex items-center gap-2 text-xs rounded bg-slate-50 border border-slate-100 px-3 py-2 dark:bg-zinc-800 dark:border-zinc-700">
           <span className="text-slate-400 dark:text-zinc-500">Alert fires when the</span>
           <span className="font-semibold text-slate-800 dark:text-zinc-200">last 3 consecutive sessions</span>
           <span className="text-slate-400 dark:text-zinc-500">all have trust score</span>
@@ -391,7 +389,7 @@ function AlertThresholdsTab({ agentId }: { agentId: string }) {
       </div>
 
       {/* ── Per-session composite thresholds ── */}
-      <div className="rounded-lg bg-white px-4 py-4 dark:bg-zinc-900">
+      <div className="rounded bg-white px-4 py-4 dark:bg-zinc-900">
         <div className="flex items-center gap-1.5 mb-1">
           <h3 className="text-sm font-semibold text-slate-700 dark:text-zinc-300">Per-session composite alert thresholds</h3>
           <Tooltip text="Each session produces two composite scores — one for LLM threats and one for Agentic (ASI) threats. An alert fires when either score meets or exceeds its threshold. You can tune them independently: lower the LLM threshold if you care more about prompt injection; lower ASI if you care more about rogue tool behaviour." />
@@ -429,7 +427,7 @@ function AlertThresholdsTab({ agentId }: { agentId: string }) {
       </div>
 
       {/* ── Per-signal thresholds ── */}
-      <div className="rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
         <div className="border-b border-slate-100 px-4 py-3 flex items-center justify-between dark:border-zinc-800">
           <div className="flex items-center gap-1.5">
             <h3 className="text-sm font-semibold text-slate-700 dark:text-zinc-300">Per-signal alert thresholds</h3>
@@ -666,7 +664,7 @@ function ActionSelect({
       </button>
 
       {open && !disabled && (
-        <div className="absolute right-0 top-full z-30 mt-1 min-w-[100px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="absolute right-0 top-full z-30 mt-1 min-w-[100px] rounded border border-slate-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
           {options.map((a) => (
             <button
               key={a}
@@ -697,7 +695,7 @@ const SUBCHECK_HAS_HEURISTIC = new Set([
   'TME-01a',  // pattern-matching fallback when no schema declared
   'IPA-01a',  // pattern-matching runs even without privilege_scope declared
   'ASCV-04a', // always fires on any install command regardless
-  'EA-02b',   // statistical baseline (7-day mean + 1σ)
+  'EA-02b',   // statistical baseline (7-day mean + 1Ïƒ)
   'TME-01b',  // statistical baseline (7-day per-session avg × 3.0)
   'SPL-03a',  // heuristic phrase detection active even without system prompt declared
 ])
@@ -756,7 +754,7 @@ const SUBCHECK_AUTO_DESC: Partial<Record<string, string>> = {
   'EA-01a':  'no tool manifest declared — EA-01a is blind, any tool name is permitted',
   'TME-01a': 'no schema declared — pattern-matching fallback active (shell chain / base64 / code injection / XSS)',
   'IPA-01a': 'no tools declared — pattern-matching active on all tool names and payloads, privilege escalation flagged with no per-tool exceptions',
-  'EA-02b':  'statistical detection active — uses 7-day rolling mean + 1σ to flag anomalies',
+  'EA-02b':  'statistical detection active — uses 7-day rolling mean + 1Ïƒ to flag anomalies',
   'TME-01b': 'no cap set — statistical baseline active, fires when session exceeds 3× the 7-day per-session average (≥5 sessions required)',
   'SPL-01a': 'no system prompt declared — verbatim match disabled',
   'SPL-01b': 'no system prompt declared — probe comparison disabled',
@@ -966,7 +964,7 @@ function SubCheckRow({
                 onChange={v => onToggleOnline(check.subCheckId, v)}
                 label={`Toggle ${check.subCheckId} online detection`}
               />
-              <div className={`flex w-[104px] items-center gap-1.5 rounded-md border px-2.5 py-1.5 transition-colors ${
+              <div className={`flex w-[104px] items-center gap-1.5 rounded border px-2.5 py-1.5 transition-colors ${
                 isOnline
                   ? `bg-white shadow-sm dark:bg-zinc-800 ${ACTION_RING[action]}`
                   : 'border-slate-200 bg-slate-50 opacity-40 pointer-events-none dark:border-zinc-700 dark:bg-zinc-800/50'
@@ -1230,10 +1228,10 @@ function SignalCard({
   const onlineCount = signal.subChecks.filter(c => onlineOverrides[c.subCheckId]).length
 
   return (
-    <div className={`rounded-lg border bg-white dark:bg-zinc-900 ${allExcluded ? 'border-slate-200 opacity-70 dark:border-zinc-700' : 'border-slate-200 dark:border-zinc-700'}`}>
+    <div className={`rounded border bg-white dark:bg-zinc-900 ${allExcluded ? 'border-slate-200 opacity-70 dark:border-zinc-700' : 'border-slate-200 dark:border-zinc-700'}`}>
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 rounded-lg transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 rounded transition-colors"
       >
         <span className="shrink-0 text-slate-400 dark:text-zinc-500">
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -1368,7 +1366,7 @@ function PhaseLegend() {
   ]
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
       <div className="flex items-center justify-between mb-2.5">
         <p className="text-xs font-medium text-slate-600 dark:text-zinc-400">Detection phase key</p>
         <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-zinc-500">
@@ -1534,7 +1532,7 @@ function ProfileSection({ title, icon, children, open, onToggle }: {
   onToggle: () => void
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden">
+    <div className="rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden">
       <button
         type="button"
         onClick={onToggle}
@@ -1637,7 +1635,7 @@ function ProfileRow({ label, subChecks, tooltip, id, status, statusNode, autoDes
 
       {/* Expandable how? */}
       {howOpen && !isManual && how && (
-        <div className="mb-3 rounded-md border border-violet-100 bg-violet-50/60 px-3 py-2 space-y-2 dark:border-violet-900 dark:bg-violet-900/10">
+        <div className="mb-3 rounded border border-violet-100 bg-violet-50/60 px-3 py-2 space-y-2 dark:border-violet-900 dark:bg-violet-900/10">
           <p className="text-[11px] text-violet-800 dark:text-violet-300 leading-relaxed">{how}</p>
           {howPatterns && howPatterns.length > 0 && (
             <div className="flex flex-wrap gap-1">
@@ -2078,14 +2076,14 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
   return (
     <div className="space-y-4">
       {!isAdmin ? (
-        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-4 py-2.5 dark:border-zinc-700 dark:bg-zinc-800">
           <Lock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
           <p className="text-xs text-slate-500 dark:text-zinc-400">
             View only — contact your tenant admin to modify agent profile settings.
           </p>
         </div>
       ) : (
-        <div className="flex items-start gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 dark:border-violet-800 dark:bg-violet-900/20">
+        <div className="flex items-start gap-2 rounded border border-violet-200 bg-violet-50 px-4 py-3 dark:border-violet-800 dark:bg-violet-900/20">
           <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />
           <p className="text-xs text-violet-700 dark:text-violet-300 leading-relaxed">
             Declare what is <strong>normal</strong> for this agent. Fields marked{' '}
@@ -2178,7 +2176,7 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
           id="profile-tool-manifest"
           label="Tool manifest"
           subChecks={['EA-01a', 'TME-01a', 'IPA-01a', 'MIS-03a', 'EA-02a']}
-          tooltip="Declare which tools this agent is allowed to call and set a per-tool approval policy. EA-01a (online) blocks any unlisted tool in real time. TME-01a (online) validates tool inputs against declared schemas. IPA-01a (post-session) detects privilege escalation — mark tools as Privilege-capable (🔒) to suppress false positives. MIS-03a (post-session) fires when a high-stakes tool runs without a human approval gate — set each tool to Always allow (no gate needed) or Needs approval (gate required). EA-02a (post-session) uses the approval policy as its primary irreversibility source — tools marked Needs approval are treated as irreversible and fire if chained directly after another tool with no confirm gate. Any tool not in this manifest is treated as needs approval if it runs."
+          tooltip="Declare which tools this agent is allowed to call and set a per-tool approval policy. EA-01a (online) blocks any unlisted tool in real time. TME-01a (online) validates tool inputs against declared schemas. IPA-01a (post-session) detects privilege escalation — mark tools as Privilege-capable (🔑) to suppress false positives. MIS-03a (post-session) fires when a high-stakes tool runs without a human approval gate — set each tool to Always allow (no gate needed) or Needs approval (gate required). EA-02a (post-session) uses the approval policy as its primary irreversibility source — tools marked Needs approval are treated as irreversible and fire if chained directly after another tool with no confirm gate. Any tool not in this manifest is treated as needs approval if it runs."
           status={manifest.length > 0 ? 'manual' : 'auto'}
           statusNode={
             <div className="ml-auto flex items-center gap-2">
@@ -2350,7 +2348,7 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
 
             {/* Pending-add confirmation row — shown after selecting a tool from the dropdown */}
             {isAdmin && pendingAdd && (
-              <div className="flex flex-wrap items-center gap-3 rounded-lg border border-violet-200 bg-violet-50/60 px-3 py-2 dark:border-violet-800 dark:bg-violet-900/10">
+              <div className="flex flex-wrap items-center gap-3 rounded border border-violet-200 bg-violet-50/60 px-3 py-2 dark:border-violet-800 dark:bg-violet-900/10">
                 <span className="font-mono text-xs font-medium text-violet-700 dark:text-violet-400">{pendingAdd}</span>
                 {/* Approval policy — MIS-03a */}
                 <div className="flex items-center gap-1.5">
@@ -2405,13 +2403,13 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
           id="profile-max-tool-calls"
           label="Max tool calls per session"
           subChecks={['EA-02b', 'TME-01b']}
-          tooltip="Set a hard cap on total tool calls per session. Without a manual cap, EA-02b uses statistical anomaly detection (mean + 1σ) and TME-01b uses a 3× average spike threshold."
+          tooltip="Set a hard cap on total tool calls per session. Without a manual cap, EA-02b uses statistical anomaly detection (mean + 1Ïƒ) and TME-01b uses a 3× average spike threshold."
           status={alertConfig?.max_tool_calls_per_session != null ? 'manual' : 'auto'}
           autoDesc={hasBaseline
-            ? `Statistical baseline: ~${Math.round(baseline!.mean!)} calls/session (7-day mean, ${baseline!.sessionCount} sessions) — EA-02b fires above mean + 1σ; TME-01b fires above 3× average.`
+            ? `Statistical baseline: ~${Math.round(baseline!.mean!)} calls/session (7-day mean, ${baseline!.sessionCount} sessions) — EA-02b fires above mean + 1Ïƒ; TME-01b fires above 3× average.`
             : 'Statistical baseline warming up — need ≥2 sessions for EA-02b and ≥5 sessions for TME-01b to activate.'}
           manualDesc={`Hard cap: ${alertConfig?.max_tool_calls_per_session} calls/session — EA-02b fires immediately when exceeded; TME-01b fires when count exceeds 3× the cap.`}
-          how="EA-02b enforces the hard cap (or mean + 1σ statistically) and flags any overage. TME-01b detects runaway spikes — it only fires when the session is more than 3× above the configured cap or 7-day average, targeting exfiltration loops rather than accidental overruns."
+          how="EA-02b enforces the hard cap (or mean + 1Ïƒ statistically) and flags any overage. TME-01b detects runaway spikes — it only fires when the session is more than 3× above the configured cap or 7-day average, targeting exfiltration loops rather than accidental overruns."
           onReset={() => updateMaxCalls.mutate(null)}
         >
           {isAdmin && (
@@ -2699,7 +2697,7 @@ export function AgentConfig() {
           <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">
             {isLoading ? agentId : agentName}
           </h1>
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 shrink-0 dark:border-zinc-700 dark:bg-zinc-800">
+          <div className="flex items-center gap-1 rounded border border-slate-200 bg-slate-50 p-1 shrink-0 dark:border-zinc-700 dark:bg-zinc-800">
             <Link
               to="/inventory/agents/$agentId"
               params={{ agentId }}
@@ -2727,7 +2725,7 @@ export function AgentConfig() {
             ), sub: onlineCount === 0 ? 'all checks post-session' : 'running via SDK in real time' },
           ] as { label: string; value: React.ReactNode; sub: string }[]
         ).map(card => (
-          <div key={card.label} className="rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+          <div key={card.label} className="rounded border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
             <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-zinc-500">{card.label}</p>
             <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100">{card.value}</p>
             <p className="mt-0.5 text-[10px] text-slate-400 dark:text-zinc-500">{card.sub}</p>

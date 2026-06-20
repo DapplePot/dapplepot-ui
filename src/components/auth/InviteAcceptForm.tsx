@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+﻿import { useState, type FormEvent } from 'react'
 import { useSearch } from '@tanstack/react-router'
 import { useAcceptInvite } from '../../hooks/useAuth'
 
@@ -13,7 +13,7 @@ export function InviteAcceptForm() {
 
   if (!token) {
     return (
-      <p className="rounded-lg bg-red-950 px-3 py-2 text-sm text-red-400">
+      <p className="rounded bg-red-950 px-3 py-2 text-sm text-red-400">
         Invalid or missing invite link. Please ask your admin to resend the invite.
       </p>
     )
@@ -36,7 +36,7 @@ export function InviteAcceptForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+          className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
         />
       </div>
 
@@ -49,7 +49,7 @@ export function InviteAcceptForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+          className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
         />
       </div>
 
@@ -61,18 +61,18 @@ export function InviteAcceptForm() {
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           placeholder="••••••••"
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+          className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
         />
       </div>
 
       {mismatch && (
-        <p className="rounded-lg bg-red-950 px-3 py-2 text-xs text-red-400">
+        <p className="rounded bg-red-950 px-3 py-2 text-xs text-red-400">
           Passwords don't match.
         </p>
       )}
 
       {accept.isError && (
-        <p className="rounded-lg bg-red-950 px-3 py-2 text-xs text-red-400">
+        <p className="rounded bg-red-950 px-3 py-2 text-xs text-red-400">
           Invite link is invalid or expired.
         </p>
       )}
@@ -80,7 +80,7 @@ export function InviteAcceptForm() {
       <button
         type="submit"
         disabled={accept.isPending}
-        className="w-full rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
+        className="w-full rounded bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
       >
         {accept.isPending ? 'Setting up…' : 'Accept invite'}
       </button>

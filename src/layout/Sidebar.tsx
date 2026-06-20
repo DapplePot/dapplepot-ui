@@ -1,4 +1,4 @@
-import { Link, useRouterState } from '@tanstack/react-router'
+﻿import { Link, useRouterState } from '@tanstack/react-router'
 import {
   LayoutDashboard,
   List,
@@ -52,7 +52,7 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-slate-200 px-3 dark:border-zinc-700">
-        <img src="/dapplePotLogo.svg" alt="DapplePot" className="h-5 w-5 shrink-0 rounded invert dark:invert-0" />
+        <img src="/dapplePotLogo.png" alt="DapplePot" className="h-5 w-5 shrink-0 rounded invert dark:invert-0" />
         {!collapsed && (
           <span className="ml-2.5 truncate text-sm font-semibold text-slate-900 dark:text-zinc-100">
             DapplePot
@@ -73,7 +73,7 @@ export function Sidebar() {
               key={path}
               to={path}
               className={cn(
-                'flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors',
+                'flex items-center gap-3 rounded px-2 py-2 text-sm transition-colors',
                 isActive
                   ? 'bg-violet-50 text-violet-700 font-medium dark:bg-violet-950 dark:text-violet-300'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
@@ -98,7 +98,7 @@ export function Sidebar() {
         <button
           onClick={() => logout.mutate()}
           disabled={logout.isPending}
-          className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-50 hover:text-red-600 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
+          className="flex w-full items-center gap-3 rounded px-2 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-50 hover:text-red-600 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
           aria-label="Sign out"
         >
           <LogOut className="h-4 w-4 shrink-0" />

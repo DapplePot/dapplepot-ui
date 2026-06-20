@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { X } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -65,7 +65,7 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="w-full max-w-md rounded border border-slate-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-zinc-800">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">
             {isEditing
@@ -75,7 +75,7 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
                 : 'Add Channel'
             }
           </h2>
-          <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300">
+          <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -112,7 +112,7 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
             </div>
           )}
 
-          <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 space-y-4 dark:border-zinc-800 dark:bg-zinc-800/50">
+          <div className="rounded border border-slate-100 bg-slate-50 p-4 space-y-4 dark:border-zinc-800 dark:bg-zinc-800/50">
             {channelType === 'slack' && (
               <>
                 <div className="space-y-1.5">

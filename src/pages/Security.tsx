@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useSecurityOverview, useTopAgents } from '../hooks/useSecurity'
 import { useAgents } from '../hooks/useAgents'
@@ -57,10 +57,10 @@ export function Security() {
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-20 rounded-lg" />
+                  <Skeleton key={i} className="h-20 rounded" />
                 ))}
               </div>
-              <Skeleton className="h-48 rounded-lg" />
+              <Skeleton className="h-48 rounded" />
             </div>
           ) : overview.isError ? (
             <p className="text-sm text-red-500 dark:text-red-400">{overview.error.message}</p>
@@ -72,7 +72,7 @@ export function Security() {
                   { label: 'High / critical', value: overview.data.highCriticalCount },
                   { label: 'Top signal',      value: overview.data.topSignalId ?? '—' },
                 ].map((m) => (
-                  <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                  <div key={m.label} className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
                     <p className="text-xs text-slate-500 dark:text-zinc-400">{m.label}</p>
                     <p className="mt-1 text-2xl font-semibold text-slate-900 truncate dark:text-zinc-100">{m.value}</p>
                   </div>
@@ -80,15 +80,15 @@ export function Security() {
               </div>
 
               <div className="grid grid-cols-3 gap-6">
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
                   <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-zinc-300">Risk distribution</h2>
                   <RiskDistribution bands={bands} total={totalScored} />
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
                   <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-zinc-300">LLM signal frequency</h2>
                   <OwaspFrequency entries={overview.data.owaspFrequency} />
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
                   <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-zinc-300">ASI signal frequency</h2>
                   {overview.data.asiFrequency.length === 0 ? (
                     <p className="text-sm text-slate-400 dark:text-zinc-500">No ASI signals detected</p>
@@ -115,10 +115,10 @@ export function Security() {
             <div className="space-y-4">
               <div className="grid grid-cols-4 gap-4">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-20 rounded-lg" />
+                  <Skeleton key={i} className="h-20 rounded" />
                 ))}
               </div>
-              <Skeleton className="h-48 rounded-lg" />
+              <Skeleton className="h-48 rounded" />
             </div>
           ) : topAgents.isError ? (
             <p className="text-sm text-red-500 dark:text-red-400">{topAgents.error.message}</p>
@@ -139,7 +139,7 @@ export function Security() {
                       { label: 'Avg composite risk',  value: avgRisk.toFixed(1) },
                       { label: 'Highest risk agent',  value: topAgent ? (agentMap[topAgent.agentId] ?? topAgent.agentId) : '—' },
                     ].map((m) => (
-                      <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                      <div key={m.label} className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
                         <p className="text-xs text-slate-500 dark:text-zinc-400">{m.label}</p>
                         <p className="mt-1 text-2xl font-semibold text-slate-900 truncate dark:text-zinc-100">{m.value}</p>
                       </div>
@@ -149,7 +149,7 @@ export function Security() {
               })()}
 
               <div className="grid grid-cols-2 gap-6">
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
                   <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-zinc-300">Agent risk distribution</h2>
                   {(() => {
                     const agents = topAgents.data ?? []
@@ -169,7 +169,7 @@ export function Security() {
                     return <RiskDistribution bands={bands} total={agents.length} />
                   })()}
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
                   <h2 className="mb-4 text-sm font-medium text-slate-700 dark:text-zinc-300">Agent threat frequency (ASI)</h2>
                   {!overview.data || overview.data.asiFrequency.length === 0 ? (
                     <p className="text-sm text-slate-400 dark:text-zinc-500">No ASI signals detected</p>
@@ -184,7 +184,7 @@ export function Security() {
                 {!topAgents.data || topAgents.data.length === 0 ? (
                   <p className="text-sm text-slate-400 dark:text-zinc-500">No agent risk data yet</p>
                 ) : (
-                  <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+                  <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-slate-100 dark:border-zinc-800">

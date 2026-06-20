@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+﻿import { useState, type FormEvent } from 'react'
 import { Plus, X, Pencil, Trash2, Server } from 'lucide-react'
 import { useMcpServers, useCreateMcpServer, useUpdateMcpServer, useDeleteMcpServer } from '../../hooks/useMcpServers'
 import { useMe } from '../../hooks/useUsers'
@@ -20,10 +20,10 @@ function CreateModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="w-full max-w-md rounded border border-slate-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Register MCP server</h2>
-          <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800">
+          <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -34,7 +34,7 @@ function CreateModal({ onClose }: { onClose: () => void }) {
             </label>
             <input required value={name} onChange={e => setName(e.target.value)}
               placeholder="e.g. Internal DB Server"
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+              className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
             />
           </div>
           <div>
@@ -43,7 +43,7 @@ function CreateModal({ onClose }: { onClose: () => void }) {
             </label>
             <input required type="url" value={url} onChange={e => setUrl(e.target.value)}
               placeholder="https://mcp.internal/tools"
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+              className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
             />
             <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">Used for ASCV-01a/01b endpoint and TLS anomaly detection.</p>
           </div>
@@ -51,17 +51,17 @@ function CreateModal({ onClose }: { onClose: () => void }) {
             <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">Description</label>
             <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={2}
               placeholder="What does this MCP server provide?"
-              className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+              className="w-full resize-none rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
             />
           </div>
           {create.isError && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
+            <p className="rounded bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
               {(create.error as Error)?.message ?? 'Failed to register server.'}
             </p>
           )}
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancel</button>
-            <button type="submit" disabled={create.isPending} className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50">
+            <button type="button" onClick={onClose} className="rounded border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancel</button>
+            <button type="submit" disabled={create.isPending} className="rounded bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50">
               {create.isPending ? 'Registering…' : 'Register'}
             </button>
           </div>
@@ -87,10 +87,10 @@ function EditModal({ server, onClose }: { server: McpServer; onClose: () => void
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="w-full max-w-md rounded border border-slate-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Edit MCP server</h2>
-          <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800">
+          <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -98,29 +98,29 @@ function EditModal({ server, onClose }: { server: McpServer; onClose: () => void
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">Name</label>
             <input required value={name} onChange={e => setName(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">Endpoint URL</label>
             <input required type="url" value={url} onChange={e => setUrl(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-zinc-300">Description</label>
             <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={2}
-              className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full resize-none rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
           </div>
           {update.isError && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
+            <p className="rounded bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
               {(update.error as Error)?.message ?? 'Failed to update server.'}
             </p>
           )}
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancel</button>
-            <button type="submit" disabled={update.isPending} className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50">
+            <button type="button" onClick={onClose} className="rounded border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancel</button>
+            <button type="submit" disabled={update.isPending} className="rounded bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50">
               {update.isPending ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -148,7 +148,7 @@ export function McpServerTable() {
         </p>
         {isAdmin && (
           <button onClick={() => setShowCreate(true)}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-500"
+            className="flex shrink-0 items-center gap-1.5 rounded bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-500"
           >
             <Plus className="h-4 w-4" />
             Register server
@@ -160,7 +160,7 @@ export function McpServerTable() {
       {isError   && <p className="text-sm text-red-600 dark:text-red-400">Failed to load MCP servers.</p>}
 
       {!isLoading && !isError && (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="overflow-x-auto rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-zinc-700 dark:text-zinc-400">
@@ -191,12 +191,12 @@ export function McpServerTable() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => setEditTarget(s)}
-                          className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                          className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button onClick={() => setDeleteTarget(s)}
-                          className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                          className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -220,18 +220,18 @@ export function McpServerTable() {
       {/* Delete confirmation */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="w-full max-w-sm rounded border border-slate-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
             <h2 className="mb-2 text-sm font-semibold text-slate-900 dark:text-zinc-100">Remove MCP server?</h2>
             <p className="mb-4 text-sm text-slate-500 dark:text-zinc-400">
               <span className="font-medium text-slate-700 dark:text-zinc-200">{deleteTarget.name}</span> will be removed.
               Tools linked to it will remain but lose their MCP server association.
             </p>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setDeleteTarget(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancel</button>
+              <button onClick={() => setDeleteTarget(null)} className="rounded border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancel</button>
               <button
                 disabled={deleteServer.isPending}
                 onClick={() => deleteServer.mutate(deleteTarget.mcpServerId, { onSuccess: () => setDeleteTarget(null) })}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50"
+                className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50"
               >
                 {deleteServer.isPending ? 'Removing…' : 'Remove'}
               </button>

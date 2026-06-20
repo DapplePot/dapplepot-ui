@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useParams, Link } from '@tanstack/react-router'
 import { useAgentProfile } from '../hooks/useSecurity'
 import { Skeleton } from '../components/ui/skeleton'
@@ -48,7 +48,7 @@ function Tooltip({ text }: { text: string }) {
         <HelpCircle className="h-3.5 w-3.5" />
       </button>
       {visible && (
-        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 w-64 rounded border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
           {text}
         </span>
       )}
@@ -83,7 +83,7 @@ const BAND_LINE_COLOR: Record<RiskBand, string> = {
 
 function ScoreCard({ label, score, band, tooltip, history }: { label: string; score: number; band: RiskBand; tooltip: string; history?: number[] }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
+    <div className="rounded border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
       <div className="flex items-center gap-1 mb-1">
         <p className="text-xs text-slate-500 dark:text-zinc-400">{label}</p>
         <Tooltip text={tooltip} />
@@ -128,7 +128,7 @@ function TrustCard({ score, history }: { score: number; history: number[] }) {
   const badge   = trustStatusBadge(rounded)
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
+    <div className="rounded border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
       <div className="flex items-center gap-1 mb-1">
         <p className="text-xs text-slate-500 dark:text-zinc-400">Agent trust score</p>
         <Tooltip text="Bayesian trust score (0–100). Starts at ~80. Each session updates the score: risky sessions (composite > 40) lower it, clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Alert fires when the last 3 consecutive sessions all score below 50." />
@@ -163,9 +163,9 @@ export function AgentSecurityProfile() {
       <div className="space-y-4">
         <Skeleton className="h-8 w-64 rounded" />
         <div className="grid grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-lg" />)}
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded" />)}
         </div>
-        <Skeleton className="h-64 rounded-lg" />
+        <Skeleton className="h-64 rounded" />
       </div>
     )
   }
@@ -222,8 +222,8 @@ export function AgentSecurityProfile() {
           <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">
             {data.name ?? 'Agent Health'}
           </h1>
-          {/* Page navigation: Health ↔ Config */}
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 shrink-0 dark:border-zinc-700 dark:bg-zinc-800">
+          {/* Page navigation: Health ↓ Config */}
+          <div className="flex items-center gap-1 rounded border border-slate-200 bg-slate-50 p-1 shrink-0 dark:border-zinc-700 dark:bg-zinc-800">
             <span className="rounded bg-white px-3 py-1.5 text-xs font-medium text-violet-700 shadow-sm dark:bg-zinc-700 dark:text-violet-300">
               Health
             </span>
@@ -240,7 +240,7 @@ export function AgentSecurityProfile() {
       </div>
 
       {/* ── Summary banner ── */}
-      <div className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-4 space-y-3 dark:border-violet-800 dark:bg-violet-900/20">
+      <div className="rounded border border-violet-200 bg-violet-50 px-4 py-4 space-y-3 dark:border-violet-800 dark:bg-violet-900/20">
         {/* Stats row */}
         <div className="flex items-center gap-5 flex-wrap">
           <span className="text-xs text-violet-800 dark:text-violet-300">
@@ -324,7 +324,7 @@ export function AgentSecurityProfile() {
               .map(s => s.trustScore!)}
           />
         ) : (
-          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="rounded border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
             <div className="flex items-center gap-1 mb-1">
               <p className="text-xs text-slate-500 dark:text-zinc-400">Agent trust score</p>
               <Tooltip text="Bayesian trust score (0–100). Starts at ~80. Each session updates the score: risky sessions (composite > 40) lower it, clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Alert fires when the last 3 consecutive sessions all score below 50." />
@@ -343,7 +343,7 @@ export function AgentSecurityProfile() {
           { label: 'Peak LLM score', value: data.maxLlmScore },
           { label: 'Peak ASI score', value: data.maxAsiScore },
         ].map(m => (
-          <div key={m.label} className="rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+          <div key={m.label} className="rounded border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
             <p className="text-xs text-slate-500 dark:text-zinc-400">{m.label}</p>
             <p className="mt-0.5 text-lg font-semibold text-slate-900 dark:text-zinc-100">{m.value}</p>
           </div>
@@ -353,7 +353,7 @@ export function AgentSecurityProfile() {
       {/* Signal breakdown */}
       <div className="grid grid-cols-2 gap-6">
         {/* LLM signals */}
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">LLM signal history (OW-LLM01–10)</h2>
           {llmSignals.length === 0 ? (
             <p className="text-sm text-slate-400 dark:text-zinc-500">No LLM signals fired</p>
@@ -382,7 +382,7 @@ export function AgentSecurityProfile() {
         </div>
 
         {/* ASI signals */}
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">Agent threat history (OW-ASI01–10)</h2>
           {agentSignals.length === 0 ? (
             <p className="text-sm text-slate-400 dark:text-zinc-500">No ASI signals fired</p>
@@ -412,7 +412,7 @@ export function AgentSecurityProfile() {
       </div>
 
       {/* Recent sessions */}
-      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
         <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">Recent sessions</h2>
         {data.recentSessions.length === 0 ? (
           <p className="text-sm text-slate-400 dark:text-zinc-500">No sessions scored yet</p>

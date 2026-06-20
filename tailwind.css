@@ -2,6 +2,25 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@keyframes float-a {
+  0%   { transform: translate(0px, 0px); }
+  30%  { transform: translate(5px, -10px); }
+  65%  { transform: translate(-3px, -18px); }
+  100% { transform: translate(0px, 0px); }
+}
+@keyframes float-b {
+  0%   { transform: translate(0px, 0px); }
+  40%  { transform: translate(-6px, -7px); }
+  70%  { transform: translate(4px, -13px); }
+  100% { transform: translate(0px, 0px); }
+}
+@keyframes float-c {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  33%  { transform: translate(7px, -5px) scale(1.2); }
+  66%  { transform: translate(-4px, -11px) scale(0.85); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
 @layer base {
   button,
   a,

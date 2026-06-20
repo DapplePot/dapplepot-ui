@@ -1,4 +1,4 @@
-import { cn } from '../../utils/cn'
+﻿import { cn } from '../../utils/cn'
 
 type Window = '24h' | '7d' | '30d'
 
@@ -31,13 +31,13 @@ export function DateRangePicker({
   return (
     <div className="flex items-center gap-3">
       {/* Segmented control */}
-      <div className="flex rounded-lg border border-slate-200 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-800">
+      <div className="flex rounded border border-slate-200 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-800">
         {WINDOWS.map(({ value, label }) => (
           <button
             key={value}
             onClick={() => onWindowChange(value)}
             className={cn(
-              'rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
+              'rounded px-4 py-1.5 text-sm font-medium transition-colors',
               window === value
                 ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
                 : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200'
@@ -52,7 +52,7 @@ export function DateRangePicker({
       <select
         value={agentId}
         onChange={(e) => onAgentChange(e.target.value)}
-        className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+        className="h-9 rounded border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
       >
         <option value="">All agents</option>
         {agents.map((a) => (

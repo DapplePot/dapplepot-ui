@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Download, FileCheck2, Clock, ChevronDown, Copy, Check } from 'lucide-react'
 import { useAuditArchives, useDownloadArchive, useDownloadLiveReport } from '../hooks/useAudit'
@@ -24,7 +24,7 @@ function CopyHash({ hash }: { hash: string }) {
     <button
       onClick={handleCopy}
       title="Copy SHA-256"
-      className="group flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 hover:border-violet-300 dark:border-zinc-700 dark:hover:border-violet-600"
+      className="group flex items-center gap-1.5 rounded border border-slate-200 px-2.5 py-1.5 hover:border-violet-300 dark:border-zinc-700 dark:hover:border-violet-600"
     >
       <span className="hidden font-mono text-xs text-slate-400 group-hover:text-violet-600 dark:text-zinc-500 dark:group-hover:text-violet-400 lg:block">
         SHA-256: {hash}
@@ -42,7 +42,7 @@ function ArchiveRow({ archive }: { archive: AuditArchiveMeta }) {
   const filename = `audit-${archive.periodStart.slice(0, 7)}-${archive.archiveId.slice(0, 8)}.json`
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-800/50">
+    <div className="flex items-center justify-between rounded border border-slate-100 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-800/50">
       <div className="flex items-center gap-3">
         <FileCheck2 className="h-4 w-4 shrink-0 text-violet-500" />
         <div>
@@ -60,7 +60,7 @@ function ArchiveRow({ archive }: { archive: AuditArchiveMeta }) {
         <button
           disabled={archive.status !== 'sealed' || download.isPending}
           onClick={() => download.mutate({ archiveId: archive.archiveId, filename })}
-          className="flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-violet-300 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-violet-600 dark:hover:text-violet-400"
+          className="flex items-center gap-1.5 rounded border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-violet-300 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-violet-600 dark:hover:text-violet-400"
         >
           <Download className="h-3.5 w-3.5" />
           Download
@@ -84,7 +84,7 @@ export function Audit() {
       <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">Audit</h1>
 
       {/* Live / current period */}
-      <div className="rounded-lg border border-violet-100 bg-violet-50/50 px-5 py-4 dark:border-violet-900/30 dark:bg-violet-950/20">
+      <div className="rounded border border-violet-100 bg-violet-50/50 px-5 py-4 dark:border-violet-900/30 dark:bg-violet-950/20">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Clock className="h-4 w-4 shrink-0 text-violet-500" />
@@ -102,7 +102,7 @@ export function Audit() {
                 <select
                   value={liveAgent ?? ''}
                   onChange={e => setLiveAgent(e.target.value || null)}
-                  className="appearance-none rounded-md border border-slate-200 bg-white py-1.5 pl-3 pr-7 text-xs text-slate-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                  className="appearance-none rounded border border-slate-200 bg-white py-1.5 pl-3 pr-7 text-xs text-slate-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
                 >
                   <option value="">All agents</option>
                   {agents.map(a => (
@@ -115,7 +115,7 @@ export function Audit() {
             <button
               onClick={() => downloadLive.mutate({ agentId: liveAgent })}
               disabled={downloadLive.isPending}
-              className="flex items-center gap-1.5 rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
             >
               <Download className="h-3.5 w-3.5" />
               {downloadLive.isPending ? 'Generating…' : 'Download'}
@@ -138,13 +138,13 @@ export function Audit() {
         {isLoading && (
           <div className="space-y-2">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-100 dark:bg-zinc-800" />
+              <div key={i} className="h-16 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
             ))}
           </div>
         )}
 
         {!isLoading && (!archives || archives.length === 0) && (
-          <div className="rounded-lg border border-dashed border-slate-200 px-5 py-8 text-center dark:border-zinc-700">
+          <div className="rounded border border-dashed border-slate-200 px-5 py-8 text-center dark:border-zinc-700">
             <p className="text-sm text-slate-400 dark:text-zinc-500">No sealed archives yet.</p>
             <p className="mt-1 text-xs text-slate-400 dark:text-zinc-600">
               The first archive will be generated automatically on the 1st of next month.

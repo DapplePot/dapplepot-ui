@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import {
   useOverview,
   useLlmUsage,
@@ -23,7 +23,7 @@ type Window = '24h' | '7d' | '30d'
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
       <div className="border-b border-slate-100 px-4 py-3 dark:border-zinc-800">
         <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">{title}</h2>
       </div>
@@ -94,7 +94,7 @@ export function Analytics() {
             { ...heroMetrics[2], trend: (trends.data ?? []).map(t => t.avgLatencyMs),  color: '#f59e0b', id: 'a-duration' },
             { ...heroMetrics[3], trend: (trends.data ?? []).map(t => t.tokenCount),    color: '#7F77DD', id: 'a-cost' },
           ].map((m) => (
-            <div key={m.label} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
+            <div key={m.label} className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
               <p className="text-xs text-slate-500 dark:text-zinc-400">{m.label}</p>
               <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-zinc-100">{m.value}</p>
               <div className="mt-3">

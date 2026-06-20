@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+﻿import React, { useState, useMemo } from 'react'
 import type { DeliveryChannel, ChannelType } from '@dapplepot/types/channel'
 import { Toggle } from '../ui/toggle'
 import { Badge } from '../ui/badge'
@@ -42,9 +42,9 @@ export function ChannelList({ channels }: ChannelListProps) {
   return (
     <div className="space-y-6">
       {/* Platform Inbox - Always on top */}
-      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+      <div className="rounded border border-dashed border-slate-200 bg-slate-50 px-4 py-4 dark:border-zinc-700 dark:bg-zinc-800/50">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
             <Bell className="h-5 w-5" />
           </div>
           <div>
@@ -69,10 +69,10 @@ export function ChannelList({ channels }: ChannelListProps) {
             const isConfigured = configuredChannels.length > 0
 
             return (
-              <div key={connector.type} className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:border-zinc-800 dark:bg-zinc-900">
+              <div key={connector.type} className="rounded border border-slate-200 bg-white shadow-sm overflow-hidden dark:border-zinc-800 dark:bg-zinc-900">
                 {/* Header row */}
                 <div className="flex items-center gap-4 px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400">
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
@@ -102,7 +102,7 @@ export function ChannelList({ channels }: ChannelListProps) {
                     {configuredChannels.map((channel) => (
                       <div
                         key={channel.channelId}
-                        className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-800"
+                        className="flex items-center gap-4 rounded border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-800"
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-slate-800 dark:text-zinc-200">{channel.name}</p>
@@ -122,7 +122,7 @@ export function ChannelList({ channels }: ChannelListProps) {
                         />
                         <button
                           onClick={() => openModal(channel, connector.type)}
-                          className="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                          className="rounded p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 transition-colors"
                           aria-label={`Edit ${channel.name}`}
                         >
                           <Settings className="h-4 w-4" />
@@ -161,10 +161,10 @@ export function ChannelList({ channels }: ChannelListProps) {
 export function ChannelListSkeleton() {
   return (
     <div className="space-y-4">
-      <Skeleton className="h-20 w-full rounded-lg" />
+      <Skeleton className="h-20 w-full rounded" />
       <div className="space-y-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-[76px] w-full rounded-xl" />
+          <Skeleton key={i} className="h-[76px] w-full rounded" />
         ))}
       </div>
     </div>

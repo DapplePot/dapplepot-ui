@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { ChevronDown, ChevronRight, Link2, ShieldAlert, HelpCircle } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import type { OwSignalStatus, ConfidenceTier, TrustTrend } from '../../types/security'
@@ -66,7 +66,7 @@ function Tooltip({ text, placement = 'top' }: { text: string; placement?: 'top' 
         <HelpCircle className="h-3.5 w-3.5" />
       </button>
       {visible && (
-        <span className={`absolute ${posClass} z-20 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300`}>
+        <span className={`absolute ${posClass} z-20 w-64 rounded border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg leading-relaxed whitespace-normal dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300`}>
           {text}
         </span>
       )}
@@ -87,7 +87,7 @@ function FiredSignalRow({ signalId, s }: { signalId: string; s: OwSignalStatus }
   const effectiveScore = s.effectiveScore
 
   return (
-    <div className="rounded-md border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+    <div className="rounded border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
       <div
         className={`flex items-center gap-2 px-3 py-2 ${subChecks.length > 0 ? 'cursor-pointer' : ''}`}
         onClick={() => subChecks.length > 0 && setExpanded(e => !e)}
@@ -155,7 +155,7 @@ function OwSignalStatusSection({
   const clean = order.filter(id => !statusMap[id] || statusMap[id].status === 'clean')
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">{title}</p>
         <div className="flex gap-2 text-xs">
@@ -192,7 +192,7 @@ function OwSignalStatusSection({
                 {clean.map(id => {
                   const s = statusMap[id]
                   return (
-                    <div key={id} className="flex items-center gap-2 rounded-md border border-green-100 bg-green-50 px-3 py-1.5 dark:border-green-900/40 dark:bg-green-900/10">
+                    <div key={id} className="flex items-center gap-2 rounded border border-green-100 bg-green-50 px-3 py-1.5 dark:border-green-900/40 dark:bg-green-900/10">
                       <Badge variant="outline" className="font-mono text-xs shrink-0">{id}</Badge>
                       <span className="text-xs text-slate-400 dark:text-zinc-500 flex-1">{id}</span>
                       <span className="font-mono text-xs text-slate-400 dark:text-zinc-500 shrink-0">{s?.rawScore ?? s?.score ?? 0}</span>
@@ -229,7 +229,7 @@ export function SessionRiskPanel({
     <div className="space-y-4">
       {/* Score summary cards — always 3 columns; trust shows pending state until computed */}
       <div className="grid gap-4 grid-cols-3">
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <div className="flex items-center gap-1">
             <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">LLM risk score</p>
             <Tooltip placement="bottom" text="OWASP LLM Top 10 composite score for this session (0–100). Computed as: top fired signal × 60% + mean of rest × 40%. If multiple signals match a known attack chain, the score is amplified by up to ×1.35. Bands: clean 0–14, low 15–34, medium 35–59, high 60–84, critical 85–100." />
@@ -251,7 +251,7 @@ export function SessionRiskPanel({
           )}
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <div className="flex items-center gap-1">
             <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Agent risk score (ASI)</p>
             <Tooltip placement="bottom" text="OWASP Agentic Security Top 10 composite score for this session (0–100). Same formula as LLM — covers agentic threats: goal hijacking, tool misuse, privilege abuse, inter-agent compromise, and rogue behaviour." />
@@ -272,7 +272,7 @@ export function SessionRiskPanel({
           )}
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <div className="flex items-center gap-1">
             <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Agent trust score</p>
             <Tooltip placement="bottom" text="Bayesian trust score for this agent at the time of this session (0–100). Starts at ~80. Risky sessions lower it; clean sessions raise it. Older sessions are decay-weighted so recent behaviour matters more. Alert fires when the last 3 consecutive sessions all score below 50." />
@@ -300,7 +300,7 @@ export function SessionRiskPanel({
 
       {/* Attack chains */}
       {hasChains && (
-        <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
+        <div className="rounded border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
           <div className="flex items-center gap-2 mb-2">
             <ShieldAlert className="h-4 w-4 text-orange-600 dark:text-orange-400" />
             <p className="text-xs font-semibold text-orange-700 dark:text-orange-400">

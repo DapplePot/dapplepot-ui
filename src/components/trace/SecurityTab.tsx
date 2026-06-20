@@ -1,4 +1,4 @@
-import { useSessionSecurity, useSessionActions } from '../../hooks/useSecurity'
+﻿import { useSessionSecurity, useSessionActions } from '../../hooks/useSecurity'
 import { SessionRiskPanel } from '../security/SessionRiskPanel'
 import { FindingsList } from '../security/FindingsList'
 import { OnlineFindingsList } from '../security/OnlineFindingsList'
@@ -16,9 +16,9 @@ export function SecurityTab({ sessionId, baseTime }: SecurityTabProps) {
   if (score.isLoading) {
     return (
       <div className="space-y-3 pt-3">
-        <Skeleton className="h-28 rounded-lg" />
-        <Skeleton className="h-16 rounded-lg" />
-        <Skeleton className="h-16 rounded-lg" />
+        <Skeleton className="h-28 rounded" />
+        <Skeleton className="h-16 rounded" />
+        <Skeleton className="h-16 rounded" />
       </div>
     )
   }

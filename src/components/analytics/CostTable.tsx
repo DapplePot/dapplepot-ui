@@ -1,4 +1,4 @@
-import type { CostPoint } from '@dapplepot/types/analytics'
+﻿import type { CostPoint } from '@dapplepot/types/analytics'
 import { formatTokens, formatCost } from '../../utils/format'
 import { Skeleton } from '../ui/skeleton'
 
@@ -12,7 +12,7 @@ export function CostTable({ data, agentMap = {} }: CostTableProps) {
   const total = data.reduce((sum, d) => sum + d.estimatedCostUsd, 0)
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-100 dark:border-zinc-800">
@@ -79,7 +79,7 @@ export function CostTable({ data, agentMap = {} }: CostTableProps) {
 
 export function CostTableSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex gap-4 border-b border-slate-50 px-4 py-3 dark:border-zinc-800">
           <Skeleton className="h-3 w-32" />
