@@ -5,15 +5,25 @@
 export function parseMarkdown(md: string): string {
   if (!md) return ''
 
-  // Escape HTML tags to prevent XSS
-  let html = md
+  // Step 1: Extract images BEFORE any escaping so GCS URLs stay intact
+  const imagePlaceholders: string[] = []
+  let html = md.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, src) => {
+    const placeholder = `%%IMG_${imagePlaceholders.length}%%`
+    imagePlaceholders.push(
+      `<img src="${src}" alt="${alt}" class="rounded max-h-96 object-contain my-4 border border-slate-200 dark:border-zinc-700 mx-auto block" />`
+    )
+    return placeholder
+  })
+
+  // Step 2: Escape HTML tags to prevent XSS
+  html = html
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
 
   // Code blocks
   html = html.replace(/```([a-zA-Z0-9]*)\n([\s\S]*?)```/gm, (_, _lang, code) => {
-    return `<pre className="bg-slate-100 dark:bg-zinc-800 p-3 rounded-lg overflow-x-auto my-4 font-mono text-xs text-slate-800 dark:text-zinc-200"><code>${code.trim()}</code></pre>`
+    return `<pre class="bg-slate-100 dark:bg-zinc-800 p-3 rounded-lg overflow-x-auto my-4 font-mono text-xs text-slate-800 dark:text-zinc-200"><code>${code.trim()}</code></pre>`
   })
 
   // Inline code
@@ -32,9 +42,6 @@ export function parseMarkdown(md: string): string {
 
   // Horizontal rules
   html = html.replace(/^---$/gim, '<hr class="my-6 border-slate-200 dark:border-zinc-800" />')
-
-  // Images
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="rounded max-h-96 object-contain my-4 border border-slate-200 dark:border-zinc-700 mx-auto" />')
 
   // Links
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-violet-600 hover:underline dark:text-violet-400">$1</a>')
@@ -55,8 +62,13 @@ export function parseMarkdown(md: string): string {
   // Ordered lists
   html = html.replace(/^\s*\d+\.\s+(.*)$/gim, '<li class="list-decimal ml-5 my-1 text-slate-700 dark:text-zinc-300">$1</li>')
 
-  // Line breaks (convert newlines to <br /> unless it's inside block tags)
+  // Line breaks
   html = html.replace(/\n/g, '<br />')
+
+  // Step 3: Restore image placeholders with their original unescaped HTML
+  imagePlaceholders.forEach((imgHtml, i) => {
+    html = html.replace(`%%IMG_${i}%%`, imgHtml)
+  })
 
   return html
 }

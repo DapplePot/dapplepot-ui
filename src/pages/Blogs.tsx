@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useBlogs, useDeleteBlog } from '../hooks/useBlogs'
-import { Edit2, Trash2, Plus, Search, Eye, X } from 'lucide-react'
+import { Edit2, Trash2, Plus, Search, Eye, X, AlertTriangle } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
 import type { BlogItem } from '../api/blogs'
 
@@ -19,6 +19,7 @@ export function Blogs() {
   const [search, setSearch] = useState('')
   const [tag, setTag] = useState('')
   const [viewBlog, setViewBlog] = useState<BlogItem | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
 
   const { data, isLoading, isError } = useBlogs({
     page,
@@ -29,13 +30,14 @@ export function Blogs() {
 
   const deleteBlogMutation = useDeleteBlog()
 
-  const handleDelete = async (id: string, title: string) => {
-    if (confirm(`Are you sure you want to delete the blog post "${title}"?`)) {
-      try {
-        await deleteBlogMutation.mutateAsync(id)
-      } catch (err) {
-        alert('Failed to delete blog post.')
-      }
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    try {
+      await deleteBlogMutation.mutateAsync(deleteTarget.id)
+    } catch (err) {
+      alert('Failed to delete blog post.')
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -183,7 +185,7 @@ export function Blogs() {
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(blog.id, blog.title)}
+                          onClick={() => setDeleteTarget({ id: blog.id, title: blog.title })}
                           disabled={deleteBlogMutation.isPending}
                           className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
                           title="Delete"
@@ -262,6 +264,42 @@ export function Blogs() {
               <div className="prose prose-slate dark:prose-invert max-w-none font-sans">
                 <div dangerouslySetInnerHTML={{ __html: parseMarkdown(viewBlog.contentMarkdown) }} />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-2xl dark:bg-zinc-900 dark:border-zinc-700 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-4 p-6">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40">
+                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-zinc-100">Delete Blog Post</h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">
+                  Are you sure you want to delete{' '}
+                  <span className="font-semibold text-slate-700 dark:text-zinc-200">"{deleteTarget.title}"</span>?
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800 px-6 py-4">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteBlogMutation.isPending}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600"
+              >
+                {deleteBlogMutation.isPending ? 'Deleting…' : 'Delete'}
+              </button>
             </div>
           </div>
         </div>
