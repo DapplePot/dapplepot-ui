@@ -33,6 +33,7 @@ export function EventRow({ event, baseTime }: EventRowProps) {
   const isSecurityFinding = event.eventType === 'security_finding'
   const dotColor = getEventColor(event.eventCategory)
   const hasPayload = Object.keys(event.payload ?? {}).length > 0
+  const isStreamed = event.eventType === 'llm_end' && event.payload?.streamed === true
 
   if (isSecurityFinding) {
     const p = event.payload as Record<string, string>
@@ -105,6 +106,15 @@ export function EventRow({ event, baseTime }: EventRowProps) {
         <span className="flex-1 truncate text-xs text-slate-500 dark:text-zinc-400">
           {event.nodeName || event.llmModel || event.toolName || '—'}
         </span>
+
+        {isStreamed && (
+          <span
+            title="Streamed response — latency is end-to-end stream duration, not server round-trip"
+            className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+          >
+            streamed
+          </span>
+        )}
 
         {event.errorCode && (
           <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600 dark:bg-red-900/30 dark:text-red-400">
