@@ -386,11 +386,15 @@ export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
             Resolve
           </Button>
         )}
-        {alert.sessionId && (
+        {alert.sessionId ? (
           <Link to="/sessions/$id" params={{ id: alert.sessionId }}>
             <Button size="sm" variant="outline">View trace ↗</Button>
           </Link>
-        )}
+        ) : alert.agentId ? (
+          <Link to="/inventory/agents/$agentId" params={{ agentId: alert.agentId }}>
+            <Button size="sm" variant="outline">View agent ↗</Button>
+          </Link>
+        ) : null}
         <Badge
           className="ml-auto"
           variant={

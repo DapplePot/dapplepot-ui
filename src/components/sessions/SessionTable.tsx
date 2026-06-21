@@ -6,29 +6,22 @@ import {
 import { Skeleton } from '../ui/skeleton'
 import { SessionRow } from './SessionRow'
 
-type SortKey = 'startedAt' | 'durationMs' | 'status' | 'agentId'
-type SortDir = 'asc' | 'desc'
-
 interface SessionTableProps {
   sessions: SessionSummary[]
-  sort: SortKey
-  sortDir: SortDir
-  onSort: (key: SortKey) => void
   agentMap?: Record<string, string>
 }
 
-const COLUMNS: { key: SortKey | null; label: string }[] = [
-  { key: null,        label: 'Session ID' },
-  { key: 'agentId',   label: 'Agent' },
-  { key: 'status',    label: 'Status' },
-  { key: null,        label: 'Env' },
-  { key: 'startedAt', label: 'Started' },
-  { key: 'durationMs',label: 'Duration' },
-  { key: null,        label: 'Tokens' },
-  { key: null,        label: '' },
+const COLUMNS = [
+  'Session ID',
+  'Agent',
+  'Status',
+  'Env',
+  'Ended',
+  'Duration',
+  'Alerts',
 ]
 
-export function SessionTable({ sessions, sort, sortDir, onSort, agentMap = {} }: SessionTableProps) {
+export function SessionTable({ sessions, agentMap = {} }: SessionTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const toggle = (id: string) => setExpandedId((prev) => (prev === id ? null : id))
@@ -38,17 +31,8 @@ export function SessionTable({ sessions, sort, sortDir, onSort, agentMap = {} }:
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
-            {COLUMNS.map(({ key, label }) => (
-              <TableHead
-                key={label}
-                className={key ? 'cursor-pointer select-none' : ''}
-                onClick={key ? () => onSort(key) : undefined}
-              >
-                {label}
-                {key && sort === key && (
-                  <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
-                )}
-              </TableHead>
+            {COLUMNS.map((label) => (
+              <TableHead key={label}>{label}</TableHead>
             ))}
           </TableRow>
         </TableHeader>
@@ -64,7 +48,7 @@ export function SessionTable({ sessions, sort, sortDir, onSort, agentMap = {} }:
           ))}
           {sessions.length === 0 && (
             <TableRow>
-              <td colSpan={8} className="py-12 text-center text-sm text-slate-400 dark:text-zinc-500">
+              <td colSpan={7} className="py-12 text-center text-sm text-slate-400 dark:text-zinc-500">
                 No sessions found
               </td>
             </TableRow>

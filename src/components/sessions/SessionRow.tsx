@@ -46,15 +46,12 @@ export function SessionRow({ session, isExpanded, onToggle, agentName }: Session
           </Badge>
         </TableCell>
         <TableCell className="text-xs text-slate-500 dark:text-zinc-400">
-          {session.startedAt ? formatAgo(session.startedAt) : '—'}
+          {session.endedAt ? formatAgo(session.endedAt) : '—'}
         </TableCell>
         <TableCell className="text-xs text-slate-600 dark:text-zinc-400">
           {session.durationMs != null ? formatDuration(session.durationMs) : '—'}
         </TableCell>
-        <TableCell>
-          <TokenBar sessionId={session.sessionId} />
-        </TableCell>
-        <TableCell className="text-xs text-slate-600 text-right dark:text-zinc-400">
+        <TableCell className="text-xs text-slate-600 dark:text-zinc-400">
           {session.alertCount > 0 && (
             <span className="mr-2 rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-600 dark:bg-red-900/30 dark:text-red-400">
               {session.alertCount}
@@ -65,7 +62,7 @@ export function SessionRow({ session, isExpanded, onToggle, agentName }: Session
 
       {isExpanded && (
         <TableRow className="bg-slate-50 hover:bg-slate-50 dark:bg-zinc-800/50 dark:hover:bg-zinc-800/50">
-          <TableCell colSpan={8} className="px-6 py-4">
+          <TableCell colSpan={7} className="px-6 py-4">
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Session ID</p>
@@ -112,6 +109,3 @@ export function SessionRow({ session, isExpanded, onToggle, agentName }: Session
   )
 }
 
-function TokenBar(_props: { sessionId: string }) {
-  return <span className="text-xs text-slate-400 dark:text-zinc-500">—</span>
-}

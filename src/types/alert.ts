@@ -2,10 +2,8 @@ export type AlertStatus = 'open' | 'acknowledged' | 'resolved'
 
 export interface AlertSummary {
   alertId: string
-  ruleId: string | null
   ruleName: string
   ruleType: string
-  source: 'security'
   sessionId: string | null
   agentId: string | null
   severity: 'info' | 'warning' | 'medium' | 'critical'
@@ -43,7 +41,6 @@ export interface AlertStats {
     resolved: number
   }>
   topRules: Array<{
-    ruleId: string
     ruleName: string
     count: number
   }>

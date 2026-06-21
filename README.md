@@ -32,7 +32,7 @@ The Vite dev server proxies `/v1/*` → `http://localhost:3000` automatically.
 | `/sessions` | Sessions | Paginated session table with filters |
 | `/sessions/:id` | SessionDetail | Event timeline + detail panel (4 tabs); synthesizes blocked/terminated trigger events on timeline |
 | `/analytics` | Analytics | Token usage, error rates, latency, cost over time |
-| `/detection` | Detection | Alert feed + rules + notification channels |
+| `/detection` | Detection | Alert feed + notification channels |
 | `/security` | Security | Risk distribution, OWASP signal frequency, high-risk sessions |
 | `/inventory` | Inventory | Agent, LLM, tool, and MCP server registry (four tabs) |
 | `/inventory/agents/:agentId` | AgentSecurityProfile | LLM/ASI scores, trust score, signal breakdown |

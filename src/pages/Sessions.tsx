@@ -1,14 +1,10 @@
-﻿import { useState } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+﻿import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useSessionList } from '../hooks/useSessions'
 import { useAgents } from '../hooks/useAgents'
 import { useSessionFilters } from '../stores/sessionFilters'
 import { SessionTable, SessionTableSkeleton } from '../components/sessions/SessionTable'
 import { SessionFilters } from '../components/sessions/SessionFilters'
 import { SessionPagination } from '../components/sessions/SessionPagination'
-
-type SortKey = 'startedAt' | 'durationMs' | 'status' | 'agentId'
-type SortDir = 'asc' | 'desc'
 
 function ErrorCard({ message, retry }: { message: string; retry: () => void }) {
   return (
@@ -24,9 +20,6 @@ export function Sessions() {
   const navigate = useNavigate({ from: '/sessions' })
   const page = search.page ?? 1
 
-  const [sort, setSort] = useState<SortKey>('startedAt')
-  const [sortDir, setSortDir] = useState<SortDir>('desc')
-
   const { status, agentId, environment, dateRange, searchQuery } = useSessionFilters()
 
   const { data: agentsData } = useAgents()
@@ -37,7 +30,6 @@ export function Sessions() {
   const { data, isLoading, isError, error, refetch } = useSessionList({
     page,
     limit: 20,
-    sort: `${sort}:${sortDir}`,
     status: status || undefined,
     agentId: agentId || undefined,
     environment: environment || undefined,
@@ -47,16 +39,6 @@ export function Sessions() {
          : undefined,
     q: searchQuery || undefined,
   })
-
-  const handleSort = (key: SortKey) => {
-    if (sort === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSort(key)
-      setSortDir('desc')
-    }
-    void navigate({ search: { page: 1 } })
-  }
 
   const handlePage = (p: number) => {
     void navigate({ search: { page: p } })
@@ -90,9 +72,6 @@ export function Sessions() {
         <>
           <SessionTable
             sessions={data?.data ?? []}
-            sort={sort}
-            sortDir={sortDir}
-            onSort={handleSort}
             agentMap={agentMap}
           />
           <SessionPagination

@@ -18,7 +18,6 @@ const SEVERITY_DOT: Record<string, string> = {
 }
 
 type AlertSeverity = 'info' | 'warning' | 'medium' | 'critical' | ''
-type AlertSource   = 'security' | ''
 
 const SEVERITY_PILLS: { value: AlertSeverity; label: string }[] = [
   { value: '',         label: 'All' },
@@ -28,15 +27,10 @@ const SEVERITY_PILLS: { value: AlertSeverity; label: string }[] = [
   { value: 'info',     label: 'Info' },
 ]
 
-const SOURCE_PILLS: { value: AlertSource; label: string }[] = [
-  { value: '',         label: 'All sources' },
-  { value: 'security', label: 'Security' },
-]
-
 function AlertCardTitle({ alert }: { alert: AlertSummary }) {
   const { data: detail } = useAlertDetail(alert.alertId)
 
-  if (alert.source === 'security' && detail) {
+  if (detail) {
     const llm = detail.payload['llm_signal_status'] as Record<string, OwSignalStatus> | undefined
     const asi = detail.payload['asi_signal_status'] as Record<string, OwSignalStatus> | undefined
     const fired = [
@@ -60,7 +54,7 @@ interface AlertFeedProps {
 }
 
 export function AlertFeed({ alerts }: AlertFeedProps) {
-  const { severity, setSeverity, status, setStatus, source, setSource } = useAlertFilters()
+  const { severity, setSeverity, status, setStatus } = useAlertFilters()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const { data: agentsData } = useAgents()
   const agentMap = Object.fromEntries((agentsData ?? []).map((a) => [a.agentId, a.name]))
@@ -83,6 +77,7 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
             {label}
           </button>
         ))}
+        <span className="mx-1 self-center text-slate-300 dark:text-zinc-600">|</span>
         <button
           onClick={() => { setSeverity(''); setStatus('open') }}
           className={cn(
@@ -116,21 +111,6 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
         >
           Resolved
         </button>
-        <span className="mx-1 self-center text-slate-300 dark:text-zinc-600">|</span>
-        {SOURCE_PILLS.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setSource(value)}
-            className={cn(
-              'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-              source === value
-                ? 'bg-violet-700 text-white dark:bg-violet-600'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
-            )}
-          >
-            {label}
-          </button>
-        ))}
       </div>
 
       {/* Alert list */}
