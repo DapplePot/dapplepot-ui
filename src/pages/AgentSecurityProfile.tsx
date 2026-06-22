@@ -299,29 +299,26 @@ export function AgentSecurityProfile() {
           score={Math.round(data.compositeRisk)}
           band={compositeRiskBand}
           tooltip="Average of (avg LLM score + avg ASI score) / 2 across all scored sessions. Gives an overall picture of how risky this agent has been over time."
-          history={[...data.recentSessions].reverse().map(s => Math.round((s.llmScore + s.asiScore) / 2))}
+          history={(data.scoreHistory ?? []).map(p => Math.round((p.llmScore + p.asiScore) / 2))}
         />
         <ScoreCard
           label="Avg LLM risk score"
           score={Math.round(data.avgLlmScore)}
           band={llmBand}
           tooltip="Average OWASP LLM Top 10 composite score across all sessions. Per session: top fired signal × 60% + mean of rest × 40%, then amplified by attack chains (up to ×1.35). Bands: clean 0–14, low 15–34, medium 35–59, high 60–84, critical 85–100."
-          history={[...data.recentSessions].reverse().map(s => s.llmScore)}
+          history={(data.scoreHistory ?? []).map(p => p.llmScore)}
         />
         <ScoreCard
           label="Avg ASI risk score"
           score={Math.round(data.avgAsiScore)}
           band={asiBand}
           tooltip="Average OWASP Agentic Security Top 10 composite score across all sessions. Same formula as LLM — covers agentic threats like goal hijacking, tool misuse, inter-agent compromise, and rogue behaviour."
-          history={[...data.recentSessions].reverse().map(s => s.asiScore)}
+          history={(data.scoreHistory ?? []).map(p => p.asiScore)}
         />
         {data.trustScore !== undefined ? (
           <TrustCard
             score={data.trustScore}
-            history={[...data.recentSessions]
-              .filter(s => s.trustScore != null)
-              .reverse()
-              .map(s => s.trustScore!)}
+            history={(data.scoreHistory ?? []).map(p => p.trustScore ?? data.trustScore!)}
           />
         ) : (
           <div className="rounded border border-slate-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">

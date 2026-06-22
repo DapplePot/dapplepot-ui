@@ -135,6 +135,14 @@ export interface AgentRecentSession {
   scoredAt:   string
 }
 
+/** One time-bucketed point in the agent's 24h score history (hourly). */
+export interface AgentScoreHistoryPoint {
+  hour:       string         // ISO datetime (start of bucket)
+  llmScore:   number         // avg per bucket; 0 for idle hours
+  asiScore:   number         // avg per bucket; 0 for idle hours
+  trustScore: number | null  // avg per bucket; LOCF — carries forward last known trust
+}
+
 export interface AgentProfile {
   agentId:         string
   name:            string | null
@@ -151,6 +159,7 @@ export interface AgentProfile {
   lastScoredAt:    string | null
   signalBreakdown: AgentSignalBreakdown[]
   recentSessions:  AgentRecentSession[]
+  scoreHistory:    AgentScoreHistoryPoint[]
 }
 
 export interface RemediationCard {
