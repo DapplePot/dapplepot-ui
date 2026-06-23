@@ -17,6 +17,7 @@ import {
   Check,
   ChevronsUpDown,
   Plus,
+  FileText,
 } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { useUiStore } from '../stores/ui'
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { path: '/settings',  label: 'Settings',  icon: Settings,        exclude: ['superadmin'] },
   { path: '/tenants',         label: 'Tenants',         icon: Building2,       exclude: ['admin', 'editor', 'viewer'] },
   { path: '/onboard-client',  label: 'Onboard Client',  icon: UserPlus,        exclude: ['admin', 'editor', 'viewer'] },
+  { path: '/blogs',           label: 'Blogs',           icon: FileText,        exclude: ['admin', 'editor', 'viewer'] },
 ]
 
 export function Sidebar() {
