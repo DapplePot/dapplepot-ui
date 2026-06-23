@@ -1,11 +1,11 @@
-﻿import { InviteAcceptForm } from '../components/auth/InviteAcceptForm'
+import { InviteAcceptForm } from '../components/auth/InviteAcceptForm'
 
 export function AcceptInvite() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950">
-      <div className="w-full max-w-sm rounded border border-slate-800 bg-slate-900 p-8 shadow-xl">
-        <h1 className="mb-1 text-xl font-semibold text-white">Accept invite</h1>
-        <p className="mb-6 text-sm text-slate-400">Set your name and password to get started.</p>
+    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6">
+      <div className="w-full max-w-md rounded border border-zinc-800 bg-zinc-900 p-8">
+        <h1 className="mb-1 text-2xl font-semibold text-white">DapplePot</h1>
+        <p className="mb-6 text-sm text-zinc-400">Accept invite</p>
         <InviteAcceptForm />
       </div>
     </div>

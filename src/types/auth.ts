@@ -2,13 +2,28 @@ export type UserRole   = 'superadmin' | 'admin' | 'editor' | 'viewer'
 export type UserStatus = 'active' | 'disabled'
 
 export interface UserSummary {
-  userId:    string
-  tenantId:  string | null   // null for superadmin
-  email:     string
-  name:      string
-  role:      UserRole
-  status:    UserStatus
-  createdAt: string
+  userId:           string
+  tenantId:         string | null   // null for superadmin
+  email:            string
+  name:             string
+  role:             UserRole
+  status:           UserStatus
+  createdAt:        string
+  emailVerifiedAt:  string | null   // null until user clicks verification link
+}
+
+export interface SignupRequest {
+  email:    string
+  password: string
+  name:     string
+}
+
+export interface VerifyEmailRequest {
+  token: string
+}
+
+export interface ResendVerificationRequest {
+  email: string
 }
 
 export interface LoginRequest {
@@ -47,9 +62,11 @@ export interface ResetPasswordRequest {
 }
 
 export interface AcceptInviteRequest {
-  token:    string
-  name:     string
-  password: string
+  token:     string
+  // name/password are required only for brand-new accounts. When the invitee
+  // already has a DapplePot account these fields are ignored by the API.
+  name?:     string
+  password?: string
 }
 
 export interface InviteSummary {

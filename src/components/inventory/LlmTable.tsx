@@ -154,7 +154,7 @@ export function LlmTable() {
           onChange={e => setSearch(e.target.value)}
           className="w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-violet-400"
         />
-        {me?.role === 'admin' && (
+        {(me?.role === 'admin' || me?.role === 'editor') && (
           <button
             onClick={() => setShowModal(true)}
             className="flex shrink-0 items-center gap-1.5 rounded bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-500"

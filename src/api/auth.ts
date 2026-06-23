@@ -8,6 +8,9 @@ import type {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   AcceptInviteRequest,
+  SignupRequest,
+  VerifyEmailRequest,
+  ResendVerificationRequest,
 } from '../types/auth'
 
 // Bare client — no auth header, used for token-lifecycle endpoints
@@ -36,4 +39,31 @@ export async function resetPassword(body: ResetPasswordRequest): Promise<void> {
 
 export function acceptInvite(body: AcceptInviteRequest): Promise<LoginResponse> {
   return bare.post('v1/auth/accept-invite', { json: body }).json()
+}
+
+export interface InviteInfo {
+  email:         string
+  role:          'admin' | 'editor' | 'viewer'
+  tenantName:    string | null
+  accountExists: boolean
+}
+
+export function getInviteInfo(token: string): Promise<InviteInfo> {
+  return bare.get('v1/auth/invite-info', { searchParams: { token } }).json()
+}
+
+export async function signup(body: SignupRequest): Promise<void> {
+  // Returns { ok, message } — no tokens. The user is created only at
+  // /verify-email time, once they click the email link.
+  await bare.post('v1/auth/signup', { json: body })
+}
+
+export function verifyEmail(body: VerifyEmailRequest): Promise<LoginResponse> {
+  // Materializes the user + tenant + SDK key from the pending signup and
+  // returns login tokens so the UI can drop the user into the dashboard.
+  return bare.post('v1/auth/verify-email', { json: body }).json()
+}
+
+export async function resendVerification(body: ResendVerificationRequest): Promise<void> {
+  await bare.post('v1/auth/resend-verification', { json: body })
 }

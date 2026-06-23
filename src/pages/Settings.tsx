@@ -157,8 +157,10 @@ function TenantSection({ tenantId }: { tenantId: string }) {
 
 export function Settings() {
   const { data: me, isLoading } = useMe()
+  const { data: tenant } = useTenant(me?.tenantId ?? null)
   const [activeSection, setActiveSection] = useState<SectionId>('profile')
   const [showInvite, setShowInvite] = useState(false)
+  const [userSearch, setUserSearch] = useState('')
 
   if (isLoading) {
     return (
@@ -173,7 +175,14 @@ export function Settings() {
   if (!me) return null
 
   const isAdmin = me.role === 'admin'
-  const visibleNav = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin)
+  // Personal workspaces are single-user dev sandboxes: the team-management ('users')
+  // and tenant-configuration ('tenant') tabs aren't relevant.
+  const isPersonalTenant = tenant?.kind === 'personal'
+  const visibleNav = NAV_ITEMS.filter(item => {
+    if (item.adminOnly && !isAdmin) return false
+    if ((item.id === 'users' || item.id === 'tenant') && isPersonalTenant) return false
+    return true
+  })
 
   const safeActive = visibleNav.find(n => n.id === activeSection)
     ? activeSection
@@ -231,16 +240,23 @@ export function Settings() {
 
           {safeActive === 'users' && isAdmin && (
             <>
-              <div className="mb-4 flex justify-end">
+              <div className="mb-4 flex items-center gap-3">
+                <input
+                  type="search"
+                  placeholder="Search users…"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+                />
                 <button
                   onClick={() => setShowInvite(true)}
-                  className="flex items-center gap-1.5 rounded bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-500"
+                  className="ml-auto flex shrink-0 items-center gap-1.5 rounded bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-500"
                 >
                   <UserPlus className="h-4 w-4" />
                   Invite user
                 </button>
               </div>
-              <UserTable />
+              <UserTable search={userSearch} />
             </>
           )}
 

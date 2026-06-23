@@ -60,7 +60,7 @@ export function useChangeRole(userId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: ChangeRoleRequest) =>
-      apiClient.patch(`v1/users/${userId}/role`, { json: body }).json<UserSummary>(),
+      apiClient.put(`v1/users/${userId}/role`, { json: body }).json<UserSummary>(),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['users'] })
     },
@@ -71,7 +71,7 @@ export function useChangeStatus(userId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: ChangeStatusRequest) =>
-      apiClient.patch(`v1/users/${userId}/status`, { json: body }).json<UserSummary>(),
+      apiClient.put(`v1/users/${userId}/status`, { json: body }).json<UserSummary>(),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['users'] })
     },

@@ -1,5 +1,4 @@
-﻿import { useState } from 'react'
-import { useUsers, useChangeRole, useChangeStatus } from '../../hooks/useUsers'
+﻿import { useUsers, useChangeRole, useChangeStatus } from '../../hooks/useUsers'
 import { RoleBadge } from './RoleBadge'
 import type { UserRole, UserStatus, UserSummary } from '../../types/auth'
 
@@ -16,9 +15,8 @@ function StatusBadge({ status }: { status: UserStatus }) {
 }
 
 
-export function UserTable() {
+export function UserTable({ search = '' }: { search?: string }) {
   const { data: users, isLoading, isError } = useUsers()
-  const [search, setSearch] = useState('')
 
   const filtered = (users ?? []).filter(
     (u) =>
@@ -26,16 +24,13 @@ export function UserTable() {
       u.email.toLowerCase().includes(search.toLowerCase())
   )
 
+  // A tenant must always have at least one admin. If this user is the only
+  // admin in the workspace, their role is locked until someone else is
+  // promoted to admin.
+  const adminCount = (users ?? []).filter(u => u.role === 'admin').length
+
   return (
     <div className="space-y-3">
-      <input
-        type="search"
-        placeholder="Search users…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
-      />
-
       {isLoading && (
         <p className="text-sm text-slate-500">Loading users…</p>
       )}
@@ -69,7 +64,7 @@ export function UserTable() {
                     <StatusBadge status={u.status} />
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <UserRowActions user={u} />
+                    <UserRowActions user={u} isLastAdmin={u.role === 'admin' && adminCount === 1} />
                   </td>
                 </tr>
               ))}
@@ -88,7 +83,7 @@ export function UserTable() {
   )
 }
 
-function UserRowActions({ user }: { user: UserSummary }) {
+function UserRowActions({ user, isLastAdmin }: { user: UserSummary; isLastAdmin: boolean }) {
   const changeRole   = useChangeRole(user.userId)
   const changeStatus = useChangeStatus(user.userId)
 
@@ -96,9 +91,10 @@ function UserRowActions({ user }: { user: UserSummary }) {
     <div className="flex items-center justify-end gap-2">
       <select
         value={user.role}
-        disabled={changeRole.isPending}
+        disabled={changeRole.isPending || isLastAdmin}
+        title={isLastAdmin ? 'Promote another user to admin before changing this role.' : undefined}
         onChange={(e) => changeRole.mutate({ role: e.target.value as UserRole })}
-        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none focus:border-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none focus:border-violet-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
       >
         <option value="viewer">Viewer</option>
         <option value="editor">Editor</option>

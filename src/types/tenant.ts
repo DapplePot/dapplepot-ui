@@ -1,6 +1,7 @@
 export interface TenantSummary {
   tenantId:    string
   name:        string
+  kind:        'personal' | 'organization'
   enabled:     boolean
   tokenBudget: number | null
   rateLimit:   number | null
@@ -11,6 +12,14 @@ export interface TenantSummary {
 export interface TenantWithStats extends TenantSummary {
   adminUser:  { name: string; email: string } | null
   userCount:  number
+}
+
+export interface UserTenantSummary {
+  tenantId:  string
+  name:      string
+  kind:      'personal' | 'organization'
+  role:      'admin' | 'editor' | 'viewer'
+  joinedAt:  string
 }
 
 export interface OnboardClientRequest {

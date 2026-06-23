@@ -61,6 +61,11 @@ export function LoginForm() {
       >
         {login.isPending ? 'Signing in…' : 'Sign in'}
       </button>
+
+      <p className="text-center text-xs text-zinc-400">
+        Don't have an account?{' '}
+        <Link to="/signup" className="text-violet-400 hover:text-violet-300">Sign up</Link>
+      </p>
     </form>
   )
 }

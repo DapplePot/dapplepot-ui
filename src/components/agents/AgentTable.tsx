@@ -128,7 +128,7 @@ export function AgentTable() {
   const [deleteTarget, setDeleteTarget] = useState<AgentSummary | null>(null)
   const [search,       setSearch]       = useState('')
 
-  const isAdmin = me?.role === 'admin'
+  const isAdmin = me?.role === 'admin' || me?.role === 'editor'
 
   const filtered = (agents ?? []).filter((a) =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||

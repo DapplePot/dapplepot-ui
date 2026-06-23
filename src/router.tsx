@@ -15,8 +15,10 @@ import { AgentSecurityProfile } from './pages/AgentSecurityProfile'
 import { AgentConfig }          from './pages/AgentConfig'
 import { Audit }          from './pages/Audit'
 import { Login }          from './pages/Login'
+import { Signup }         from './pages/Signup'
 import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword }  from './pages/ResetPassword'
+import { VerifyEmail }    from './pages/VerifyEmail'
 import { AcceptInvite }   from './pages/AcceptInvite'
 import { useAuthStore }   from './stores/auth'
 
@@ -36,6 +38,12 @@ const loginRoute = createRoute({
   component: Login,
 })
 
+const signupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/signup',
+  component: Signup,
+})
+
 const forgotPasswordRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/forgot-password',
@@ -50,6 +58,13 @@ const resetPasswordRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/reset-password',
   component: ResetPassword,
+  validateSearch: tokenSearchSchema,
+})
+
+const verifyEmailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/verify-email',
+  component: VerifyEmail,
   validateSearch: tokenSearchSchema,
 })
 
@@ -176,8 +191,10 @@ const auditRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
+  signupRoute,
   forgotPasswordRoute,
   resetPasswordRoute,
+  verifyEmailRoute,
   acceptInviteRoute,
   overviewRoute,
   sessionsRoute,

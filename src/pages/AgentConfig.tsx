@@ -287,7 +287,7 @@ function CompositeSlider({
   )
 }
 
-function AlertThresholdsTab({ agentId }: { agentId: string }) {
+function AlertThresholdsTab({ agentId, isAdmin }: { agentId: string; isAdmin: boolean }) {
   const { data: alertConfig, isLoading, isError } = useAlertConfig(agentId)
   const updateLlm         = useUpdateLlmCompositeThreshold(agentId)
   const updateAsi         = useUpdateAsiCompositeThreshold(agentId)
@@ -357,7 +357,7 @@ function AlertThresholdsTab({ agentId }: { agentId: string }) {
     sigId in alertConfig.signal_thresholds
 
   return (
-    <div className="space-y-6">
+    <fieldset disabled={!isAdmin} className="min-w-0 border-0 p-0 m-0 space-y-6 disabled:cursor-not-allowed disabled:opacity-70">
       {/* ── Trust degradation alert ── */}
       <div className="rounded border border-slate-200 bg-white px-4 py-4 dark:border-zinc-700 dark:bg-zinc-900">
         <div className="flex items-start justify-between mb-3">
@@ -564,7 +564,7 @@ function AlertThresholdsTab({ agentId }: { agentId: string }) {
         </div>
       </div>
 
-    </div>
+    </fieldset>
   )
 }
 
@@ -2075,14 +2075,7 @@ function AgentProfileTab({ agentId, isAdmin, scrollTo }: { agentId: string; isAd
 
   return (
     <div className="space-y-4">
-      {!isAdmin ? (
-        <div className="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-4 py-2.5 dark:border-zinc-700 dark:bg-zinc-800">
-          <Lock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-          <p className="text-xs text-slate-500 dark:text-zinc-400">
-            View only — contact your tenant admin to modify agent profile settings.
-          </p>
-        </div>
-      ) : (
+      {isAdmin && (
         <div className="flex items-start gap-2 rounded border border-violet-200 bg-violet-50 px-4 py-3 dark:border-violet-800 dark:bg-violet-900/20">
           <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />
           <p className="text-xs text-violet-700 dark:text-violet-300 leading-relaxed">
@@ -2654,7 +2647,7 @@ export function AgentConfig() {
   const toggleMutation = useToggleSubcheckOnline(agentId)
 
   const user     = useAuthStore(s => s.user)
-  const isAdmin  = user?.role === 'admin' || user?.role === 'superadmin'
+  const isAdmin  = user?.role === 'admin' || user?.role === 'editor' || user?.role === 'superadmin'
 
   const [activeTab, setActiveTab] = useState<'profile' | 'llm' | 'asi' | 'thresholds'>('profile')
   const [profileScrollTo, setProfileScrollTo] = useState<string | undefined>(undefined)
@@ -2670,11 +2663,13 @@ export function AgentConfig() {
   )
 
   function handleToggleOnline(subCheckId: string, online: boolean) {
+    if (!isAdmin) return
     const currentAction = actionOverrides[subCheckId] ?? 'alert'
     toggleMutation.mutate({ subCheckId, online_detection: online, action: currentAction })
   }
 
   function handleActionChange(subCheckId: string, action: OnlineAction) {
+    if (!isAdmin) return
     toggleMutation.mutate({ subCheckId, online_detection: true, action })
   }
 
@@ -2788,7 +2783,7 @@ export function AgentConfig() {
           />
         </>
       ) : activeTab === 'thresholds' ? (
-        <AlertThresholdsTab agentId={agentId} />
+        <AlertThresholdsTab agentId={agentId} isAdmin={isAdmin} />
       ) : (
         <AgentProfileTab agentId={agentId} isAdmin={isAdmin} scrollTo={profileScrollTo} />
       )}

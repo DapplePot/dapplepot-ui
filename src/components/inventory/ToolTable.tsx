@@ -275,7 +275,7 @@ export function ToolTable() {
     (t.description ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
-  const isAdmin = me?.role === 'admin'
+  const isAdmin = me?.role === 'admin' || me?.role === 'editor'
 
   return (
     <div className="space-y-4">

@@ -5,7 +5,14 @@ import { Topbar } from './Topbar'
 import { useAuthStore } from '../stores/auth'
 import { useTheme } from '../hooks/useTheme'
 
-const AUTH_ROUTES = new Set(['/login', '/forgot-password', '/reset-password', '/accept-invite'])
+const AUTH_ROUTES = new Set([
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/accept-invite',
+])
 
 export function AppShell() {
   const pathname  = useRouterState({ select: (s) => s.location.pathname })
@@ -16,7 +23,9 @@ export function AppShell() {
   useTheme()
 
   useEffect(() => {
-    if (isAuthed && AUTH_ROUTES.has(pathname)) {
+    // /verify-email is exempt — a freshly-signed-up user (no session yet)
+    // clicks the email link and the page itself issues login tokens.
+    if (isAuthed && AUTH_ROUTES.has(pathname) && pathname !== '/verify-email') {
       void navigate({ to: '/' })
     }
   }, [isAuthed, pathname, navigate])

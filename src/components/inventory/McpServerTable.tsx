@@ -138,7 +138,7 @@ export function McpServerTable() {
   const [editTarget,  setEditTarget]  = useState<McpServer | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<McpServer | null>(null)
 
-  const isAdmin = me?.role === 'admin'
+  const isAdmin = me?.role === 'admin' || me?.role === 'editor'
 
   return (
     <div className="space-y-4">
