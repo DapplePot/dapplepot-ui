@@ -137,7 +137,13 @@ export function AlertFeed({ alerts }: AlertFeedProps) {
                 <div className="min-w-0 flex-1">
                   <AlertCardTitle alert={alert} />
                   <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-zinc-500">
-                    {alert.agentId ? (agentMap[alert.agentId] ?? alert.agentId) : '—'} · {alert.sessionId ? <span className="font-mono">{alert.sessionId.slice(0, 8)}…</span> : '—'}
+                    {alert.agentId ? (agentMap[alert.agentId] ?? alert.agentId) : '—'}
+                    {alert.sessionId && (
+                      <>
+                        {' · '}
+                        <span className="font-mono">{alert.sessionId.slice(0, 8)}…</span>
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">

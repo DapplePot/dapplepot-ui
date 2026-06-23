@@ -317,12 +317,24 @@ export function AlertDrawer({ alert, onClose }: AlertDrawerProps) {
   const isOnlineAlert   = alert.ruleType === 'online_security_summary'
 
   const fields: { label: string; value: React.ReactNode }[] = [
-    { label: 'Agent',      value: alert.agentId ? (agentMap[alert.agentId] ?? alert.agentId) : '—' },
-    { label: 'Session',    value: alert.sessionId ? (
-      <Link to="/sessions/$id" params={{ id: alert.sessionId }} className="font-mono text-xs text-violet-600 hover:underline dark:text-violet-400">
-        {alert.sessionId.slice(0, 8)}
-      </Link>
-    ) : '—' },
+    { label: 'Agent',      value: alert.agentId
+      ? (
+        <Link to="/inventory/agents/$agentId" params={{ agentId: alert.agentId }} className="text-xs text-violet-600 hover:underline dark:text-violet-400">
+          {agentMap[alert.agentId] ?? alert.agentId}
+        </Link>
+      )
+      : '—' },
+    // Session row is omitted entirely for cross-session alerts (e.g. trust degradation).
+    ...(alert.sessionId
+      ? [{
+        label: 'Session',
+        value: (
+          <Link to="/sessions/$id" params={{ id: alert.sessionId }} className="font-mono text-xs text-violet-600 hover:underline dark:text-violet-400">
+            {alert.sessionId.slice(0, 8)}
+          </Link>
+        ),
+      }]
+      : []),
     { label: 'Rule',       value: alert.ruleName },
     { label: 'Rule type',  value: alert.ruleType },
     { label: 'Status',     value: alert.status },
