@@ -22,6 +22,13 @@ export interface UserTenantSummary {
   joinedAt:  string
 }
 
+export interface TenantGrowthPoint {
+  month:        string  // 'YYYY-MM'
+  total:        number
+  organization: number
+  personal:     number
+}
+
 export interface OnboardClientRequest {
   tenant: {
     name:        string

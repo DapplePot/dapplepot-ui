@@ -12,6 +12,32 @@ export interface UserSummary {
   emailVerifiedAt:  string | null   // null until user clicks verification link
 }
 
+export interface UserMembership {
+  tenantId:   string
+  tenantName: string
+  role:       Exclude<UserRole, 'superadmin'>
+}
+
+export interface UserGrowthPoint {
+  month:        string  // 'YYYY-MM'
+  total:        number
+  self:         number
+  organization: number
+}
+
+export interface UserWithMemberships {
+  userId:           string
+  email:            string
+  name:             string
+  role:             UserRole
+  status:           UserStatus
+  createdAt:        string
+  emailVerifiedAt:  string | null
+  activeTenantId:   string | null
+  activeTenantName: string | null
+  memberships:      UserMembership[]
+}
+
 export interface SignupRequest {
   email:    string
   password: string

@@ -11,7 +11,7 @@ const ROUTE_LABELS: Record<string, string> = {
   '/inventory/agents':   'Agents',
   '/settings':       'Settings',
   '/tenants':        'Tenants',
-  '/onboard-client': 'Onboard Client',
+  '/users':          'Users',
 }
 
 type Crumb = { label: string; path: string }

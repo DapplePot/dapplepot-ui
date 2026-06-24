@@ -55,7 +55,7 @@ export function Blogs() {
         </div>
         <Link
           to="/blogs/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 dark:bg-violet-700 dark:hover:bg-violet-600"
+          className="inline-flex items-center gap-1.5 rounded bg-violet-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 dark:bg-violet-700 dark:hover:bg-violet-600"
         >
           <Plus className="h-4 w-4" />
           New Blog
@@ -73,7 +73,7 @@ export function Blogs() {
               setSearch(e.target.value)
               setPage(1)
             }}
-            className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-violet-400"
+            className="w-full rounded border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-violet-400"
           />
         </div>
 
@@ -83,7 +83,7 @@ export function Blogs() {
             setTag(e.target.value)
             setPage(1)
           }}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-violet-400"
+          className="rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-violet-400"
         >
           <option value="">All Tags</option>
           <option value="Research">Research</option>
@@ -96,7 +96,7 @@ export function Blogs() {
       {isLoading && (
         <div className="space-y-2">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-100 dark:bg-zinc-800" />
+            <div key={i} className="h-16 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
           ))}
         </div>
       )}
@@ -107,7 +107,7 @@ export function Blogs() {
 
       {!isLoading && !isError && (
         <>
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="overflow-x-auto rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-zinc-700 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-800/50">
@@ -127,10 +127,10 @@ export function Blogs() {
                       <img
                         src={blog.bannerImageUrl}
                         alt=""
-                        className="h-10 w-16 object-cover rounded border border-slate-200 dark:border-zinc-700 cursor-pointer"
+                        className="w-24 aspect-[1200/630] object-cover rounded border border-slate-200 dark:border-zinc-700 cursor-pointer"
                         onClick={() => setViewBlog(blog)}
                         onError={(e) => {
-                          e.currentTarget.src = 'https://placehold.co/120x80?text=No+Image'
+                          e.currentTarget.src = 'https://placehold.co/1200x630?text=No+Image'
                         }}
                       />
                     </td>
@@ -212,7 +212,7 @@ export function Blogs() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
                 Previous
               </button>
@@ -222,7 +222,7 @@ export function Blogs() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
                 Next
               </button>
@@ -234,7 +234,7 @@ export function Blogs() {
       {/* View Blog Modal */}
       {viewBlog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="flex flex-col w-full max-w-3xl max-h-[85vh] bg-white rounded-xl border border-slate-200 shadow-2xl dark:bg-zinc-900 dark:border-zinc-700 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex flex-col w-full max-w-3xl max-h-[85vh] bg-white rounded border border-slate-200 shadow-2xl dark:bg-zinc-900 dark:border-zinc-700 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4 dark:border-zinc-700 dark:bg-zinc-800/50">
               <div>
@@ -247,7 +247,7 @@ export function Blogs() {
               </div>
               <button
                 onClick={() => setViewBlog(null)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -258,10 +258,10 @@ export function Blogs() {
                 <img
                   src={viewBlog.bannerImageUrl}
                   alt=""
-                  className="w-full h-64 object-cover rounded-lg border border-slate-200 dark:border-zinc-700 mx-auto"
+                  className="w-full aspect-[1200/630] object-cover rounded border border-slate-200 dark:border-zinc-700 mx-auto"
                 />
               )}
-              <div className="prose prose-slate dark:prose-invert max-w-none font-sans">
+              <div className="max-w-none text-sm text-slate-700 dark:text-zinc-300">
                 <div dangerouslySetInnerHTML={{ __html: parseMarkdown(viewBlog.contentMarkdown) }} />
               </div>
             </div>
@@ -272,7 +272,7 @@ export function Blogs() {
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-2xl dark:bg-zinc-900 dark:border-zinc-700 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-md bg-white rounded border border-slate-200 shadow-2xl dark:bg-zinc-900 dark:border-zinc-700 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-start gap-4 p-6">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40">
                 <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
@@ -289,14 +289,14 @@ export function Blogs() {
             <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800 px-6 py-4">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 disabled={deleteBlogMutation.isPending}
-                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600"
+                className="inline-flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600"
               >
                 {deleteBlogMutation.isPending ? 'Deleting…' : 'Delete'}
               </button>

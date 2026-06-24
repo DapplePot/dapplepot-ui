@@ -2,6 +2,7 @@ import { apiClient } from './client'
 import type {
   OnboardClientRequest,
   OnboardClientResponse,
+  TenantGrowthPoint,
   TenantSummary,
   TenantWithStats,
   UserTenantSummary,
@@ -14,6 +15,14 @@ export function onboardClient(body: OnboardClientRequest): Promise<OnboardClient
 
 export function getTenants(): Promise<TenantWithStats[]> {
   return apiClient.get('v1/tenants').json()
+}
+
+export function getTenantGrowth(): Promise<TenantGrowthPoint[]> {
+  return apiClient.get('v1/tenants/stats/growth').json()
+}
+
+export async function deleteTenant(tenantId: string): Promise<void> {
+  await apiClient.delete(`v1/tenants/${tenantId}`)
 }
 
 export function getTenant(tenantId: string): Promise<TenantSummary> {

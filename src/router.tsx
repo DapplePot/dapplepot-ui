@@ -8,8 +8,8 @@ import { Analytics }      from './pages/Analytics'
 import { Detection }      from './pages/Detection'
 import { Security }       from './pages/Security'
 import { Settings }       from './pages/Settings'
-import { OnboardClient }  from './pages/OnboardClient'
 import { Tenants }        from './pages/Tenants'
+import { Users }          from './pages/Users'
 import { Inventory }            from './pages/Inventory'
 import { AgentSecurityProfile } from './pages/AgentSecurityProfile'
 import { AgentConfig }          from './pages/AgentConfig'
@@ -132,18 +132,18 @@ const settingsRoute = createRoute({
   component: Settings,
 })
 
-const onboardClientRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/onboard-client',
-  beforeLoad: requireAuth,
-  component: OnboardClient,
-})
-
 const tenantsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/tenants',
   beforeLoad: requireAuth,
   component: Tenants,
+})
+
+const usersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/users',
+  beforeLoad: requireAuth,
+  component: Users,
 })
 
 const inventorySearchSchema = z.object({
@@ -226,8 +226,8 @@ const routeTree = rootRoute.addChildren([
   detectionRoute,
   securityRoute,
   settingsRoute,
-  onboardClientRoute,
   tenantsRoute,
+  usersRoute,
   inventoryRoute,
   inventoryAgentsRedirectRoute,
   agentsRedirectRoute,

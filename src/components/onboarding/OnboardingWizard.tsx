@@ -1,4 +1,5 @@
 ﻿import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, Building2, UserCog } from 'lucide-react'
 import { TenantInfoStep, type TenantInfoData } from './TenantInfoStep'
 import { AdminAccountStep, type AdminAccountData } from './AdminAccountStep'
@@ -15,7 +16,12 @@ const STEPS = [
 
 const EMPTY_TENANT: TenantInfoData = { name: '', tokenBudget: '', rateLimit: '' }
 
-export function OnboardingWizard() {
+interface OnboardingWizardProps {
+  onClose?: () => void
+}
+
+export function OnboardingWizard({ onClose }: OnboardingWizardProps = {}) {
+  const queryClient = useQueryClient()
   const [currentStep,  setCurrentStep]  = useState<Step>(1)
   const [tenantData,   setTenantData]   = useState<TenantInfoData>(EMPTY_TENANT)
   const [result,       setResult]       = useState<OnboardClientResponse | null>(null)
@@ -37,7 +43,12 @@ export function OnboardingWizard() {
         },
         admin: adminData,
       },
-      { onSuccess: (data) => setResult(data) },
+      {
+        onSuccess: (data) => {
+          setResult(data)
+          void queryClient.invalidateQueries({ queryKey: ['tenants'] })
+        },
+      },
     )
   }
 
@@ -91,12 +102,22 @@ export function OnboardingWizard() {
           )}
         </div>
 
-        <button
-          onClick={handleReset}
-          className="rounded bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-500"
-        >
-          Onboard another client
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleReset}
+            className="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            Onboard another
+          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="rounded bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-500"
+            >
+              Done
+            </button>
+          )}
+        </div>
       </div>
     )
   }

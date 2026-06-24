@@ -9,7 +9,7 @@ import {
   Settings,
   Boxes,
   Building2,
-  UserPlus,
+  Users as UsersIcon,
   FileCheck2,
   LogOut,
   ChevronLeft,
@@ -26,7 +26,7 @@ import { useAuthStore } from '../stores/auth'
 import { useTenant, useMyTenants, useSwitchTenant, useCreatePersonalWorkspace } from '../hooks/useTenants'
 
 const NAV_ITEMS = [
-  { path: '/',          label: 'Overview',  icon: LayoutDashboard, exclude: ['superadmin'] },
+  { path: '/',          label: 'Overview',  icon: LayoutDashboard, exclude: [] },
   { path: '/sessions',  label: 'Sessions',  icon: List,            exclude: ['superadmin'] },
   { path: '/detection', label: 'Detection', icon: Bell,            exclude: ['superadmin'] },
   { path: '/analytics', label: 'Analytics', icon: BarChart2,       exclude: ['superadmin'] },
@@ -35,7 +35,7 @@ const NAV_ITEMS = [
   { path: '/audit',     label: 'Audit',     icon: FileCheck2,      exclude: ['superadmin', 'editor', 'viewer'] },
   { path: '/settings',  label: 'Settings',  icon: Settings,        exclude: ['superadmin'] },
   { path: '/tenants',         label: 'Tenants',         icon: Building2,       exclude: ['admin', 'editor', 'viewer'] },
-  { path: '/onboard-client',  label: 'Onboard Client',  icon: UserPlus,        exclude: ['admin', 'editor', 'viewer'] },
+  { path: '/users',           label: 'Users',           icon: UsersIcon,       exclude: ['admin', 'editor', 'viewer'] },
   { path: '/blogs',           label: 'Blogs',           icon: FileText,        exclude: ['admin', 'editor', 'viewer'] },
 ]
 
@@ -55,7 +55,8 @@ export function Sidebar() {
   const activeIsPersonal = tenant?.kind === 'personal'
   // The block is interactive whenever the dropdown has something to offer:
   // another workspace to switch to, or the option to create a personal one.
-  const hasSwitcher = !collapsed && (otherTenants.length > 0 || !hasPersonalTenant)
+  // Superadmins manage tenants directly and don't switch workspaces from here.
+  const hasSwitcher = !collapsed && user?.role !== 'superadmin' && (otherTenants.length > 0 || !hasPersonalTenant)
 
   return (
     <aside

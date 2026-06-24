@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
 import type {
   UserSummary,
+  UserWithMemberships,
+  UserGrowthPoint,
   InviteSummary,
   InviteUserRequest,
   UpdateMeRequest,
@@ -9,6 +11,7 @@ import type {
   ChangeStatusRequest,
 } from '../types/auth'
 import type { Paginated } from '../types/common'
+import { useAuthStore } from '../stores/auth'
 
 export function useMe() {
   return useQuery({
@@ -34,6 +37,42 @@ export function useUsers() {
     queryKey: ['users'],
     queryFn:  () => apiClient.get('v1/users').json<Paginated<UserSummary>>().then((r) => r.data),
     staleTime: 60_000,
+  })
+}
+
+// Superadmin-only system-wide users listing with workspace memberships.
+export function useAllUsers() {
+  const role = useAuthStore((s) => s.user?.role)
+  return useQuery({
+    queryKey: ['users', 'all'],
+    queryFn:  () => apiClient.get('v1/users/all').json<UserWithMemberships[]>(),
+    enabled:  role === 'superadmin',
+    staleTime: 60_000,
+  })
+}
+
+// Superadmin-only monthly cumulative user counts for the Overview chart.
+export function useUserGrowth() {
+  const role = useAuthStore((s) => s.user?.role)
+  return useQuery({
+    queryKey: ['users', 'growth'],
+    queryFn:  () => apiClient.get('v1/users/stats/growth').json<UserGrowthPoint[]>(),
+    enabled:  role === 'superadmin',
+    staleTime: 5 * 60_000,
+  })
+}
+
+// Superadmin-only hard delete. Also invalidates the tenants list since
+// deleting a user wipes their personal workspaces and tenant_members rows.
+export function useDeleteUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => apiClient.delete(`v1/users/${userId}`).then(() => undefined),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['users', 'all'] })
+      void qc.invalidateQueries({ queryKey: ['tenants'] })
+      void qc.invalidateQueries({ queryKey: ['tenants', 'growth'] })
+    },
   })
 }
 
