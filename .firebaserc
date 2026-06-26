@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "dapplepot-landing-page"
+  },
+  "targets": {
+    "dapplepot-landing-page": {
+      "hosting": {
+        "dapplepot-app": [
+          "dapplepot-app"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
