@@ -24,6 +24,8 @@ import { useUiStore } from '../stores/ui'
 import { useLogout } from '../hooks/useAuth'
 import { useAuthStore } from '../stores/auth'
 import { useTenant, useMyTenants, useSwitchTenant, useCreatePersonalWorkspace } from '../hooks/useTenants'
+import { usePlan } from '../hooks/usePlan'
+import { useMe } from '../hooks/useUsers'
 
 const NAV_ITEMS = [
   { path: '/',          label: 'Overview',  icon: LayoutDashboard, exclude: [] },
@@ -43,10 +45,17 @@ export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
   const toggle    = useUiStore((s) => s.toggleSidebar)
   const pathname  = useRouterState({ select: (s) => s.location.pathname })
-  const user      = useAuthStore((s) => s.user)
+  const authUser  = useAuthStore((s) => s.user)
+  const { data: me } = useMe()
+  // Prefer the live /me response over the auth store snapshot for tenantId —
+  // the auth store is only updated at login/setTokens, so it goes stale after
+  // a tenant gets created mid-session (orphan picks a plan, etc.). Falling
+  // back to authUser keeps role / name available even while /me is loading.
+  const user = me ?? authUser
   const logout    = useLogout()
   const { data: tenant } = useTenant(user?.tenantId ?? null)
   const { data: myTenants } = useMyTenants()
+  const { plan, limits } = usePlan()
   const switchTenantMut = useSwitchTenant()
   const createPersonalMut = useCreatePersonalWorkspace()
   const [switcherOpen, setSwitcherOpen] = useState(false)
@@ -98,8 +107,10 @@ export function Sidebar() {
       <nav className="flex-1 space-y-0.5 px-2 py-3">
         {NAV_ITEMS.filter(({ exclude, path }) => {
           if (exclude.includes(user?.role as 'superadmin')) return false
-          // Audit isn't available on personal workspaces (no sealed archives are produced).
-          if (path === '/audit' && activeIsPersonal) return false
+          // Audit is an Enterprise-only feature — hide for plans without it
+          // (Personal, Free Trial, Pro, Team, Internal). Avoids dead-end clicks
+          // that just land on a "Talk to sales" gate.
+          if (path === '/audit' && !limits?.canExportSealedAudit) return false
           return true
         }).map(({ path, label, icon: Icon }) => {
           const isActive = path === '/'
@@ -138,7 +149,14 @@ export function Sidebar() {
                 className="flex w-full cursor-pointer items-center justify-between gap-2 rounded px-2 py-1.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-slate-900 dark:text-zinc-100">{tenant?.name ?? '—'}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-xs font-medium text-slate-900 dark:text-zinc-100">{tenant?.name ?? '—'}</p>
+                    {limits && plan?.planTier !== 'internal' && plan?.lifecycleState === 'active' && (
+                      <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-zinc-800 dark:text-zinc-400">
+                        {limits.displayName}
+                      </span>
+                    )}
+                  </div>
                   <p className="truncate text-xs text-slate-500 dark:text-zinc-400">
                     {user.name}
                     {tenant?.kind === 'organization' && ` · ${user.role}`}
@@ -149,7 +167,14 @@ export function Sidebar() {
             ) : (
               <div className="flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-slate-900 dark:text-zinc-100">{tenant?.name ?? '—'}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-xs font-medium text-slate-900 dark:text-zinc-100">{tenant?.name ?? '—'}</p>
+                    {limits && plan?.planTier !== 'internal' && plan?.lifecycleState === 'active' && (
+                      <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-zinc-800 dark:text-zinc-400">
+                        {limits.displayName}
+                      </span>
+                    )}
+                  </div>
                   <p className="truncate text-xs text-slate-500 dark:text-zinc-400">
                     {user.name}
                     {tenant?.kind === 'organization' && ` · ${user.role}`}

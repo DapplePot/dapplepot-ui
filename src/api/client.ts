@@ -1,5 +1,6 @@
 import ky from 'ky'
 import { useAuthStore } from '../stores/auth'
+import { useUpgradeModalStore, triggerForErrorCode } from '../stores/upgradeModal'
 import { refresh } from './auth'
 
 export const API_BASE: string = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
@@ -73,6 +74,21 @@ export const apiClient = ky.create({
       },
     ],
     afterResponse: [
+      // Plan-gate interceptor: open the upgrade modal when the server
+      // returns a tier-related error code (403 / 429 / 402). Clones the
+      // response first so the caller's .json() still works.
+      async (_request, _options, response) => {
+        if (response.status !== 402 && response.status !== 403 && response.status !== 429) return
+        try {
+          const body = await response.clone().json() as { error?: { code?: string } }
+          const code = body?.error?.code
+          // ONBOARDING_PENDING is handled by the OnboardingGate modal, not the
+          // upgrade modal — never open the latter on top of the former.
+          if (code === 'ONBOARDING_PENDING') return
+          const trigger = triggerForErrorCode(code)
+          if (trigger) useUpgradeModalStore.getState().openModal(trigger)
+        } catch { /* non-JSON body — ignore */ }
+      },
       async (request, _options, response) => {
         if (response.status !== 401) return  // void → ky uses original response
 

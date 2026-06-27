@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Trash2, X } from 'lucide-react'
-import { useAllUsers, useDeleteUser } from '../hooks/useUsers'
+import { useAllUsers, useDeleteUser, useForceDeleteUser } from '../hooks/useUsers'
 import { useAuthStore } from '../stores/auth'
 import type { UserMembership, UserWithMemberships } from '../types/auth'
 
@@ -71,7 +71,7 @@ export function Users() {
             <thead>
               <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-zinc-700 dark:text-zinc-400">
                 <th className="px-4 py-3">User</th>
-                <th className="px-4 py-3">Role</th>
+                <th className="px-4 py-3">Active role</th>
                 <th className="px-4 py-3">Active workspace</th>
                 <th className="px-4 py-3">Workspaces</th>
                 <th className="px-4 py-3">Status</th>
@@ -167,22 +167,55 @@ interface DeleteUserDialogProps {
 }
 
 function DeleteUserDialog({ user, onClose }: DeleteUserDialogProps) {
-  const deleteMut = useDeleteUser()
+  const deleteMut      = useDeleteUser()
+  const forceDeleteMut = useForceDeleteUser()
   const [confirmEmail, setConfirmEmail] = useState('')
+  // Set when the normal delete returned 409 OWNER_REMOVAL_FORBIDDEN — surfaces
+  // a "Force delete" escalation path. The user has to re-confirm their typed
+  // email to proceed (since the destruction blast radius is bigger).
+  const [ownerBlock, setOwnerBlock] = useState(false)
+
+  const isAnyPending = deleteMut.isPending || forceDeleteMut.isPending
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !deleteMut.isPending) onClose()
+      if (e.key === 'Escape' && !isAnyPending) onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, deleteMut.isPending])
+  }, [onClose, isAnyPending])
 
-  const canDelete = confirmEmail.trim().toLowerCase() === user.email.toLowerCase() && !deleteMut.isPending
+  const emailMatches = confirmEmail.trim().toLowerCase() === user.email.toLowerCase()
+  const canDelete    = emailMatches && !isAnyPending
+
+  // ky wraps HTTP errors in HTTPError where the body lives on `err.response`.
+  // The default Error.message just says "Request failed with status code 409 ..."
+  // so we must crack open the response body to read our own error.code field.
+  async function isOwnerBlockError(err: unknown): Promise<boolean> {
+    const response = (err as { response?: Response })?.response
+    if (!response) return false
+    if (response.status !== 409) return false
+    try {
+      const body = await response.clone().json() as { error?: { code?: string } }
+      return body?.error?.code === 'OWNER_REMOVAL_FORBIDDEN'
+    } catch {
+      return false
+    }
+  }
 
   function handleDelete() {
     if (!canDelete) return
-    deleteMut.mutate(user.userId, { onSuccess: onClose })
+    deleteMut.mutate(user.userId, {
+      onSuccess: onClose,
+      onError: async (err) => {
+        if (await isOwnerBlockError(err)) setOwnerBlock(true)
+      },
+    })
+  }
+
+  function handleForceDelete() {
+    if (!canDelete) return
+    forceDeleteMut.mutate(user.userId, { onSuccess: onClose })
   }
 
   return (
@@ -246,9 +279,29 @@ function DeleteUserDialog({ user, onClose }: DeleteUserDialogProps) {
             />
           </div>
 
-          {deleteMut.isError && (
+          {/* Owner-block escalation panel — appears after the first delete hits 409 */}
+          {ownerBlock && (
+            <div className="rounded border border-orange-300 bg-orange-50 p-3 text-xs text-orange-900 dark:border-orange-900/50 dark:bg-orange-950/30 dark:text-orange-200">
+              <p className="font-semibold">This user owns an organisation workspace.</p>
+              <p className="mt-1">
+                The normal delete won't run while they own an active org. You can either
+                cancel and reassign ownership manually, or <strong>force delete</strong>{' '}
+                — which permanently destroys this user AND every workspace they own,
+                including all member data, sessions, alerts, agents, audit archives,
+                and billing periods. This cannot be undone.
+              </p>
+            </div>
+          )}
+
+          {/* Error display — suppress the 409 we're handling above */}
+          {(deleteMut.isError && !ownerBlock) && (
             <p className="rounded bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
               {(deleteMut.error as Error)?.message ?? 'Failed to delete user.'}
+            </p>
+          )}
+          {forceDeleteMut.isError && (
+            <p className="rounded bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
+              {(forceDeleteMut.error as Error)?.message ?? 'Force delete failed.'}
             </p>
           )}
 
@@ -256,19 +309,30 @@ function DeleteUserDialog({ user, onClose }: DeleteUserDialogProps) {
             <button
               type="button"
               onClick={onClose}
-              disabled={deleteMut.isPending}
+              disabled={isAnyPending}
               className="rounded border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               Cancel
             </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={!canDelete}
-              className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50"
-            >
-              {deleteMut.isPending ? 'Deleting…' : 'Delete user'}
-            </button>
+            {ownerBlock ? (
+              <button
+                type="button"
+                onClick={handleForceDelete}
+                disabled={!canDelete}
+                className="rounded bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
+              >
+                {forceDeleteMut.isPending ? 'Force deleting…' : 'Force delete user + workspaces'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={!canDelete}
+                className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50"
+              >
+                {deleteMut.isPending ? 'Deleting…' : 'Delete user'}
+              </button>
+            )}
           </div>
         </div>
       </div>

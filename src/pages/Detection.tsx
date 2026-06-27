@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAlerts } from '../hooks/useAlerts'
 import { useChannels } from '../hooks/useChannels'
+import { usePlan } from '../hooks/usePlan'
 import { useAlertFilters } from '../stores/alertFilters'
 import { AlertFeed, AlertFeedSkeleton } from '../components/detection/AlertFeed'
 import { ChannelList, ChannelListSkeleton } from '../components/detection/ChannelList'
@@ -10,6 +11,18 @@ type Tab = 'alerts' | 'channels'
 
 export function Detection() {
   const [tab, setTab] = useState<Tab>('alerts')
+  const { limits } = usePlan()
+
+  // Channels are a Team+ feature. Individual tenants (Free Trial / Pro)
+  // never see the Channels tab — their plan has no allowed channels anyway,
+  // and the UI clutter isn't useful.
+  const canConfigureChannels = (limits?.allowedChannels.length ?? 0) > 0
+
+  // Defensive: if a tenant downgrades while parked on the Channels tab,
+  // bounce them back to Alerts so they don't see a stale empty view.
+  useEffect(() => {
+    if (!canConfigureChannels && tab === 'channels') setTab('alerts')
+  }, [canConfigureChannels, tab])
 
   const { severity, status } = useAlertFilters()
 
@@ -38,7 +51,7 @@ export function Detection() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="channels">Channels</TabsTrigger>
+          {canConfigureChannels && <TabsTrigger value="channels">Channels</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="alerts">
@@ -49,13 +62,15 @@ export function Detection() {
           )}
         </TabsContent>
 
-        <TabsContent value="channels">
-          {channels.isLoading ? (
-            <ChannelListSkeleton />
-          ) : (
-            <ChannelList channels={channels.data ?? []} />
-          )}
-        </TabsContent>
+        {canConfigureChannels && (
+          <TabsContent value="channels">
+            {channels.isLoading ? (
+              <ChannelListSkeleton />
+            ) : (
+              <ChannelList channels={channels.data ?? []} />
+            )}
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   )

@@ -11,6 +11,31 @@ function formatDate(iso: string) {
   })
 }
 
+const PLAN_LABEL: Record<TenantWithStats['planTier'], string> = {
+  internal:   'Internal',
+  trial:      'Free Trial',
+  pro:        'Pro',
+  team:       'Team',
+  enterprise: 'Enterprise',
+}
+
+// Colour-codes the plan label so the superadmin can scan tiers at a glance.
+const PLAN_TONE: Record<TenantWithStats['planTier'], string> = {
+  internal:   'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300',
+  trial:      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  pro:        'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+  team:       'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  enterprise: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+}
+
+function PlanBadge({ planTier }: { planTier: TenantWithStats['planTier']; kind: TenantWithStats['kind'] }) {
+  return (
+    <span className={`inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-medium ${PLAN_TONE[planTier]}`}>
+      {PLAN_LABEL[planTier]}
+    </span>
+  )
+}
+
 export function Tenants() {
   const { data: tenants, isLoading, isError } = useTenants()
   const [search, setSearch] = useState('')
@@ -69,6 +94,7 @@ export function Tenants() {
             <thead>
               <tr className="border-b border-slate-200 text-xs font-medium text-slate-500 dark:border-zinc-700 dark:text-zinc-400">
                 <th className="px-4 py-3">Tenant</th>
+                <th className="px-4 py-3">Plan</th>
                 <th className="px-4 py-3">Admin</th>
                 <th className="px-4 py-3">Users</th>
                 <th className="px-4 py-3">Status</th>
@@ -82,6 +108,9 @@ export function Tenants() {
                   <td className="px-4 py-3">
                     <div className="text-sm font-medium text-slate-900 dark:text-zinc-100">{tenant.name}</div>
                     <div className="font-mono text-xs text-slate-400 dark:text-zinc-500">{tenant.tenantId}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <PlanBadge planTier={tenant.planTier} kind={tenant.kind} />
                   </td>
                   <td className="px-4 py-3">
                     {tenant.adminUser ? (
@@ -124,7 +153,7 @@ export function Tenants() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={isSuperadmin ? 6 : 5} className="px-4 py-8 text-center text-sm text-slate-400 dark:text-zinc-500">
+                  <td colSpan={isSuperadmin ? 7 : 6} className="px-4 py-8 text-center text-sm text-slate-400 dark:text-zinc-500">
                     {tenants?.length === 0 ? 'No tenants onboarded yet.' : 'No tenants match your search.'}
                   </td>
                 </tr>

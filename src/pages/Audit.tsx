@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { Download, FileCheck2, Clock, ChevronDown, Copy, Check } from 'lucide-react'
 import { useAuditArchives, useDownloadArchive, useDownloadLiveReport } from '../hooks/useAudit'
 import { useAgents } from '../hooks/useAgents'
+import { PlanGate } from '../components/PlanGate'
 import type { AuditArchiveMeta } from '../api/audit'
 
 function formatPeriod(start: string, end: string): string {
@@ -71,6 +72,14 @@ function ArchiveRow({ archive }: { archive: AuditArchiveMeta }) {
 }
 
 export function Audit() {
+  return (
+    <PlanGate feature="canExportSealedAudit" upgradeTo="Enterprise">
+      <AuditContent />
+    </PlanGate>
+  )
+}
+
+function AuditContent() {
   const { data: agentsData } = useAgents()
   const agents = agentsData ?? []
 

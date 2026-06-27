@@ -8,8 +8,15 @@ export interface UserSummary {
   name:             string
   role:             UserRole
   status:           UserStatus
+  /** True when this user owns the workspace (tenants.owner_user_id matches).
+   *  Owners can't be demoted or removed by other admins. Only set on tenant-
+   *  scoped listings (Settings → Users). */
+  isOwner?:         boolean
   createdAt:        string
   emailVerifiedAt:  string | null   // null until user clicks verification link
+  /** When set, the user has already consumed their one Free Trial. Persists
+   *  across workspace deletion — used to prevent unlimited delete-and-redo. */
+  trialConsumedAt?: string | null
 }
 
 export interface UserMembership {

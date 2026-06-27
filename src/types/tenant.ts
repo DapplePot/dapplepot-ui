@@ -1,10 +1,16 @@
+export type PlanTier = 'internal' | 'trial' | 'pro' | 'team' | 'enterprise'
+
 export interface TenantSummary {
   tenantId:    string
   name:        string
   kind:        'personal' | 'organization'
+  planTier:    PlanTier
   enabled:     boolean
   tokenBudget: number | null
   rateLimit:   number | null
+  /** When present, identifies the workspace owner — used by Settings to gate
+   *  delete + ownership-protection UX. */
+  ownerUserId?: string | null
   createdAt:   string
   updatedAt:   string
 }
@@ -32,8 +38,13 @@ export interface TenantGrowthPoint {
 export interface OnboardClientRequest {
   tenant: {
     name:        string
+    kind:        'personal' | 'organization'
+    planTier:    'internal' | 'enterprise'
     tokenBudget: number | null
     rateLimit:   number | null
+    /** Enterprise-only contractual limits. NULL ignored for non-Enterprise. */
+    enterpriseSeatsCap?:        number | null
+    enterpriseEventsPerPeriod?: number | null
   }
   admin: {
     email:    string

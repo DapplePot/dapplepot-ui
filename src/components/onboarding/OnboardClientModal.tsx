@@ -21,7 +21,7 @@ export function OnboardClientModal({ onClose }: OnboardClientModalProps) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded border border-slate-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+        className="w-full max-w-2xl rounded border border-slate-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-start justify-between">

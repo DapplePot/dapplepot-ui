@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
-import { onboardClient, getTenant, getTenants, getTenantGrowth, getMyTenants, switchTenant, createPersonalWorkspace, deleteTenant } from '../api/tenants'
+import { onboardClient, getTenant, getTenants, getTenantGrowth, getMyTenants, switchTenant, createPersonalWorkspace, deleteTenant, deleteOwnWorkspace } from '../api/tenants'
 import { useAuthStore } from '../stores/auth'
 import { scheduleProactiveRefresh } from '../api/client'
 import type { OnboardClientRequest } from '../types/tenant'
@@ -71,6 +71,23 @@ export function useDeleteTenant() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['tenants'] })
       void queryClient.invalidateQueries({ queryKey: ['tenants', 'growth'] })
+    },
+  })
+}
+
+/** Owner-only self-serve workspace delete. After success, blows away the
+ *  current React Query cache (everything was scoped to the now-gone workspace)
+ *  and clears auth so the user lands back on /login. */
+export function useDeleteOwnWorkspace() {
+  const queryClient = useQueryClient()
+  const clearAuth   = useAuthStore((s) => s.clearAuth)
+  const router      = useRouter()
+  return useMutation({
+    mutationFn: (confirmName: string) => deleteOwnWorkspace(confirmName),
+    onSuccess: () => {
+      queryClient.clear()
+      clearAuth()
+      void router.navigate({ to: '/login' })
     },
   })
 }

@@ -1,20 +1,29 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2, Building2, UserCog } from 'lucide-react'
+import { CheckCircle2, Building2, UserCog, Layers, FileBadge } from 'lucide-react'
+import {
+    ProvisionTypeStep,
+    provisionMeta,
+    type ProvisionType,
+} from './ProvisionTypeStep'
 import { TenantInfoStep, type TenantInfoData } from './TenantInfoStep'
+import { ContractLimitsStep, type ContractLimitsData } from './ContractLimitsStep'
 import { AdminAccountStep, type AdminAccountData } from './AdminAccountStep'
 import { useOnboardClient } from '../../hooks/useTenants'
 import type { OnboardClientResponse } from '../../types/tenant'
 import { cn } from '../../utils/cn'
 
-type Step = 1 | 2
+// Step IDs are stable across all flows so navigation logic (next/back, indicator
+// active state) is just integer arithmetic regardless of which steps a given
+// provision type actually shows.
+//   1 = Account Type
+//   2 = Tenant Info
+//   3 = Contract Limits   (Enterprise only)
+//   4 = Admin Account
+type Step = 1 | 2 | 3 | 4
 
-const STEPS = [
-  { step: 1 as Step, label: 'Tenant Info',    icon: Building2 },
-  { step: 2 as Step, label: 'Admin Account',  icon: UserCog   },
-]
-
-const EMPTY_TENANT: TenantInfoData = { name: '', tokenBudget: '', rateLimit: '' }
+const EMPTY_TENANT:           TenantInfoData     = { name: '' }
+const EMPTY_CONTRACT_LIMITS:  ContractLimitsData = { enterpriseSeatsCap: '', enterpriseEventsPerPeriod: '' }
 
 interface OnboardingWizardProps {
   onClose?: () => void
@@ -22,24 +31,91 @@ interface OnboardingWizardProps {
 
 export function OnboardingWizard({ onClose }: OnboardingWizardProps = {}) {
   const queryClient = useQueryClient()
-  const [currentStep,  setCurrentStep]  = useState<Step>(1)
-  const [tenantData,   setTenantData]   = useState<TenantInfoData>(EMPTY_TENANT)
-  const [result,       setResult]       = useState<OnboardClientResponse | null>(null)
+  const [currentStep,   setCurrentStep]   = useState<Step>(1)
+  const [provision,     setProvision]     = useState<ProvisionType>('internal_individual')
+  const [tenantData,    setTenantData]    = useState<TenantInfoData>(EMPTY_TENANT)
+  const [contractData,  setContractData]  = useState<ContractLimitsData>(EMPTY_CONTRACT_LIMITS)
+  const [result,        setResult]        = useState<OnboardClientResponse | null>(null)
 
   const onboard = useOnboardClient()
 
+  // Provision type drives which steps are shown:
+  //   Internal Individual   → Account Type → Admin Account             (steps 1, 4)
+  //   Internal Organisation → Account Type → Tenant Info → Admin       (steps 1, 2, 4)
+  //   Enterprise            → Account Type → Tenant Info → Contract → Admin (steps 1, 2, 3, 4)
+  // Internal Individual auto-names the workspace from the admin name (matches signup).
+  const isIndividual = provision === 'internal_individual'
+  const isEnterprise = provision === 'enterprise_organization'
+
+  const STEPS: { step: Step; label: string; icon: typeof Layers }[] = isIndividual
+    ? [
+        { step: 1, label: 'Account Type',  icon: Layers   },
+        { step: 4, label: 'Admin Account', icon: UserCog  },
+      ]
+    : isEnterprise
+      ? [
+          { step: 1, label: 'Account Type',     icon: Layers     },
+          { step: 2, label: 'Tenant Info',      icon: Building2  },
+          { step: 3, label: 'Contract Limits',  icon: FileBadge  },
+          { step: 4, label: 'Admin Account',    icon: UserCog    },
+        ]
+      : [
+          { step: 1, label: 'Account Type',  icon: Layers     },
+          { step: 2, label: 'Tenant Info',   icon: Building2  },
+          { step: 4, label: 'Admin Account', icon: UserCog    },
+        ]
+
+  // ── Back-navigation helper — knows which steps to skip based on provision type ──
+  function prevStepBefore(step: Step): Step {
+    if (step === 4) {
+      if (isEnterprise)  return 3
+      if (isIndividual)  return 1
+      return 2
+    }
+    if (step === 3) return 2
+    if (step === 2) return 1
+    return 1
+  }
+
+  function handleProvisionNext(value: ProvisionType) {
+    setProvision(value)
+    // Recompute first "after step 1" jump based on the freshly-picked value.
+    if (value === 'internal_individual') setCurrentStep(4)
+    else                                 setCurrentStep(2)
+  }
+
   function handleTenantNext(data: TenantInfoData) {
     setTenantData(data)
-    setCurrentStep(2)
+    setCurrentStep(isEnterprise ? 3 : 4)
+  }
+
+  function handleContractNext(data: ContractLimitsData) {
+    setContractData(data)
+    setCurrentStep(4)
   }
 
   function handleAdminSubmit(adminData: AdminAccountData) {
+    const meta = provisionMeta(provision)
+    // Auto-name personal-internal workspaces after the admin (matches signup convention).
+    // Trim + collapse whitespace so accidental extra spaces don't produce names like
+    // "pushpendra 's workspace".
+    const cleanAdminName = adminData.name.trim().replace(/\s+/g, ' ')
+    const tenantName = isIndividual
+      ? `${cleanAdminName}'s workspace`
+      : tenantData.name.trim()
+
     onboard.mutate(
       {
         tenant: {
-          name:        tenantData.name,
-          tokenBudget: tenantData.tokenBudget ? Number(tenantData.tokenBudget) : null,
-          rateLimit:   tenantData.rateLimit   ? Number(tenantData.rateLimit)   : null,
+          name:        tenantName,
+          kind:        meta.kind,
+          planTier:    meta.planTier,
+          tokenBudget: null,
+          rateLimit:   null,
+          enterpriseSeatsCap:
+            isEnterprise && contractData.enterpriseSeatsCap ? Number(contractData.enterpriseSeatsCap) : null,
+          enterpriseEventsPerPeriod:
+            isEnterprise && contractData.enterpriseEventsPerPeriod ? Number(contractData.enterpriseEventsPerPeriod) : null,
         },
         admin: adminData,
       },
@@ -54,7 +130,9 @@ export function OnboardingWizard({ onClose }: OnboardingWizardProps = {}) {
 
   function handleReset() {
     setCurrentStep(1)
+    setProvision('internal_individual')
     setTenantData(EMPTY_TENANT)
+    setContractData(EMPTY_CONTRACT_LIMITS)
     setResult(null)
     onboard.reset()
   }
@@ -85,21 +163,13 @@ export function OnboardingWizard({ onClose }: OnboardingWizardProps = {}) {
             <span className="font-mono text-xs text-slate-600 dark:text-zinc-300">{result.tenant.tenantId}</span>
           </div>
           <div className="flex justify-between">
+            <span className="text-slate-500 dark:text-zinc-400">Account type</span>
+            <span className="text-slate-900 dark:text-zinc-100">{provisionMeta(provision).label}</span>
+          </div>
+          <div className="flex justify-between">
             <span className="text-slate-500 dark:text-zinc-400">Admin email</span>
             <span className="text-slate-900 dark:text-zinc-100">{result.admin.email}</span>
           </div>
-          {result.tenant.tokenBudget !== null && (
-            <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-zinc-400">Token budget</span>
-              <span className="text-slate-900 dark:text-zinc-100">{result.tenant.tokenBudget.toLocaleString()} tokens</span>
-            </div>
-          )}
-          {result.tenant.rateLimit !== null && (
-            <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-zinc-400">Rate limit</span>
-              <span className="text-slate-900 dark:text-zinc-100">{result.tenant.rateLimit} req/min</span>
-            </div>
-          )}
         </div>
 
         <div className="flex gap-2">
@@ -170,11 +240,26 @@ export function OnboardingWizard({ onClose }: OnboardingWizardProps = {}) {
       {/* Step content */}
       <div>
         {currentStep === 1 && (
-          <TenantInfoStep initialData={tenantData} onNext={handleTenantNext} />
+          <ProvisionTypeStep initialValue={provision} onNext={handleProvisionNext} />
         )}
         {currentStep === 2 && (
+          <TenantInfoStep
+            initialData={tenantData}
+            onBack={() => setCurrentStep(prevStepBefore(2))}
+            onNext={handleTenantNext}
+          />
+        )}
+        {currentStep === 3 && (
+          <ContractLimitsStep
+            initialData={contractData}
+            onBack={() => setCurrentStep(prevStepBefore(3))}
+            onNext={handleContractNext}
+          />
+        )}
+        {currentStep === 4 && (
           <AdminAccountStep
-            onBack={() => setCurrentStep(1)}
+            provision={provision}
+            onBack={() => setCurrentStep(prevStepBefore(4))}
             onSubmit={handleAdminSubmit}
             isPending={onboard.isPending}
             error={errorMessage}

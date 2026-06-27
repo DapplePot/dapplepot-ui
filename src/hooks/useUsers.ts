@@ -76,6 +76,27 @@ export function useDeleteUser() {
   })
 }
 
+// Superadmin-only destructive force delete — wipes the user AND every
+// tenant they own (personal + organisation). Use after the normal delete
+// returns 409 OWNER_REMOVAL_FORBIDDEN and the operator has confirmed they
+// understand the blast radius.
+export interface ForceDeleteResult {
+  deletedTenants: { tenantId: string; name: string }[]
+}
+export function useForceDeleteUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) =>
+      apiClient.post(`v1/users/${userId}/force-delete`, { json: { acknowledged: true } })
+        .json<ForceDeleteResult>(),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['users', 'all'] })
+      void qc.invalidateQueries({ queryKey: ['tenants'] })
+      void qc.invalidateQueries({ queryKey: ['tenants', 'growth'] })
+    },
+  })
+}
+
 export function useInviteUser() {
   const qc = useQueryClient()
   return useMutation({
@@ -113,6 +134,24 @@ export function useChangeStatus(userId: string) {
       apiClient.put(`v1/users/${userId}/status`, { json: body }).json<UserSummary>(),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['users'] })
+    },
+  })
+}
+
+/** Removes the user from THIS workspace's membership. User account stays
+ *  intact — they retain access to other workspaces they belong to. */
+export interface RemoveMemberResult {
+  removed:      boolean
+  repointedTo:  string | null
+}
+export function useRemoveMember(userId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiClient.delete(`v1/users/${userId}/membership`).json<RemoveMemberResult>(),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['users'] })
+      void qc.invalidateQueries({ queryKey: ['me', 'tenants'] })
     },
   })
 }

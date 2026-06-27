@@ -22,7 +22,20 @@ import { VerifyEmail }    from './pages/VerifyEmail'
 import { AcceptInvite }   from './pages/AcceptInvite'
 import { Blogs }          from './pages/Blogs'
 import { BlogForm }       from './pages/BlogForm'
+import { ContactSales }      from './pages/ContactSales'
+import { BillingSuccess }    from './pages/BillingSuccess'
+import { AdminLayout }       from './pages/admin/AdminLayout'
+import { AdminHome }         from './pages/admin/AdminHome'
+import { AdminTenants }      from './pages/admin/AdminTenants'
+import { AdminTenantDetail } from './pages/admin/AdminTenantDetail'
+import { AdminUsers }        from './pages/admin/AdminUsers'
+import { AdminAuditLog }     from './pages/admin/AdminAuditLog'
 import { useAuthStore }   from './stores/auth'
+
+function requireSuperadmin() {
+  const user = useAuthStore.getState().user
+  if (!user || user.role !== 'superadmin') throw redirect({ to: '/' })
+}
 
 function requireAuth() {
   const token = useAuthStore.getState().accessToken
@@ -212,6 +225,57 @@ const blogEditRoute = createRoute({
   component: BlogForm,
 })
 
+const contactSalesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/contact-sales',
+  component: ContactSales,
+})
+
+const billingSuccessRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/billing/success',
+  beforeLoad: requireAuth,
+  component: BillingSuccess,
+})
+
+// Admin (superadmin-only) routes
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin',
+  beforeLoad: () => { requireAuth(); requireSuperadmin() },
+  component: AdminLayout,
+})
+
+const adminHomeRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/',
+  component: AdminHome,
+})
+
+const adminTenantsRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/tenants',
+  component: AdminTenants,
+})
+
+const adminTenantDetailRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/tenants/$id',
+  component: AdminTenantDetail,
+})
+
+const adminUsersRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/users',
+  component: AdminUsers,
+})
+
+const adminAuditLogRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/audit-log',
+  component: AdminAuditLog,
+})
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
@@ -237,6 +301,15 @@ const routeTree = rootRoute.addChildren([
   blogsRoute,
   blogNewRoute,
   blogEditRoute,
+  contactSalesRoute,
+  billingSuccessRoute,
+  adminRoute.addChildren([
+    adminHomeRoute,
+    adminTenantsRoute,
+    adminTenantDetailRoute,
+    adminUsersRoute,
+    adminAuditLogRoute,
+  ]),
 ])
 
 export const router = createRouter({ routeTree })

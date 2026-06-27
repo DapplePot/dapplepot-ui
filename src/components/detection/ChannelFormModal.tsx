@@ -4,6 +4,8 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select } from '../ui/select'
 import { useCreateChannel, useUpdateChannel, useDeleteChannel } from '../../hooks/useChannels'
+import { usePlan } from '../../hooks/usePlan'
+import { usePlanModalStore } from '../../stores/planModal'
 import type { ChannelType, DeliveryChannel } from '@dapplepot/types/channel'
 
 interface ChannelFormModalProps {
@@ -16,6 +18,8 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
   const createChannel = useCreateChannel()
   const updateChannel = useUpdateChannel()
   const deleteChannel = useDeleteChannel()
+  const { hasChannel } = usePlan()
+  const openUpgrade   = usePlanModalStore(s => s.openModal)
   
   const isEditing = !!initialData
   // Type is locked when editing an existing channel OR when opened from a specific connector card
@@ -105,10 +109,15 @@ export function ChannelFormModal({ onClose, initialData, initialChannelType }: C
                   setConfig({})
                 }}
               >
-                <option value="slack">Slack</option>
-                <option value="msteams">Microsoft Teams</option>
-                <option value="webhook">Custom Webhook</option>
+                {hasChannel('slack')    && <option value="slack">Slack</option>}
+                {hasChannel('msteams')  && <option value="msteams">Microsoft Teams</option>}
+                {hasChannel('webhook')  && <option value="webhook">Custom Webhook</option>}
               </Select>
+              {!hasChannel('slack') && !hasChannel('msteams') && !hasChannel('webhook') && (
+                <p className="mt-1 text-xs text-amber-600">
+                  External alert channels require the Team plan. <button type="button" onClick={() => openUpgrade('team')} className="font-medium underline">Upgrade</button> to enable them.
+                </p>
+              )}
             </div>
           )}
 
