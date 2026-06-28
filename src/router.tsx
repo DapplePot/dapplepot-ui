@@ -20,6 +20,7 @@ import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword }  from './pages/ResetPassword'
 import { VerifyEmail }    from './pages/VerifyEmail'
 import { AcceptInvite }   from './pages/AcceptInvite'
+import { OAuthCallback }  from './pages/OAuthCallback'
 import { Blogs }          from './pages/Blogs'
 import { BlogForm }       from './pages/BlogForm'
 import { ContactSales }      from './pages/ContactSales'
@@ -88,6 +89,12 @@ const acceptInviteRoute = createRoute({
   path: '/accept-invite',
   component: AcceptInvite,
   validateSearch: tokenSearchSchema,
+})
+
+const oauthCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/oauth/callback',
+  component: OAuthCallback,
 })
 
 // Authenticated routes
@@ -287,6 +294,7 @@ const routeTree = rootRoute.addChildren([
   resetPasswordRoute,
   verifyEmailRoute,
   acceptInviteRoute,
+  oauthCallbackRoute,
   overviewRoute,
   sessionsRoute,
   sessionRoute,

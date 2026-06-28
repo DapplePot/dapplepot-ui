@@ -4,6 +4,7 @@ import { useSearch } from '@tanstack/react-router'
 import { Building2 } from 'lucide-react'
 import { useAcceptInvite } from '../../hooks/useAuth'
 import { getInviteInfo } from '../../api/auth'
+import { GoogleSignInButton } from './GoogleSignInButton'
 
 export function InviteAcceptForm() {
   const accept = useAcceptInvite()
@@ -79,6 +80,14 @@ export function InviteAcceptForm() {
         >
           {accept.isPending ? 'Joining…' : `Join ${tenantName ?? 'workspace'}`}
         </button>
+
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-zinc-800" />
+          <span className="text-[10px] uppercase tracking-wide text-zinc-500">or</span>
+          <div className="h-px flex-1 bg-zinc-800" />
+        </div>
+
+        <GoogleSignInButton inviteToken={token!} label="Continue with Google" />
       </div>
     )
   }
@@ -92,9 +101,18 @@ export function InviteAcceptForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-4">
       {InviteSummary}
 
+      <GoogleSignInButton inviteToken={token!} label="Sign up with Google" />
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-zinc-800" />
+        <span className="text-[10px] uppercase tracking-wide text-zinc-500">or</span>
+        <div className="h-px flex-1 bg-zinc-800" />
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="mb-1 block text-xs font-medium text-zinc-300">Full name</label>
         <input
@@ -151,6 +169,7 @@ export function InviteAcceptForm() {
       >
         {accept.isPending ? 'Setting up…' : 'Accept invite'}
       </button>
-    </form>
+      </form>
+    </div>
   )
 }

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Mail } from 'lucide-react'
 import { useSignup, useResendVerification } from '../../hooks/useAuth'
+import { GoogleSignInButton } from './GoogleSignInButton'
 
 export function SignupForm() {
   const signup = useSignup()
@@ -57,7 +58,16 @@ export function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-4">
+      <GoogleSignInButton label="Sign up with Google" />
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-zinc-800" />
+        <span className="text-[10px] uppercase tracking-wide text-zinc-500">or</span>
+        <div className="h-px flex-1 bg-zinc-800" />
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="mb-1 block text-xs font-medium text-zinc-300">Name</label>
         <input
@@ -111,6 +121,7 @@ export function SignupForm() {
         Already have an account?{' '}
         <Link to="/login" className="text-violet-400 hover:text-violet-300">Sign in</Link>
       </p>
-    </form>
+      </form>
+    </div>
   )
 }

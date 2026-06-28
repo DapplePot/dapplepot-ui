@@ -1,6 +1,7 @@
 ﻿import { useState, type FormEvent } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useLogin } from '../../hooks/useAuth'
+import { GoogleSignInButton } from './GoogleSignInButton'
 
 export function LoginForm() {
   const login = useLogin()
@@ -14,7 +15,16 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-4">
+      <GoogleSignInButton />
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-zinc-800" />
+        <span className="text-[10px] uppercase tracking-wide text-zinc-500">or</span>
+        <div className="h-px flex-1 bg-zinc-800" />
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="mb-1 block text-xs font-medium text-zinc-300">Email</label>
         <input
@@ -66,6 +76,7 @@ export function LoginForm() {
         Don't have an account?{' '}
         <Link to="/signup" className="text-violet-400 hover:text-violet-300">Sign up</Link>
       </p>
-    </form>
+      </form>
+    </div>
   )
 }
