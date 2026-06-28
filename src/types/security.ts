@@ -114,6 +114,24 @@ export interface SecurityOverview {
     asiBand:        RiskBand
     owaspSignalIds: string[]
   }>
+  topSubchecks: Array<{
+    subCheckId:      string
+    owaspSignalId:   string
+    framework:       string
+    checkLabel:      string
+    count:           number
+    latestSessionId: string
+    lastSeenAt:      string
+  }>
+  recentAlertedSessions: Array<{
+    sessionId:   string
+    agentId:     string | null
+    agentName:   string | null
+    alertCount:  number
+    endedAt:     string | null
+    durationMs:  number | null
+    lastAlertAt: string
+  }>
   topAgents: AgentRiskEntry[]
 }
 
@@ -160,6 +178,22 @@ export interface AgentProfile {
   signalBreakdown: AgentSignalBreakdown[]
   recentSessions:  AgentRecentSession[]
   scoreHistory:    AgentScoreHistoryPoint[]
+  recentAlertedSessions: Array<{
+    sessionId:   string
+    alertCount:  number
+    endedAt:     string | null
+    durationMs:  number | null
+    lastAlertAt: string
+  }>
+  topSubchecks: Array<{
+    subCheckId:      string
+    owaspSignalId:   string
+    framework:       string
+    checkLabel:      string
+    count:           number
+    latestSessionId: string
+    lastSeenAt:      string
+  }>
 }
 
 export interface RemediationCard {

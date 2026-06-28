@@ -1,10 +1,13 @@
 ﻿import { useState } from 'react'
-import { useParams, Link } from '@tanstack/react-router'
+import { useParams, Link, useNavigate } from '@tanstack/react-router'
 import { useAgentProfile } from '../hooks/useSecurity'
 import { Skeleton } from '../components/ui/skeleton'
 import { Sparkline } from '../components/ui/Sparkline'
-import { Settings, Copy, Check, HelpCircle } from 'lucide-react'
+import { Settings, Copy, Check, HelpCircle, ChevronRight } from 'lucide-react'
 import type { RiskBand } from '../types/security'
+import { formatAgo, formatDuration } from '../utils/format'
+
+const TOP_SUBCHECKS_COLLAPSED = 5
 
 function AgentIdRow({ agentId }: { agentId: string }) {
   const [copied, setCopied] = useState(false)
@@ -156,6 +159,8 @@ function fmt(iso: string | null) {
 
 export function AgentSecurityProfile() {
   const { agentId } = useParams({ from: '/inventory/agents/$agentId' })
+  const navigate = useNavigate()
+  const [subchecksExpanded, setSubchecksExpanded] = useState(false)
   const { data, isLoading, isError, error } = useAgentProfile(agentId)
 
   if (isLoading) {
@@ -184,11 +189,6 @@ export function AgentSecurityProfile() {
       </div>
     )
   }
-
-  const llmSignals   = data.signalBreakdown.filter(s => s.framework === 'LLM')
-    .sort((a, b) => a.owaspSignalId.localeCompare(b.owaspSignalId))
-  const agentSignals = data.signalBreakdown.filter(s => s.framework === 'ASI')
-    .sort((a, b) => a.owaspSignalId.localeCompare(b.owaspSignalId))
 
   const compositeRiskBand: RiskBand =
     data.compositeRisk >= 85 ? 'critical'
@@ -334,124 +334,121 @@ export function AgentSecurityProfile() {
         )}
       </div>
 
-      {/* Peak scores */}
-      <div className="grid grid-cols-2 gap-4">
-        {[
-          { label: 'Peak LLM score', value: data.maxLlmScore },
-          { label: 'Peak ASI score', value: data.maxAsiScore },
-        ].map(m => (
-          <div key={m.label} className="rounded border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
-            <p className="text-xs text-slate-500 dark:text-zinc-400">{m.label}</p>
-            <p className="mt-0.5 text-lg font-semibold text-slate-900 dark:text-zinc-100">{m.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Signal breakdown */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* LLM signals */}
-        <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-          <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">LLM signal history (OW-LLM01–10)</h2>
-          {llmSignals.length === 0 ? (
-            <p className="text-sm text-slate-400 dark:text-zinc-500">No LLM signals fired</p>
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-slate-400 border-b border-slate-100 dark:border-zinc-800 dark:text-zinc-500">
-                  <th className="pb-2 text-left font-medium">Signal</th>
-                  <th className="pb-2 text-right font-medium">Sessions</th>
-                  <th className="pb-2 text-right font-medium">Events</th>
-                  <th className="pb-2 text-right font-medium">Last seen</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
-                {llmSignals.map(s => (
-                  <tr key={s.owaspSignalId} className="text-slate-700 dark:text-zinc-300">
-                    <td className="py-1.5 font-mono">{s.owaspSignalId}</td>
-                    <td className="py-1.5 text-right">{s.sessionsAffected}</td>
-                    <td className="py-1.5 text-right">{s.firedCount}</td>
-                    <td className="py-1.5 text-right text-slate-400 dark:text-zinc-500">{fmt(s.lastSeenAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* ASI signals */}
-        <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-          <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">Agent threat history (OW-ASI01–10)</h2>
-          {agentSignals.length === 0 ? (
-            <p className="text-sm text-slate-400 dark:text-zinc-500">No ASI signals fired</p>
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-slate-400 border-b border-slate-100 dark:border-zinc-800 dark:text-zinc-500">
-                  <th className="pb-2 text-left font-medium">Signal</th>
-                  <th className="pb-2 text-right font-medium">Sessions</th>
-                  <th className="pb-2 text-right font-medium">Events</th>
-                  <th className="pb-2 text-right font-medium">Last seen</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
-                {agentSignals.map(s => (
-                  <tr key={s.owaspSignalId} className="text-slate-700 dark:text-zinc-300">
-                    <td className="py-1.5 font-mono">{s.owaspSignalId}</td>
-                    <td className="py-1.5 text-right">{s.sessionsAffected}</td>
-                    <td className="py-1.5 text-right">{s.firedCount}</td>
-                    <td className="py-1.5 text-right text-slate-400 dark:text-zinc-500">{fmt(s.lastSeenAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
-      {/* Recent sessions */}
-      <div className="rounded border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-        <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">Recent sessions</h2>
-        {data.recentSessions.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-zinc-500">No sessions scored yet</p>
+      {/* Recent sessions with alerts (this agent) */}
+      <div>
+        <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">Recent sessions with alerts</h2>
+        {!data.recentAlertedSessions || data.recentAlertedSessions.length === 0 ? (
+          <p className="text-sm text-slate-400 dark:text-zinc-500">No alerted sessions for this agent</p>
         ) : (
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-slate-400 border-b border-slate-100 dark:border-zinc-800 dark:text-zinc-500">
-                <th className="pb-2 text-left font-medium">Session ID</th>
-                <th className="pb-2 text-right font-medium">LLM score</th>
-                <th className="pb-2 text-right font-medium">LLM band</th>
-                <th className="pb-2 text-right font-medium">ASI score</th>
-                <th className="pb-2 text-right font-medium">ASI band</th>
-                <th className="pb-2 text-right font-medium">Scored</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
-              {data.recentSessions.map(s => (
-                <tr key={s.sessionId} className="text-slate-700 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50">
-                  <td className="py-1.5">
-                    <Link
-                      to="/sessions/$id"
-                      params={{ id: s.sessionId }}
-                      className="font-mono text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      {s.sessionId.slice(0, 8)}…
-                    </Link>
-                  </td>
-                  <td className={`py-1.5 text-right font-semibold ${BAND_COLOR[s.llmBand]}`}>
-                    {s.llmScore}
-                  </td>
-                  <td className="py-1.5 text-right capitalize text-slate-500 dark:text-zinc-400">{s.llmBand}</td>
-                  <td className={`py-1.5 text-right font-semibold ${BAND_COLOR[s.asiBand]}`}>
-                    {s.asiScore}
-                  </td>
-                  <td className="py-1.5 text-right capitalize text-slate-500 dark:text-zinc-400">{s.asiBand}</td>
-                  <td className="py-1.5 text-right text-slate-400 dark:text-zinc-500">{fmt(s.scoredAt)}</td>
+          <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-zinc-800">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Session</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Ended</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Duration</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Alerts</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
+                {data.recentAlertedSessions.map((r) => (
+                  <tr
+                    key={r.sessionId}
+                    onClick={() => void navigate({ to: '/sessions/$id', params: { id: r.sessionId } })}
+                    className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800"
+                  >
+                    <td className="px-4 py-3 text-xs font-mono text-slate-700 dark:text-zinc-300">
+                      {r.sessionId.slice(0, 8)}…
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-zinc-400">
+                      {r.endedAt ? formatAgo(r.endedAt) : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
+                      {r.durationMs != null ? formatDuration(r.durationMs) : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {r.alertCount > 0 && (
+                        <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                          {r.alertCount}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
+
+      {/* Top sub-checks fired (this agent) */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">Top sub-checks fired</h2>
+          {data.topSubchecks && data.topSubchecks.length > TOP_SUBCHECKS_COLLAPSED && (
+            <button
+              onClick={() => setSubchecksExpanded((v) => !v)}
+              className="text-xs text-violet-600 hover:underline dark:text-violet-400"
+            >
+              {subchecksExpanded ? 'Show less' : 'Show more'}
+            </button>
+          )}
+        </div>
+        {!data.topSubchecks || data.topSubchecks.length === 0 ? (
+          <p className="text-sm text-slate-400 dark:text-zinc-500">No findings for this agent</p>
+        ) : (
+          <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-zinc-800">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Sub-check</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Signal</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Framework</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-zinc-400">Count</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Latest session</th>
+                  <th className="w-24 px-4" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
+                {(subchecksExpanded
+                  ? data.topSubchecks
+                  : data.topSubchecks.slice(0, TOP_SUBCHECKS_COLLAPSED)
+                ).map((s) => (
+                  <tr key={s.subCheckId}>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-zinc-300">
+                      <span className="font-medium text-slate-900 dark:text-zinc-100">{s.subCheckId}</span>
+                      <span className="ml-2 text-slate-500 dark:text-zinc-400">{s.checkLabel}</span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">{s.owaspSignalId}</td>
+                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">{s.framework}</td>
+                    <td className="px-4 py-3 text-right text-xs font-semibold text-slate-800 dark:text-zinc-200">{s.count}</td>
+                    <td className="px-4 py-3 text-xs">
+                      <button
+                        onClick={() => void navigate({ to: '/sessions/$id', params: { id: s.latestSessionId } })}
+                        className="font-mono text-violet-600 hover:underline dark:text-violet-400"
+                      >
+                        {s.latestSessionId}
+                      </button>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                      <button
+                        onClick={() => void navigate({ to: '/sessions', search: { page: 1, subCheckId: s.subCheckId, agentId } })}
+                        title={`See sessions for this agent with ${s.subCheckId}`}
+                        aria-label={`See sessions for this agent with ${s.subCheckId}`}
+                        className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-violet-600 hover:underline dark:text-violet-400"
+                      >
+                        show all
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }

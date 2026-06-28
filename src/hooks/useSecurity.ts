@@ -86,6 +86,17 @@ export function useAgentProfile(agentId: string) {
   })
 }
 
+// Live signal/sub-check IDs that have produced findings for this tenant.
+// Used by the Sessions page filter dropdowns so the user only sees values that
+// actually exist in their data, not the full static registry.
+export function useObservedSignals() {
+  return useQuery({
+    queryKey: ['security', 'observed'],
+    queryFn:  () => securityApi.getObservedSignals(),
+    staleTime: 120_000,
+  })
+}
+
 // Signal registry — 121 sub-checks for all 20 OW signals; rarely changes
 export function useSignalRegistry() {
   return useQuery({

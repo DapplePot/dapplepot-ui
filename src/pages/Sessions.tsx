@@ -1,4 +1,5 @@
-﻿import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useEffect } from 'react'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useSessionList } from '../hooks/useSessions'
 import { useAgents } from '../hooks/useAgents'
 import { useSessionFilters } from '../stores/sessionFilters'
@@ -20,7 +21,25 @@ export function Sessions() {
   const navigate = useNavigate({ from: '/sessions' })
   const page = search.page ?? 1
 
-  const { status, agentId, environment, dateRange, searchQuery } = useSessionFilters()
+  const {
+    status, agentId, environment, dateRange, searchQuery,
+    hasAlerts, signalId, subCheckId,
+    setAgentId, setHasAlerts, setSignalId, setSubCheckId,
+  } = useSessionFilters()
+
+  // Seed store from URL search params so deep links from the security page work.
+  // On unmount, clear filters so they don't bleed into the next visit to /sessions.
+  useEffect(() => {
+    if (search.hasAlerts !== undefined)  setHasAlerts(search.hasAlerts)
+    if (search.signalId   !== undefined) setSignalId(search.signalId)
+    if (search.subCheckId !== undefined) setSubCheckId(search.subCheckId)
+    if (search.agentId    !== undefined) setAgentId(search.agentId)
+    return () => {
+      useSessionFilters.getState().clearFilters()
+    }
+  // Run once on mount — subsequent changes flow store → URL via SessionFilters.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const { data: agentsData } = useAgents()
   const agentMap = Object.fromEntries(
@@ -38,10 +57,13 @@ export function Sessions() {
          : dateRange === '30d' ? new Date(Date.now() - 30 * 86_400_000).toISOString()
          : undefined,
     q: searchQuery || undefined,
+    hasAlerts: hasAlerts || undefined,
+    signalId: signalId || undefined,
+    subCheckId: subCheckId || undefined,
   })
 
   const handlePage = (p: number) => {
-    void navigate({ search: { page: p } })
+    void navigate({ search: (prev) => ({ ...prev, page: p }) })
   }
 
   const agents = (agentsData ?? []).map((a) => ({ value: a.agentId, label: a.name }))
@@ -61,7 +83,18 @@ export function Sessions() {
 
       <SessionFilters
         agents={agents}
-        onFiltersChange={() => void navigate({ search: { page: 1 } })}
+        onFiltersChange={() => void navigate({
+          search: () => {
+            // Read latest store state — closure values may be stale here.
+            const s = useSessionFilters.getState()
+            const next: { page: number; hasAlerts?: boolean; signalId?: string; subCheckId?: string; agentId?: string } = { page: 1 }
+            if (s.hasAlerts)  next.hasAlerts  = true
+            if (s.signalId)   next.signalId   = s.signalId
+            if (s.subCheckId) next.subCheckId = s.subCheckId
+            if (s.agentId)    next.agentId    = s.agentId
+            return next
+          },
+        })}
       />
 
       {isLoading ? (

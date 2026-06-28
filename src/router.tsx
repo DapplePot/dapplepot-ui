@@ -100,6 +100,10 @@ const overviewRoute = createRoute({
 
 const sessionListSearchSchema = z.object({
   page: z.number().default(1),
+  hasAlerts: z.boolean().optional(),
+  signalId: z.string().optional(),
+  subCheckId: z.string().optional(),
+  agentId: z.string().optional(),
 })
 
 const sessionsRoute = createRoute({

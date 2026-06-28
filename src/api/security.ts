@@ -52,6 +52,15 @@ export async function getAgentProfile(agentId: string): Promise<AgentProfile | n
   }
 }
 
+export interface ObservedSignals {
+  signals:   Array<{ signalId: string; count: number }>
+  subchecks: Array<{ subCheckId: string; signalId: string; checkLabel: string; count: number }>
+}
+
+export async function getObservedSignals(): Promise<ObservedSignals> {
+  return apiClient.get('v1/security/observed').json()
+}
+
 export async function getSignalRegistry(): Promise<SignalRegistryEntry[]> {
   const data = await apiClient
     .get('v1/security/signals')
