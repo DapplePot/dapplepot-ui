@@ -61,7 +61,6 @@ export function Sidebar() {
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const otherTenants = (myTenants ?? []).filter(t => t.tenantId !== user?.tenantId)
   const hasPersonalTenant = (myTenants ?? []).some(t => t.kind === 'personal')
-  const activeIsPersonal = tenant?.kind === 'personal'
   // The block is interactive whenever the dropdown has something to offer:
   // another workspace to switch to, or the option to create a personal one.
   // Superadmins manage tenants directly and don't switch workspaces from here.
