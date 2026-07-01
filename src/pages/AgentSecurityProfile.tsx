@@ -337,21 +337,25 @@ export function AgentSecurityProfile() {
       {/* Recent sessions with alerts (this agent) */}
       <div>
         <h2 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">Recent sessions with alerts</h2>
-        {!data.recentAlertedSessions || data.recentAlertedSessions.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-zinc-500">No alerted sessions for this agent</p>
-        ) : (
-          <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-zinc-800">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Session</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Ended</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Duration</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Alerts</th>
+        <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 dark:border-zinc-800">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Session</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Ended</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Duration</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Alerts</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
+              {!data.recentAlertedSessions || data.recentAlertedSessions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-zinc-500">
+                    No alerted sessions for this agent
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
-                {data.recentAlertedSessions.map((r) => (
+              ) : (
+                data.recentAlertedSessions.map((r) => (
                   <tr
                     key={r.sessionId}
                     onClick={() => void navigate({ to: '/sessions/$id', params: { id: r.sessionId } })}
@@ -374,11 +378,11 @@ export function AgentSecurityProfile() {
                       )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Top sub-checks fired (this agent) */}
@@ -394,23 +398,27 @@ export function AgentSecurityProfile() {
             </button>
           )}
         </div>
-        {!data.topSubchecks || data.topSubchecks.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-zinc-500">No findings for this agent</p>
-        ) : (
-          <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-zinc-800">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Sub-check</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Signal</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Framework</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-zinc-400">Count</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Latest session</th>
-                  <th className="w-24 px-4" />
+        <div className="overflow-hidden rounded border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 dark:border-zinc-800">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Sub-check</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Signal</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Framework</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Count</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-zinc-400">Latest session</th>
+                <th className="w-24 px-4" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
+              {!data.topSubchecks || data.topSubchecks.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-zinc-500">
+                    No findings for this agent
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
-                {(subchecksExpanded
+              ) : (
+                (subchecksExpanded
                   ? data.topSubchecks
                   : data.topSubchecks.slice(0, TOP_SUBCHECKS_COLLAPSED)
                 ).map((s) => (
@@ -421,7 +429,7 @@ export function AgentSecurityProfile() {
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">{s.owaspSignalId}</td>
                     <td className="px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">{s.framework}</td>
-                    <td className="px-4 py-3 text-right text-xs font-semibold text-slate-800 dark:text-zinc-200">{s.count}</td>
+                    <td className="px-4 py-3 text-left text-xs font-semibold text-slate-800 dark:text-zinc-200">{s.count}</td>
                     <td className="px-4 py-3 text-xs">
                       <button
                         onClick={() => void navigate({ to: '/sessions/$id', params: { id: s.latestSessionId } })}
@@ -442,11 +450,11 @@ export function AgentSecurityProfile() {
                       </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>

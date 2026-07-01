@@ -1,6 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
 import { getMyPlan, getMyUsage, type PlanSnapshot, type PlanLimits, type ChannelType, type UsageTimeSeries } from '../api/plan'
 import { useAuthStore } from '../stores/auth'
+import { useMyTenants } from './useTenants'
+
+/**
+ * Mirrors the exact "gate is open" signal used by `OnboardingGate` so gated
+ * queries (alerts, agents, channels, sessions) can skip firing until the
+ * server would actually accept them. Otherwise the API returns 409
+ * ONBOARDING_PENDING and React Query surfaces it as a visible error.
+ */
+export function useOnboardingComplete(): boolean {
+    const { data: myTenants } = useMyTenants()
+    const { plan } = usePlan()
+    if (!myTenants || myTenants.length === 0) return false
+    return plan?.onboardingCompletedAt != null
+}
 
 export function useUsageHistory(days = 30) {
     const isLoggedIn = useAuthStore(s => !!s.accessToken)

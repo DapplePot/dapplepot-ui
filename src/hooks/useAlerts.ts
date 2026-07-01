@@ -1,11 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AlertListParams } from '@dapplepot/types/common'
 import * as alertsApi from '../api/alerts'
+import { useOnboardingComplete } from './usePlan'
 
 export function useAlerts(params: AlertListParams) {
+  const onboardingComplete = useOnboardingComplete()
   return useQuery({
     queryKey: ['alerts', params],
     queryFn: () => alertsApi.getAlerts(params),
+    enabled: onboardingComplete,
     staleTime: 30_000,
     placeholderData: (prev) => prev,
   })
