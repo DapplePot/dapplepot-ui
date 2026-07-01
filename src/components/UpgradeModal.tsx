@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router'
 import { X } from 'lucide-react'
 import type { UpgradeTrigger } from '../api/upgrade'
 import { usePlanModalStore } from '../stores/planModal'
@@ -73,13 +72,15 @@ export function UpgradeModal({ open, onClose, trigger, headline }: UpgradeModalP
                     >
                         {copy.cta}
                     </button>
-                    <Link
-                        to="/contact-sales"
+                    <a
+                        href="https://dapplepot.com"
+                        target="_blank"
+                        rel="noreferrer"
                         onClick={onClose}
                         className="block w-full rounded border border-slate-300 py-2 text-center text-sm font-medium hover:bg-slate-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
                     >
                         Need Enterprise? Contact sales
-                    </Link>
+                    </a>
                     <button
                         onClick={onClose}
                         className="mt-2 text-center text-xs text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200"

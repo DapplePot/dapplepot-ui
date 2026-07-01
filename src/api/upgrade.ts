@@ -17,17 +17,5 @@ export function requestUpgrade(body: {
     return apiClient.post('v1/me/upgrade-request', { json: body }).json()
 }
 
-export function submitContactSales(body: {
-    name:                   string
-    email:                  string
-    company?:               string
-    monthlyVolumeEstimate?: string
-    deploymentPreference?:  'saas' | 'self_hosted_vpc'
-    complianceNeeds?:       string
-    notes?:                 string
-}): Promise<{ ok: true; leadId: string }> {
-    return apiClient.post('v1/leads/contact-sales', { json: body }).json()
-}
-
 // Re-export PlanTier for callers
 export type { PlanTier }

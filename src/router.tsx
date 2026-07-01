@@ -23,7 +23,6 @@ import { AcceptInvite }   from './pages/AcceptInvite'
 import { OAuthCallback }  from './pages/OAuthCallback'
 import { Blogs }          from './pages/Blogs'
 import { BlogForm }       from './pages/BlogForm'
-import { ContactSales }      from './pages/ContactSales'
 import { BillingSuccess }    from './pages/BillingSuccess'
 import { AdminLayout }       from './pages/admin/AdminLayout'
 import { AdminHome }         from './pages/admin/AdminHome'
@@ -236,12 +235,6 @@ const blogEditRoute = createRoute({
   component: BlogForm,
 })
 
-const contactSalesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/contact-sales',
-  component: ContactSales,
-})
-
 const billingSuccessRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/billing/success',
@@ -313,7 +306,6 @@ const routeTree = rootRoute.addChildren([
   blogsRoute,
   blogNewRoute,
   blogEditRoute,
-  contactSalesRoute,
   billingSuccessRoute,
   adminRoute.addChildren([
     adminHomeRoute,

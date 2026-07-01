@@ -379,7 +379,7 @@ export function PlanSelectionModal({ initialTier, checkoutSuccess, mode = 'onboa
                         You're on our highest self-serve plan.
                     </p>
                     <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400">
-                        Looking for more? <a href="/contact-sales" className="font-medium text-violet-600 hover:underline">Talk to us about Enterprise</a>.
+                        Looking for more? <a href="https://dapplepot.com" target="_blank" rel="noreferrer" className="font-medium text-violet-600 hover:underline">Talk to us about Enterprise</a>.
                     </p>
                 </div>
             ) : isSingleTierPicker ? (
@@ -477,7 +477,7 @@ export function PlanSelectionModal({ initialTier, checkoutSuccess, mode = 'onboa
             <p className="mt-4 text-center text-xs text-slate-500 dark:text-zinc-500">
                 Looking for Enterprise?{' '}
                 <a
-                    href="https://dapplepot.com/contact"
+                    href="https://dapplepot.com"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-0.5 font-medium text-violet-600 hover:underline"

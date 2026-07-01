@@ -17,7 +17,6 @@ const AUTH_ROUTES = new Set([
   '/reset-password',
   '/verify-email',
   '/accept-invite',
-  '/contact-sales',   // public Enterprise sales page — no app chrome
 ])
 
 export function AppShell() {

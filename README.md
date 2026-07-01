@@ -45,7 +45,7 @@ src/
 | **Auth** | `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/reset-password`, `/accept-invite` |
 | **Tenant operator** | `/` (Overview), `/sessions`, `/sessions/:id`, `/analytics`, `/detection`, `/security`, `/inventory`, `/inventory/agents/:id`, `/audit`, `/settings`, `/tenants` |
 | **Superadmin** | `/admin` (Home), `/admin/tenants`, `/admin/tenants/:id`, `/admin/users`, `/admin/audit-log` |
-| **Other** | `/contact-sales`, `/blogs`, `/billing/success` |
+| **Other** | `/blogs`, `/billing/success` |
 
 ## Auth
 
