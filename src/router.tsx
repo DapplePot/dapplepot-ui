@@ -120,11 +120,18 @@ const sessionsRoute = createRoute({
   validateSearch: sessionListSearchSchema,
 })
 
+// `?finding=SUB-CHECK-ID` is the deep-link the SDK's DapplePotBlockedError
+// URL uses to scroll straight to the firing check on the timeline.
+const sessionSearchSchema = z.object({
+  finding: z.string().optional(),
+})
+
 const sessionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/sessions/$id',
   beforeLoad: requireAuth,
   component: SessionDetail,
+  validateSearch: sessionSearchSchema,
 })
 
 const analyticsRoute = createRoute({

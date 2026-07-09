@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Check, ExternalLink, CheckCircle2, Loader2, X } from 'lucide-react'
+import { Check, ExternalLink, CheckCircle2, Loader2, X, AlertTriangle } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { selectTrialPlan } from '../api/plan'
@@ -331,12 +331,15 @@ export function PlanSelectionModal({ initialTier, checkoutSuccess, mode = 'onboa
                     </p>
                 )}
                 {mode === 'suspended' && daysUntilDeletion !== null && (
-                    <p className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">
-                        {daysUntilDeletion === 0
-                            ? '⚠ All your data will be permanently deleted today'
-                            : daysUntilDeletion === 1
-                                ? '⚠ All your data will be permanently deleted tomorrow'
-                                : `⚠ All your data will be permanently deleted in ${daysUntilDeletion} days`}
+                    <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-red-600 dark:text-red-400">
+                        <AlertTriangle className="h-4 w-4 shrink-0" />
+                        <span>
+                            {daysUntilDeletion === 0
+                                ? 'All your data will be permanently deleted today'
+                                : daysUntilDeletion === 1
+                                    ? 'All your data will be permanently deleted tomorrow'
+                                    : `All your data will be permanently deleted in ${daysUntilDeletion} days`}
+                        </span>
                     </p>
                 )}
                 {/* Billing-cycle toggle — hidden when there's only a single tier

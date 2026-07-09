@@ -86,6 +86,33 @@ export function useAgentProfile(agentId: string) {
   })
 }
 
+// Shadow-mode evidence for an agent — sub-check firing counts over a window.
+// Used by the Checks tab "fired N× last 7d" ambient stat and the Enforce
+// confirmation modal.
+export function useSubCheckFirings(agentId: string, windowDays: number = 7) {
+  return useQuery({
+    queryKey: ['security', 'subcheck-firings', agentId, windowDays],
+    queryFn:  () => securityApi.getSubCheckFirings(agentId, windowDays),
+    staleTime: 120_000,
+    enabled:   !!agentId,
+  })
+}
+
+// Sessions that a specific sub-check would have affected — populates the
+// "review these sessions before enabling Enforce" list in the confirm modal.
+export function useSubCheckFiringSessions(
+  agentId: string,
+  subCheckId: string | null,
+  opts: { windowDays?: number; limit?: number } = {},
+) {
+  return useQuery({
+    queryKey: ['security', 'subcheck-firing-sessions', agentId, subCheckId, opts],
+    queryFn:  () => securityApi.getSubCheckFiringSessions(agentId, subCheckId!, opts),
+    staleTime: 60_000,
+    enabled:   !!agentId && !!subCheckId,
+  })
+}
+
 // Live signal/sub-check IDs that have produced findings for this tenant.
 // Used by the Sessions page filter dropdowns so the user only sees values that
 // actually exist in their data, not the full static registry.
@@ -233,21 +260,25 @@ export function useUpdateSignalThreshold(agentId: string) {
   })
 }
 
-// Mutation to toggle or reconfigure a single sub-check (online flag + action)
+// Mutation to toggle or reconfigure a single sub-check (online flag + action).
 export function useToggleSubcheckOnline(agentId: string) {
   const queryClient = useQueryClient()
   const key = ['security', 'agent', agentId, 'subcheck-config']
   return useMutation({
     mutationFn: ({
       subCheckId, online_detection, action = 'alert',
-    }: { subCheckId: string; online_detection: boolean; action?: OnlineAction }) =>
+    }: {
+      subCheckId: string
+      online_detection: boolean
+      action?: OnlineAction
+    }) =>
       securityApi.setSubcheckOnline(agentId, subCheckId, online_detection, action),
     onMutate: async ({ subCheckId, online_detection, action = 'alert' }) => {
       await queryClient.cancelQueries({ queryKey: key })
-      const prev = queryClient.getQueryData<Record<string, { online_detection: boolean; action: OnlineAction }>>(key)
+      const prev = queryClient.getQueryData<Record<string, securityApi.SubcheckOverride>>(key)
       queryClient.setQueryData(
         key,
-        (old: Record<string, { online_detection: boolean; action: OnlineAction }> = {}) => ({
+        (old: Record<string, securityApi.SubcheckOverride> = {}) => ({
           ...old,
           [subCheckId]: { online_detection, action },
         }),

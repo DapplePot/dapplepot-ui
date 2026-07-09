@@ -52,6 +52,64 @@ export async function getAgentProfile(agentId: string): Promise<AgentProfile | n
   }
 }
 
+// ─── Shadow-mode evidence ────────────────────────────────────────────────
+// Counts of past findings per sub-check for an agent within a rolling
+// window. Powers the "fired N× last 7d" ambient stat on the Checks tab and
+// the "would have blocked these sessions" evidence in the Enforce confirm
+// modal. Returns empty {} if the security service is unreachable — the UI
+// gracefully degrades to no badge.
+
+export interface SubCheckFiring {
+  count:             number
+  distinct_sessions: number
+  last_fired_at:     string | null
+}
+
+export interface SubCheckFiringsResponse {
+  window_days: number
+  firings:     Record<string, SubCheckFiring>
+}
+
+export async function getSubCheckFirings(
+  agentId: string,
+  windowDays: number = 7,
+): Promise<SubCheckFiringsResponse> {
+  return apiClient
+    .get(`v1/security/agents/${agentId}/subcheck-firings`, {
+      searchParams: { window_days: windowDays },
+    })
+    .json()
+}
+
+export interface SubCheckFiringSession {
+  session_id:    string
+  event_type:    string
+  severity:      string
+  matched_text:  string
+  created_at:    string | null
+}
+
+export interface SubCheckFiringSessionsResponse {
+  window_days:  number
+  sub_check_id: string
+  sessions:     SubCheckFiringSession[]
+}
+
+export async function getSubCheckFiringSessions(
+  agentId: string,
+  subCheckId: string,
+  opts: { windowDays?: number; limit?: number } = {},
+): Promise<SubCheckFiringSessionsResponse> {
+  return apiClient
+    .get(`v1/security/agents/${agentId}/subcheck-firings/${encodeURIComponent(subCheckId)}/sessions`, {
+      searchParams: {
+        window_days: opts.windowDays ?? 7,
+        limit:       opts.limit ?? 25,
+      },
+    })
+    .json()
+}
+
 export interface ObservedSignals {
   signals:   Array<{ signalId: string; count: number }>
   subchecks: Array<{ subCheckId: string; signalId: string; checkLabel: string; count: number }>
@@ -68,12 +126,17 @@ export async function getSignalRegistry(): Promise<SignalRegistryEntry[]> {
   return data.signals
 }
 
+export interface SubcheckOverride {
+  online_detection: boolean
+  action:           OnlineAction
+}
+
 export async function getSubcheckConfig(
   agentId: string
-): Promise<Record<string, { online_detection: boolean; action: OnlineAction }>> {
+): Promise<Record<string, SubcheckOverride>> {
   const data = await apiClient
     .get(`v1/security/agents/${agentId}/subcheck-config`)
-    .json<{ overrides: Record<string, { online_detection: boolean; action: OnlineAction }> }>()
+    .json<{ overrides: Record<string, SubcheckOverride> }>()
   return data.overrides
 }
 

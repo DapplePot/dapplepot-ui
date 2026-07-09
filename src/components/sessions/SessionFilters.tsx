@@ -60,24 +60,24 @@ export function SessionFilters({ agents, onFiltersChange }: SessionFiltersProps)
   ]
 
   // Signal + sub-check options come from the canonical UI registry
-  // (see src/data/signalRegistry.ts, which mirrors the security service seed).
-  // We skip anything flagged `excluded` so users don't see disabled checks.
+  // (generated from dapplepot-security/registry/checks.yaml). We skip any
+  // check whose status is not `active` so users don't see disabled entries.
   const signalOptions = useMemo(() => {
     const opts = SIGNAL_REGISTRY
-      .filter((sig) => sig.subChecks.some((sc) => !sc.excluded))
-      .map((sig) => ({ value: sig.owaspSignalId, label: `${sig.owaspSignalId} — ${sig.name}` }))
+      .filter((sig) => sig.subChecks.some((sc) => sc.status === 'active'))
+      .map((sig) => ({ value: sig.id, label: `${sig.id} — ${sig.name}` }))
     return [{ value: '', label: 'All signals' }, ...opts]
   }, [])
 
   const subCheckOptions = useMemo(() => {
     const rows = SIGNAL_REGISTRY.flatMap((sig) =>
       sig.subChecks
-        .filter((sc) => !sc.excluded && (!signalId || sig.owaspSignalId === signalId))
-        .map((sc) => ({ subCheckId: sc.subCheckId, label: sc.label })),
+        .filter((sc) => sc.status === 'active' && (!signalId || sig.id === signalId))
+        .map((sc) => ({ id: sc.id, label: sc.label })),
     )
     const opts = rows.map((r) => ({
-      value: r.subCheckId,
-      label: `${r.subCheckId} — ${r.label}`,
+      value: r.id,
+      label: `${r.id} — ${r.label}`,
     }))
     return [{ value: '', label: 'All sub-checks' }, ...opts]
   }, [signalId])
@@ -149,8 +149,8 @@ export function SessionFilters({ agents, onFiltersChange }: SessionFiltersProps)
           // Clear sub-check if it no longer belongs to the selected signal
           if (next && subCheckId) {
             const stillValid = SIGNAL_REGISTRY.some(
-              (sig) => sig.owaspSignalId === next
-                    && sig.subChecks.some((sc) => sc.subCheckId === subCheckId && !sc.excluded),
+              (sig) => sig.id === next
+                    && sig.subChecks.some((sc) => sc.id === subCheckId && sc.status === 'active'),
             )
             if (!stillValid) setSubCheckId('')
           }

@@ -27,18 +27,24 @@ import { useTenant, useMyTenants, useSwitchTenant, useCreatePersonalWorkspace } 
 import { usePlan } from '../hooks/usePlan'
 import { useMe } from '../hooks/useUsers'
 
+// Nav is organised around the four planes (see platform_taxonomy_plan.md):
+//   Runtime Guard  → per-agent settings, not a top-level page today
+//   Security       → /security (session findings + scoring)
+//   Agent Trust    → per-agent view, accessed via Inventory
+//   Alerts         → /detection (feed of triggered alerts)
+// Routes are stable; only labels reflect the plane vocabulary.
 const NAV_ITEMS = [
-  { path: '/',          label: 'Overview',  icon: LayoutDashboard, exclude: [] },
-  { path: '/sessions',  label: 'Sessions',  icon: List,            exclude: ['superadmin'] },
-  { path: '/detection', label: 'Detection', icon: Bell,            exclude: ['superadmin'] },
-  { path: '/analytics', label: 'Analytics', icon: BarChart2,       exclude: ['superadmin'] },
-  { path: '/security',  label: 'Security',  icon: Shield,          exclude: ['superadmin'] },
-  { path: '/inventory', label: 'Inventory', icon: Boxes,           exclude: ['superadmin'] },
-  { path: '/audit',     label: 'Audit',     icon: FileCheck2,      exclude: ['superadmin', 'editor', 'viewer'] },
-  { path: '/settings',  label: 'Settings',  icon: Settings,        exclude: ['superadmin'] },
-  { path: '/tenants',         label: 'Tenants',         icon: Building2,       exclude: ['admin', 'editor', 'viewer'] },
-  { path: '/users',           label: 'Users',           icon: UsersIcon,       exclude: ['admin', 'editor', 'viewer'] },
-  { path: '/blogs',           label: 'Blogs',           icon: FileText,        exclude: ['admin', 'editor', 'viewer'] },
+  { path: '/',          label: 'Overview',   icon: LayoutDashboard, exclude: [] },
+  { path: '/sessions',  label: 'Sessions',   icon: List,            exclude: ['superadmin'] },
+  { path: '/detection', label: 'Alerts',     icon: Bell,            exclude: ['superadmin'] },
+  { path: '/security',  label: 'Security',   icon: Shield,          exclude: ['superadmin'] },
+  { path: '/analytics', label: 'Analytics',  icon: BarChart2,       exclude: ['superadmin'] },
+  { path: '/inventory', label: 'Inventory',  icon: Boxes,           exclude: ['superadmin'] },
+  { path: '/audit',     label: 'Audit',      icon: FileCheck2,      exclude: ['superadmin', 'editor', 'viewer'] },
+  { path: '/settings',  label: 'Settings',   icon: Settings,        exclude: ['superadmin'] },
+  { path: '/tenants',   label: 'Tenants',    icon: Building2,       exclude: ['admin', 'editor', 'viewer'] },
+  { path: '/users',     label: 'Users',      icon: UsersIcon,       exclude: ['admin', 'editor', 'viewer'] },
+  { path: '/blogs',     label: 'Blogs',      icon: FileText,        exclude: ['admin', 'editor', 'viewer'] },
 ]
 
 export function Sidebar() {

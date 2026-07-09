@@ -1,4 +1,6 @@
-﻿import { useParams } from '@tanstack/react-router'
+﻿import { useParams, useSearch } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { useSessionDetail, useSessionTrace } from '../hooks/useSessions'
 import { useSessionAlerts } from '../hooks/useAlerts'
 import { useSessionActions } from '../hooks/useSecurity'
@@ -18,6 +20,16 @@ function ErrorCard({ message }: { message: string }) {
 
 export function SessionDetail() {
   const { id } = useParams({ from: '/sessions/$id' })
+  // Deep-link support: `?finding=SUB-CHECK-ID` arrives on the DapplePotBlockedError
+  // URL. We surface it as a top-of-page banner so the engineer landing here
+  // sees why they were blocked and can dismiss it. Dashboard-side highlighting
+  // of the specific event on the timeline is a follow-up; this banner alone
+  // closes the "no context" gap.
+  const search = useSearch({ from: '/sessions/$id' })
+  const highlightFinding = (search as { finding?: string }).finding
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+  // Re-show the banner if the URL changes to a different finding.
+  useEffect(() => { setBannerDismissed(false) }, [highlightFinding])
 
   const { data: session, isLoading: sessionLoading, isError: sessionError, error: sessionErr } =
     useSessionDetail(id)
@@ -158,8 +170,41 @@ export function SessionDetail() {
     }
   )
 
+  // Look up the highlighted finding in this session's actions so we can show
+  // the engineer what fired without making them hunt the timeline.
+  const highlightedAction = highlightFinding
+    ? (sessionActions ?? []).find(a => a.subCheckId === highlightFinding)
+    : undefined
+
   return (
     <div className="flex h-[calc(100vh-theme(spacing.14)-theme(spacing.6)*2)] flex-col">
+      {highlightFinding && !bannerDismissed && (
+        <div className="mb-3 flex items-start gap-3 rounded border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-900/20">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-red-800 dark:text-red-300">
+              Session was blocked by{' '}
+              <span className="rounded bg-red-100 px-1.5 py-0.5 font-mono text-xs text-red-800 dark:bg-red-900/40 dark:text-red-200">
+                {highlightFinding}
+              </span>
+              {highlightedAction && <> · {highlightedAction.checkLabel}</>}
+            </p>
+            {highlightedAction?.matchedText && (
+              <p className="mt-1 truncate text-xs text-red-700 dark:text-red-400">
+                Matched: <span className="font-mono">{highlightedAction.matchedText}</span>
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setBannerDismissed(true)}
+            className="rounded text-xs text-red-700 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+            aria-label="Dismiss"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
       {traceLoading ? (
         <div className="space-y-3">
           <Skeleton className="h-20 w-full rounded" />

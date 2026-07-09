@@ -1,17 +1,18 @@
-﻿import { useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { SessionAction} from '../../types/security'
+import { useHighlightedEvent } from '../../stores/highlightedEvent'
 
 interface OnlineFindingsListProps {
   findings: SessionAction[]
   baseTime: string | null
 }
 
-const SEVERITY_ICON: Record<string, string> = {
-  critical: '🔴',
-  high:     '🟠',
-  medium:   '🟡',
-  low:      '🔵',
+const SEVERITY_DOT_CLASS: Record<string, string> = {
+  critical: 'bg-red-500',
+  high:     'bg-orange-500',
+  medium:   'bg-amber-400',
+  low:      'bg-blue-400',
 }
 
 const ACTION_BADGE: Record<string, string> = {
@@ -28,6 +29,22 @@ const ACTION_LABEL: Record<string, string> = {
 
 export function OnlineFindingsList({ findings, baseTime }: OnlineFindingsListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const setHighlight   = useHighlightedEvent(s => s.setHighlight)
+  const clearHighlight = useHighlightedEvent(s => s.clearHighlight)
+
+  useEffect(() => clearHighlight, [clearHighlight])
+
+  function handleToggle(f: SessionAction) {
+    const next = expandedId === f.id ? null : f.id
+    setExpandedId(next)
+    // The timeline synthesises security_finding rows from sessionActions and
+    // uses `finding_id` (SessionAction.id) as the event_id on those rows —
+    // see SessionDetail.tsx. To match, highlight by finding_id, not by the
+    // trigger event's UUID (which was never buffered to obs_events when the
+    // finding fired via block_call/terminate_session).
+    if (next) setHighlight(f.id ? [f.id] : [])
+    else      clearHighlight()
+  }
 
   if (findings.length === 0) {
     return <p className="py-6 text-center text-sm text-slate-400">No online findings</p>
@@ -39,9 +56,12 @@ export function OnlineFindingsList({ findings, baseTime }: OnlineFindingsListPro
         <div key={f.id}>
           <div
             className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-zinc-800/50"
-            onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
+            onClick={() => handleToggle(f)}
           >
-            <span>{SEVERITY_ICON[f.severity] ?? '⚪'}</span>
+            <span
+              className={`inline-block h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT_CLASS[f.severity] ?? 'bg-slate-400'}`}
+              title={f.severity}
+            />
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -50,10 +70,10 @@ export function OnlineFindingsList({ findings, baseTime }: OnlineFindingsListPro
                   {ACTION_LABEL[f.actionTaken] ?? f.actionTaken}
                 </span>
                 <p className="text-sm font-medium text-slate-800 dark:text-zinc-200">{f.checkLabel}</p>
-                <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide ${
                   f.framework === 'ASI' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                 }`}>
-                  {f.framework}
+                  OW-{f.framework}
                 </span>
               </div>
               <p className="text-xs text-slate-400 dark:text-zinc-500 font-mono">

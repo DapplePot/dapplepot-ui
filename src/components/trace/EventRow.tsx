@@ -3,6 +3,7 @@ import type { TraceEvent } from '@dapplepot/types/session'
 import { EventPayload } from './EventPayload'
 import { getEventColor } from '../../utils/eventColors'
 import { ChevronRight, ChevronDown, ShieldAlert } from 'lucide-react'
+import { useHighlightedEvent } from '../../stores/highlightedEvent'
 
 interface EventRowProps {
   event: TraceEvent
@@ -24,6 +25,13 @@ const SECURITY_ACTION_LABEL: Record<string, string> = {
 
 export function EventRow({ event, baseTime }: EventRowProps) {
   const [expanded, setExpanded] = useState(false)
+  const highlightedIds = useHighlightedEvent(s => s.eventIds)
+  const primaryEventId = useHighlightedEvent(s => s.primaryEventId)
+  const isHighlighted  = highlightedIds.includes(event.eventId)
+  // Slightly heavier bar on the primary event so the user can see which one
+  // the timeline scrolled to, but the accent colour stays the same for every
+  // event in the set — they all contributed.
+  const isPrimary      = event.eventId === primaryEventId
 
   const relativeMs = baseTime
     ? new Date(event.emittedAt).getTime() - new Date(baseTime).getTime()
@@ -41,7 +49,11 @@ export function EventRow({ event, baseTime }: EventRowProps) {
     return (
       <div>
         <div
-          className="flex items-center gap-3 px-4 py-2 hover:bg-red-50/40 cursor-pointer border-l-2 border-red-300 dark:hover:bg-red-950/20 dark:border-red-700"
+          className={`flex items-center gap-3 px-4 py-2 hover:bg-red-50/40 cursor-pointer dark:hover:bg-red-950/20 ${
+            isHighlighted
+              ? `${isPrimary ? 'border-l-4' : 'border-l-2'} border-violet-500 bg-violet-50/40 dark:border-violet-400 dark:bg-violet-950/20`
+              : 'border-l-2 border-red-300 dark:border-red-700'
+          }`}
           onClick={() => setExpanded((v) => !v)}
         >
           <span className="w-4 shrink-0 text-slate-400 dark:text-zinc-500">
@@ -86,7 +98,11 @@ export function EventRow({ event, baseTime }: EventRowProps) {
   return (
     <div>
       <div
-        className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 cursor-pointer dark:hover:bg-zinc-800"
+        className={`flex items-center gap-3 px-4 py-2 hover:bg-slate-50 cursor-pointer dark:hover:bg-zinc-800 ${
+          isHighlighted
+            ? `${isPrimary ? 'border-l-4' : 'border-l-2'} border-violet-500 bg-violet-50/40 dark:border-violet-400 dark:bg-violet-950/20`
+            : 'border-l-2 border-transparent'
+        }`}
         onClick={() => hasPayload && setExpanded((v) => !v)}
       >
         <span className="w-4 shrink-0 text-slate-400 dark:text-zinc-500">

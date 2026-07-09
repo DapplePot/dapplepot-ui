@@ -2,6 +2,7 @@ import { useRef, useEffect, useMemo } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { TraceEvent } from '@dapplepot/types/session'
 import { useTraceFilters } from '../../stores/traceFilters'
+import { useHighlightedEvent } from '../../stores/highlightedEvent'
 import { EventRow } from './EventRow'
 import { Button } from '../ui/button'
 import { Skeleton } from '../ui/skeleton'
@@ -35,6 +36,8 @@ export function EventTimeline({
   onLoadMore,
 }: EventTimelineProps) {
   const { activeCategory, setActiveCategory } = useTraceFilters()
+  const primaryEventId    = useHighlightedEvent(s => s.primaryEventId)
+  const highlightedIds    = useHighlightedEvent(s => s.eventIds)
 
   useEffect(() => {
     setActiveCategory('all')
@@ -61,6 +64,34 @@ export function EventTimeline({
     measureElement: (el) => el.getBoundingClientRect().height,
     paddingEnd: 16,
   })
+
+  // When a finding is expanded, scroll the timeline to the primary event of
+  // that finding. If any highlighted event is present in the full list but
+  // filtered out under the current category, drop the filter to 'all' so
+  // every contributing event becomes visible.
+  useEffect(() => {
+    if (!primaryEventId) return
+    const primaryIdx = filtered.findIndex(e => e.eventId === primaryEventId)
+    if (primaryIdx < 0) {
+      if (allEvents.some(e => e.eventId === primaryEventId)) {
+        setActiveCategory('all')
+      }
+      return
+    }
+    // If any additional highlighted events are hidden by the filter, still
+    // reset to 'all' so the user sees the whole set — but do it in one shot
+    // (no double-scroll).
+    const anyHidden = highlightedIds.some(
+      id => id !== primaryEventId
+         && !filtered.some(e => e.eventId === id)
+         && allEvents.some(e => e.eventId === id)
+    )
+    if (anyHidden) {
+      setActiveCategory('all')
+      return
+    }
+    rowVirtualizer.scrollToIndex(primaryIdx, { align: 'center', behavior: 'smooth' })
+  }, [primaryEventId, highlightedIds, filtered, allEvents, rowVirtualizer, setActiveCategory])
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
